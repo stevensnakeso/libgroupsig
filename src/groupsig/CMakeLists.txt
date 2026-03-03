@@ -31,6 +31,8 @@ target_link_libraries (groupsig
   PUBLIC klap20
   PUBLIC dl21
   PUBLIC dl21seq
+  PUBLIC scsl25
+  PUBLIC bap24
   PUBLIC sys
   PUBLIC math
   PUBLIC base64
@@ -62,3 +64,5 @@ add_subdirectory(klap20)
 add_subdirectory(dl21)
 add_subdirectory(dl21seq)
 add_subdirectory(kty04)
+add_subdirectory(scsl25)
+add_subdirectory(bap24)

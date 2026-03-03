@@ -28,7 +28,8 @@
 #include "groupsig/klap20/proof.h"
 #include "groupsig/dl21/proof.h"
 #include "groupsig/dl21seq/proof.h"
-
+#include "groupsig/scsl25/proof.h"
+#include "groupsig/bap24/proof.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,7 +38,7 @@ extern "C" {
  * @def GROUPSIG_PROOF_HANDLES_N
  * @brief Number of supported proof bundles.
  */
-#define GROUPSIG_PROOF_HANDLES_N 6
+#define GROUPSIG_PROOF_HANDLES_N 8
 
 /**
  * @var GROUPSIG_PROOF_HANDLES
@@ -50,6 +51,8 @@ static const groupsig_proof_handle_t *GROUPSIG_PROOF_HANDLES[GROUPSIG_PROOF_HAND
   &klap20_proof_handle,
   &dl21_proof_handle,
   &dl21seq_proof_handle,
+  &scsl25_proof_handle,
+  &bap24_proof_handle,
 };
 
 #ifdef __cplusplus

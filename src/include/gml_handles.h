@@ -26,7 +26,7 @@
 #include "groupsig/cpy06/gml.h"
 #include "groupsig/ps16/gml.h"
 #include "groupsig/klap20/gml.h"
-
+#include "groupsig/bap24/gml.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,7 +35,7 @@ extern "C" {
  * @def GML_HANDLES_N
  * @brief Number of known GML implementation handles.
  */
-#define GML_HANDLES_N 5
+#define GML_HANDLES_N 6
 
 /**
  * @var GML_HANDLES
@@ -47,6 +47,7 @@ const gml_handle_t *GML_HANDLES[GML_HANDLES_N] = {
   &cpy06_gml_handle,
   &ps16_gml_handle,
   &klap20_gml_handle,
+  &bap24_gml_handle,
 };
 
 #ifdef __cplusplus

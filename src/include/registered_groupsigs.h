@@ -30,6 +30,8 @@
 #include "klap20.h"
 #include "dl21.h"
 #include "dl21seq.h"
+#include "scsl25.h"
+#include "bap24.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -2917,4 +2917,24 @@ int pbcext_element_GT_from_string(pbcext_element_GT_t **e,
   
 }
 
+ int pbcext_element_Fr_set2(pbcext_element_Fr_t *dst,  mclInt  lambda)
+{
+  pbcext_element_Fr_t  *exponent, *base;
+
+  exponent = pbcext_element_Fr_init();
+  base = pbcext_element_Fr_init();
+
+  
+  mclBnFr_setInt(base, 2);
+  
+  mclBnFr_setInt(exponent, lambda);
+
+  pbcext_element_Fr_mul(dst, base, exponent);
+
+  if(exponent) { pbcext_element_Fr_free(exponent); exponent = NULL; }
+  if(base) { pbcext_element_Fr_free(base); base = NULL; }
+  return IOK;
+
+}
+
 /* pbc_ext.c ends here */

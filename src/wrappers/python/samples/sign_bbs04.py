@@ -20,7 +20,7 @@ msg2 = groupsig.join_mem(1, gpk, msgin = msg1)
 usk = msg2['memkey']
 
 # Sign
-sig = groupsig.sign("Hello, World!", usk, gpk)
+sig = groupsig.sign("QmT5SK1c1T9R6A1ajgd9KeTCsz7GUuaH8TZoQ5CDWyciLh", usk, gpk)
 
 # Verify
 b = groupsig.verify(sig, "Hello, World!", gpk)

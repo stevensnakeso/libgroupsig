@@ -243,7 +243,7 @@ groupsig_key_t* bbs04_mem_key_import(byte_t *source, uint32_t size) {
 
   rc = IOK;
   ctr = 0;
-  
+
   if(!(key = bbs04_mem_key_init())) {
     return NULL;
   }
@@ -252,6 +252,7 @@ groupsig_key_t* bbs04_mem_key_import(byte_t *source, uint32_t size) {
 
   /* First byte: scheme */
   scheme = source[ctr++];
+
   if(scheme != key->scheme) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_mem_key_import", __LINE__, 
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
@@ -260,11 +261,13 @@ groupsig_key_t* bbs04_mem_key_import(byte_t *source, uint32_t size) {
 
   /* Next  byte: key type */
   type = source[ctr++];
+
   if(type != GROUPSIG_KEY_MEMKEY) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_mem_key_import", __LINE__,
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, bbs04_mem_key_import);
   }
+
 
   /* Get x */
   if(!(bbs04_key->x = pbcext_element_Fr_init()))

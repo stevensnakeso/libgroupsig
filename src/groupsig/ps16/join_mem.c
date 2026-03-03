@@ -79,7 +79,7 @@ int ps16_join_mem(message_t **mout, groupsig_key_t *memkey,
   
   if (seq == 1) { /* First message of interactive protocol */
 
-    /* The manager sends a random element in G1 */
+    /* The manager sends a random element in G1 */ //random G1 n
     if(!(n = pbcext_element_G1_init()))
       GOTOENDRC(IERROR, ps16_join_mem);
     if(pbcext_get_element_G1_bytes(n, &nlen, min->bytes) == IERROR)
@@ -87,7 +87,7 @@ int ps16_join_mem(message_t **mout, groupsig_key_t *memkey,
     if(pbcext_element_G1_to_bytes(&bn, &nlen, n) == IERROR)
       GOTOENDRC(IERROR, ps16_join_mem);
 
-    /* Compute secret exponent, tau and ttau */
+    /* Compute secret exponent, tau and ttau */ 
     if(!(ps16_memkey->sk = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, ps16_join_mem);
     if(pbcext_element_Fr_random(ps16_memkey->sk) == IERROR)

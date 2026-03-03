@@ -1799,6 +1799,17 @@ extern "C" {
 				    int base); 
 
 
+     /** 
+   * @fn int pbcext_element_Fr_2pow(pbcext_element_Fr_t *dst, mclInt  *lambda)
+   * @brief Allocates (and initializes, when possible) a new element 2 to the power of lambda in the
+   * Fr field associated to curve c.
+   *
+   * @param[in,out] dst The element to be set.
+   * @param[in] lambda The safety parameter to assign from.
+   * 
+   * @return IOK or IERROR.
+   */
+  int pbcext_element_Fr_set2(pbcext_element_Fr_t *dst,  mclInt  lambda);
 #ifdef __cplusplus
 }
 #endif

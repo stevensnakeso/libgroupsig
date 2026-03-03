@@ -120,4 +120,5 @@ if (HW)
 endif ()
 add_subdirectory (${CMAKE_SOURCE_DIR}/src/groupsig)
 add_subdirectory (${PROJECT_SOURCE_DIR}/src/tools)
+
 add_subdirectory (${CMAKE_SOURCE_DIR}/src/test/basic)

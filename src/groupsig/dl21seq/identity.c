@@ -132,7 +132,7 @@ identity_t* dl21seq_identity_from_string(char *sid) {
     return NULL;
   }
 
-  return NULL;
+  return NULL; //?????
 
 }
 

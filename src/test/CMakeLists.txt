@@ -52,6 +52,19 @@ target_link_libraries(PS16Test
   pthread)
 add_test(NAME PS16Test COMMAND PS16Test)
 
+# Tests for BAP24
+add_executable(BAP24Test test_bap24.cpp)
+target_link_libraries(BAP24Test
+  PUBLIC
+  groupsig
+  big
+  sys
+  logger
+  gtest_main
+  gtest
+  pthread)
+add_test(NAME BAP24Test COMMAND BAP24Test)
+
 # Tests for KLAP20
 add_executable(KLAP20Test test_klap20.cpp)
 target_link_libraries(KLAP20Test
@@ -90,6 +103,19 @@ target_link_libraries(DL21SEQTest
   gtest
   pthread)
 add_test(NAME DL21SEQTest COMMAND DL21SEQTest)
+
+# Tests for SCSL25
+add_executable(SCSL25Test test_scsl25.cpp)
+target_link_libraries(SCSL25Test
+  PUBLIC
+  groupsig
+  big
+  sys
+  logger
+  gtest_main
+  gtest
+  pthread)
+add_test(NAME SCSL25Test COMMAND SCSL25Test)
 
 # Tests for PBC
 add_executable(PBCTest test_pbc.cpp)
