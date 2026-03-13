@@ -34,7 +34,7 @@ build() {
     [ -n "$HW3" ] && hw3="-DHW3=1"
     [[ "$(uname -a)" =~ (arm|aarch) ]] && comp="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
     cmake -B build $gtest $comp $debug $sha2 $sha3 $hw $hw3 \
-        && make -C build $verbose
+        && make -C build $verbose 
 }
 
 for arg in "$@"; do

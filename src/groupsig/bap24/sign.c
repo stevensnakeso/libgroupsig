@@ -120,7 +120,7 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (pbcext_element_Fr_random(alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
   /*cnym1 = g^a*/
   cnym1 = pbcext_element_G1_init();
-  cnym1 = pbcext_element_G1_mul(cnym1, bap24_grpkey->g, alpha);
+  if( pbcext_element_G1_mul(cnym1, bap24_grpkey->g, alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
 
   /*cnuym2 = dpk^alpha hscp^sk*/
   cnym2 = pbcext_element_G1_init();
