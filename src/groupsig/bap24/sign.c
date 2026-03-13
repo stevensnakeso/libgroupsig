@@ -42,8 +42,10 @@
 int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
 	      groupsig_key_t *grpkey, unsigned int seed) {
 
-  pbcext_element_Fr_t *t, *k;
+  pbcext_element_Fr_t *t, *k, *alpha;
   pbcext_element_GT_t *e;
+  pbcext_element_G1_t *hscp,*cnym1,*cnym2,*aux;
+  hash_t *hc;
 #if defined (SHA2) || defined (SHA3)
   byte_t aux_sc[HASH_DIGEST_LENGTH+1];
 #else
@@ -55,7 +57,7 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   bap24_mem_key_t *bap24_memkey;
   uint64_t len;
   int rc;
-
+  char *msg_msg, *msg_scp;        
   if(!sig || !msg ||
      !memkey || memkey->scheme != GROUPSIG_BAP24_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_BAP24_CODE) {
@@ -73,6 +75,10 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
 #endif
   aux_bytes = NULL;
   rc = IOK;
+
+  /* de message and scope */
+  if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if(message_json_get_key(&msg_scp, msg, "$.scope") == IERROR) GOTOENDRC(IERROR, bap24_sign);
 
   /* Randomize sigma1 and sigma2 */
   if (!(t = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
@@ -99,6 +105,29 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (pbcext_pairing(e, bap24_sig->sigma1, bap24_grpkey->Y) == IERROR)
     GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_GT_pow(e, e, k) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+
+  /* Hash(scp)^sk */
+
+  hscp = pbcext_element_G1_init();
+  if(!(hc = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, bap24_sign);
+  if(hash_update(hc, (byte_t *) msg_scp, strlen(msg_scp)) == IERROR)
+    GOTOENDRC(IERROR, bap24_sign);
+  if(hash_finalize(hc) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  pbcext_element_G1_from_hash(hscp, hc->hash, hc->length);
+
+  /* gen alpha*/
+  alpha = pbcext_element_Fr_init();
+  if (pbcext_element_Fr_random(alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  /*cnym1 = g^a*/
+  cnym1 = pbcext_element_G1_init();
+  cnym1 = pbcext_element_G1_mul(cnym1, bap24_grpkey->g, alpha);
+
+  /*cnuym2 = dpk^alpha hscp^sk*/
+  cnym2 = pbcext_element_G1_init();
+  if (pbcext_element_G1_mul(cnym2, bap24_grpkey->dpk, alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_G1_mul(aux, hscp, bap24_memkey->sk) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_G1_add(cnym2, cnym2, aux) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+
 
   /* c = hash(bap24_sig->sigma1,bap24_sig->sigma2,e,m); */
 #if defined (SHA2) || defined (SHA3)
@@ -206,7 +235,8 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
     GOTOENDRC(IERROR, bap24_sign);
 
  bap24_sign_end:
-
+  if(msg_msg) { mem_free(msg_msg); msg_msg = NULL; }
+  if(msg_scp) { mem_free(msg_scp); msg_scp = NULL; }
   if (k) { pbcext_element_Fr_free(k); k = NULL; }
   if (t) { pbcext_element_Fr_free(t); t = NULL; }
   if (e) { pbcext_element_GT_free(e); e = NULL; }

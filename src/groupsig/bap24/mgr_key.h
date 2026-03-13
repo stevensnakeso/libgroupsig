@@ -45,7 +45,10 @@
  */
 typedef struct {
   pbcext_element_Fr_t *x; 
-  pbcext_element_Fr_t *y; 
+  pbcext_element_Fr_t *y; //y1
+  pbcext_element_Fr_t *yy; //y2
+  pbcext_element_Fr_t *ask;  /*accumulator key pair |sk|*/
+  pbcext_element_Fr_t *dsk;  /*Data Processor key pair |sk|*/
 } bap24_mgr_key_t;
 
 /** 

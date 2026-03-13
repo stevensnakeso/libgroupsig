@@ -35,9 +35,15 @@
  */
 typedef struct {
   pbcext_element_G1_t *g; /**< Random generator of G1 */
+  pbcext_element_G1_t *h; /**< Random generator of G1 */
   pbcext_element_G2_t *gg; /**< Random generator of G2 */
+  pbcext_element_G2_t *hh; /**< Random generator of G2 */
   pbcext_element_G2_t *X; /**< gg^x (x is part of mgrkey) */
   pbcext_element_G2_t *Y;  /**< gg^y (y is part of mgrkey) */
+  pbcext_element_G2_t *YY;  /**< gg^y (y is part of mgrkey) */
+  pbcext_element_G2_t *apk; /*accumulator key pair |pk|*/
+  pbcext_element_G2_t *dpk; /**Data Processor Key Pair PK */
+  pbcext_element_G2_t *acc; /*accumulator*/
 } bap24_grp_key_t;
 
 /**

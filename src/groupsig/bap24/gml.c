@@ -276,6 +276,7 @@ int bap24_gml_entry_free(gml_entry_t *entry) {
   if (data) {
     if (data->tau) { rc = pbcext_element_G1_free(data->tau); data->tau = NULL; }
     if (data->ttau) { rc += pbcext_element_G2_free(data->ttau); data->ttau = NULL; }
+    if (data->uid) { rc += pbcext_element_Fr_free(data->uid); data->uid = NULL; }
     mem_free(entry->data); entry->data = NULL;
   }
 
@@ -344,6 +345,15 @@ int bap24_gml_entry_export(byte_t **bytes,
   if (pbcext_dump_element_G2_bytes(&__bytes,
 				   &len,
 				   ((bap24_gml_entry_data_t *) entry->data)->ttau) == IERROR) {
+    mem_free(_bytes); _bytes = NULL;
+    return IERROR;
+  }
+  offset += len;
+
+  __bytes = &_bytes[offset];
+  if (pbcext_dump_element_Fr_bytes(&__bytes,
+				   &len,
+				   ((bap24_gml_entry_data_t *) entry->data)->uid) == IERROR) {
     mem_free(_bytes); _bytes = NULL;
     return IERROR;
   }
@@ -432,6 +442,25 @@ gml_entry_t* bap24_gml_entry_import(byte_t *bytes, uint32_t size) {
 
   offset += len;
 
+  if(!(((bap24_gml_entry_data_t *)entry->data)->uid = pbcext_element_Fr_init())) {
+    bap24_gml_entry_free(entry); entry = NULL;
+    return NULL;
+  }
+
+  if (pbcext_get_element_Fr_bytes(((bap24_gml_entry_data_t *)entry->data)->uid,
+				  &len,
+				  &bytes[offset]) == IERROR) {
+    bap24_gml_entry_free(entry); entry = NULL;
+    return NULL;
+  }
+
+  if (!len) {
+    bap24_gml_entry_free(entry); entry = NULL;
+    return NULL;
+  }
+
+  offset += len;
+
   /* Sanity check */
   if (offset != size) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_gml_entry_import", __LINE__,
@@ -446,8 +475,8 @@ gml_entry_t* bap24_gml_entry_import(byte_t *bytes, uint32_t size) {
 
 char* bap24_gml_entry_to_string(gml_entry_t *entry) {
 
-  char *stau, *sttau, *sid, *sentry;
-  uint64_t stau_len, sttau_len, sentry_len;
+  char *stau, *sttau,*suid, *sid, *sentry;
+  uint64_t stau_len, sttau_len, suid_len, sentry_len;
 
   if(!entry) {
     LOG_EINVAL(&logger, __FILE__, "bap24_gml_entry_to_string", __LINE__, LOGERROR);
@@ -477,6 +506,15 @@ char* bap24_gml_entry_to_string(gml_entry_t *entry) {
 				 ((bap24_gml_entry_data_t *)entry->data)->ttau) == IERROR) {
     mem_free(sid); sid = NULL;
     mem_free(stau); stau = NULL;
+    return NULL;
+  }
+
+  if(pbcext_element_Fr_to_string(&suid,
+				 &suid_len,
+				 16,
+				 ((bap24_gml_entry_data_t *)entry->data)->uid) == IERROR) {
+    mem_free(sid); sid = NULL;
+    mem_free(suid); suid = NULL;
     return NULL;
   }
 

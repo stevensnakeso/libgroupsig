@@ -33,6 +33,7 @@
 typedef struct {
   pbcext_element_G1_t *tau;
   pbcext_element_G2_t *ttau;
+  pbcext_element_Fr_t *uid;
 } bap24_gml_entry_data_t;
 
 /**

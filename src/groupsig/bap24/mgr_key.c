@@ -51,7 +51,9 @@ groupsig_key_t* bap24_mgr_key_init() {
   bap24_key = key->key;
   bap24_key->x = NULL;
   bap24_key->y = NULL;
-
+  bap24_key->yy = NULL;
+  bap24_key->ask = NULL;
+  bap24_key->dsk = NULL;
   return key;
 
 }
@@ -75,6 +77,9 @@ int bap24_mgr_key_free(groupsig_key_t *key) {
     bap24_key = key->key;
     if(bap24_key->x) { pbcext_element_Fr_free(bap24_key->x); bap24_key->x = NULL; }
     if(bap24_key->y) { pbcext_element_Fr_free(bap24_key->y); bap24_key->y = NULL; }
+     if(bap24_key->yy) { pbcext_element_Fr_free(bap24_key->yy); bap24_key->yy = NULL; }
+    if(bap24_key->ask) { pbcext_element_Fr_free(bap24_key->ask); bap24_key->ask = NULL; }
+    if(bap24_key->dsk) { pbcext_element_Fr_free(bap24_key->dsk); bap24_key->dsk = NULL; }
     mem_free(key->key); key->key = NULL;
   }
 
@@ -108,12 +113,27 @@ int bap24_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     GOTOENDRC(IERROR, bap24_mgr_key_copy);
   if(pbcext_element_Fr_set(bap24_dst->y, bap24_src->y) == IERROR)
     GOTOENDRC(IERROR, bap24_mgr_key_copy);
+  if(!(bap24_dst->yy = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_mgr_key_copy);
+  if(pbcext_element_Fr_set(bap24_dst->yy, bap24_src->yy) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_copy);
+  if(!(bap24_dst->ask = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_mgr_key_copy);
+  if(pbcext_element_Fr_set(bap24_dst->ask, bap24_src->ask) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_copy);
+  if(!(bap24_dst->dsk = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_mgr_key_copy);
+  if(pbcext_element_Fr_set(bap24_dst->dsk, bap24_src->dsk) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_copy);
 
  bap24_mgr_key_copy_end:
 
   if(rc == IERROR) {
     if (bap24_dst->x) { pbcext_element_Fr_free(bap24_dst->x); bap24_dst->x = NULL; }
     if (bap24_dst->y) { pbcext_element_Fr_free(bap24_dst->y); bap24_dst->y = NULL; }
+    if (bap24_dst->yy) { pbcext_element_Fr_free(bap24_dst->yy); bap24_dst->yy = NULL; }
+    if (bap24_dst->ask) { pbcext_element_Fr_free(bap24_dst->ask); bap24_dst->ask = NULL; }
+    if (bap24_dst->dsk) { pbcext_element_Fr_free(bap24_dst->dsk); bap24_dst->dsk = NULL; }
   }
 
   return rc;
@@ -123,19 +143,21 @@ int bap24_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 int bap24_mgr_key_get_size(groupsig_key_t *key) {
 
   bap24_mgr_key_t *bap24_key;
-  uint64_t size64, sx, sy;
+  uint64_t size64, sx, sy,syy, sask, sdsk;
 
   if(!key || key->scheme != GROUPSIG_BAP24_CODE) {
     LOG_EINVAL(&logger, __FILE__, "bap24_mgr_key_get_size", __LINE__, LOGERROR);
     return -1;
   }
 
-  sx = sy = 0;
+  sx = sy = syy = sask = sdsk= 0;
 
   if(pbcext_element_Fr_byte_size(&sx) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&sy) == IERROR) return -1;
-
-  size64 = sizeof(uint8_t)*2 + sizeof(int)*2 + sx + sy;
+  if(pbcext_element_Fr_byte_size(&syy) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sask) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sdsk) == IERROR) return -1;
+  size64 = sizeof(uint8_t)*2 + sizeof(int)*5 + sx + sy + syy + sask + sdsk; // get size problem??
 
   if(size64 > INT_MAX) return -1;
   return (int) size64;
@@ -189,6 +211,24 @@ int bap24_mgr_key_export(byte_t **bytes,
   /* Dump y */
   __bytes = &_bytes[ctr];
   if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_key->y) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_export);
+  ctr += len;
+
+  /* Dump yy */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_key->yy) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_export);
+  ctr += len;
+
+  /* Dump ask */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_key->ask) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_export);
+  ctr += len;
+
+  /* Dump dsk */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_key->dsk) == IERROR)
     GOTOENDRC(IERROR, bap24_mgr_key_export);
   ctr += len;
 
@@ -271,6 +311,28 @@ groupsig_key_t* bap24_mgr_key_import(byte_t *source, uint32_t size) {
     GOTOENDRC(IERROR, bap24_mgr_key_import);
   ctr += len;
 
+  /* Get yy */
+  if(!(bap24_key->yy = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_mgr_key_import);
+  if(pbcext_get_element_Fr_bytes(bap24_key->yy, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_import);
+  ctr += len;
+
+
+  /* Get ask */
+  if(!(bap24_key->ask = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_mgr_key_import);
+  if(pbcext_get_element_Fr_bytes(bap24_key->ask, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_import);
+  ctr += len;
+
+  /* Get dsk */
+  if(!(bap24_key->ask = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_mgr_key_import);
+  if(pbcext_get_element_Fr_bytes(bap24_key->dsk, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_mgr_key_import);
+  ctr += len;
+
  bap24_mgr_key_import_end:
 
   if(rc == IERROR && key) { bap24_mgr_key_free(key); key = NULL; }
@@ -283,8 +345,8 @@ groupsig_key_t* bap24_mgr_key_import(byte_t *source, uint32_t size) {
 char* bap24_mgr_key_to_string(groupsig_key_t *key) {
 
   bap24_mgr_key_t* bap24_key = (bap24_mgr_key_t*) key->key;
-  char *x = NULL, *y = NULL, *mgr_key = NULL;
-  size_t x_size = 0, y_size = 0, mgr_key_size = 0;
+  char *x = NULL, *y = NULL, *yy = NULL, * ask = NULL, *dsk =NULL, *mgr_key = NULL;
+  size_t x_size = 0, y_size = 0, yy_size = 0, ask_size = 0, dsk_size = 0, mgr_key_size = 0;
 
   if(!key || !bap24_key ||key->scheme != GROUPSIG_BAP24_CODE) {
     LOG_EINVAL(&logger, __FILE__, "bap24_mgr_key_to_string", __LINE__, LOGERROR);
@@ -307,7 +369,31 @@ char* bap24_mgr_key_to_string(groupsig_key_t *key) {
     goto mgr_key_to_string_error;
   }
 
-  mgr_key_size = x_size + y_size + strlen("x: \ny: \n") + 1;
+  if(pbcext_element_Fr_to_string(&yy,
+                                 &yy_size,
+                                 10,
+                                 bap24_key->yy) == IERROR) {
+    LOG_EINVAL(&logger, __FILE__, "bap24_mgr_key_to_string", __LINE__, LOGERROR);
+    goto mgr_key_to_string_error;
+  }
+
+  if(pbcext_element_Fr_to_string(&ask,
+                                 &ask_size,
+                                 10,
+                                 bap24_key->ask) == IERROR) {
+    LOG_EINVAL(&logger, __FILE__, "bap24_mgr_key_to_string", __LINE__, LOGERROR);
+    goto mgr_key_to_string_error;
+  }
+
+  if(pbcext_element_Fr_to_string(&dsk,
+                                 &dsk_size,
+                                 10,
+                                 bap24_key->dsk) == IERROR) {
+    LOG_EINVAL(&logger, __FILE__, "bap24_mgr_key_to_string", __LINE__, LOGERROR);
+    goto mgr_key_to_string_error;
+  }
+
+  mgr_key_size = x_size + y_size + yy_size + ask_size + dsk_size + strlen("x: \ny: \nyy: \n") + 1;
   if (!(mgr_key = (char*) calloc(mgr_key_size, sizeof(char)))){
     LOG_EINVAL(&logger, __FILE__, "bap24_mgr_key_to_string", __LINE__, LOGERROR);
     goto mgr_key_to_string_error;
@@ -316,13 +402,18 @@ char* bap24_mgr_key_to_string(groupsig_key_t *key) {
   snprintf(mgr_key, mgr_key_size,
           "x: %s\n"
           "y: %s\n",
-          x, y);
+          "yy: %s\n",
+          "ask: %s\n",
+          "dsk: %s\n",
+          x, y, yy, ask, dsk );
 
  mgr_key_to_string_error:
 
   if(x){mem_free(x), x = NULL;}
   if(y){mem_free(y), y = NULL;}
-
+  if(yy){mem_free(yy), yy = NULL;}
+  if(ask){mem_free(ask), ask = NULL;}  
+  if(dsk){mem_free(dsk), dsk = NULL;}  
   return mgr_key;
 }
 

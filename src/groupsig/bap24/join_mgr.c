@@ -75,7 +75,9 @@ int bap24_join_mgr(message_t **mout,
   bap24_grp_key_t *bap24_grpkey;
   gml_entry_t *bap24_entry;
   pbcext_element_Fr_t *u;
+  pbcext_element_Fr_t *uid;
   pbcext_element_G1_t *n, *tau, *aux;
+  pbcext_element_Fr_t *aux1;
   pbcext_element_G2_t *ttau;
   pbcext_element_GT_t *e1, *e2;
   spk_dlog_t *pi;
@@ -166,6 +168,9 @@ int bap24_join_mgr(message_t **mout,
     if (pbcext_element_GT_cmp(e1, e2)) GOTOENDRC(IERROR, bap24_join_mgr);
 
     /* Compute the partial member key */
+    if (!(uid = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);
+    if (pbcext_element_Fr_random(uid) == IERROR) GOTOENDRC(IERROR, bap24_join_mgr);
+
     if (!(u = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);
     if (pbcext_element_Fr_random(u) == IERROR) GOTOENDRC(IERROR, bap24_join_mgr);
 
@@ -180,9 +185,9 @@ int bap24_join_mgr(message_t **mout,
     if (!(bap24_memkey->sigma2 = pbcext_element_G1_init()))
       GOTOENDRC(IERROR, bap24_join_mgr);
     if (!(aux = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_join_mgr);    
-    if (pbcext_element_G1_mul(aux, tau, bap24_mgrkey->y) == IERROR)
+    if (pbcext_element_G1_mul(aux, tau, bap24_mgrkey->y) == IERROR) //aux == g^(ski y)
       GOTOENDRC(IERROR, bap24_join_mgr);
-    if (pbcext_element_G1_mul(bap24_memkey->sigma2,
+    if (pbcext_element_G1_mul(bap24_memkey->sigma2, //simga2 ==g^x
 			      bap24_grpkey->g,
 			      bap24_mgrkey->x) == IERROR) 
       GOTOENDRC(IERROR, bap24_join_mgr);
@@ -190,11 +195,25 @@ int bap24_join_mgr(message_t **mout,
 			      aux,
 			      bap24_memkey->sigma2) == IERROR)
       GOTOENDRC(IERROR, bap24_join_mgr);
+    if (pbcext_element_G1_mul(aux, bap24_grpkey->g, uid) == IERROR) //aux == g^(uid)
+      GOTOENDRC(IERROR, bap24_join_mgr);
+    if (pbcext_element_G1_mul(aux, bap24_grpkey->g, bap24_mgrkey->yy) == IERROR) //aux == g^(uid)
+       GOTOENDRC(IERROR, bap24_join_mgr);
+    if (pbcext_element_G1_add(bap24_memkey->sigma2,
+			      aux,
+			      bap24_memkey->sigma2) == IERROR)  
     if (pbcext_element_G1_mul(bap24_memkey->sigma2,
 			      bap24_memkey->sigma2,
 			      u) == IERROR) 
       GOTOENDRC(IERROR, bap24_join_mgr);    
 
+    /* Compute and update acc*/
+    if (!(aux1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);  
+    if (pbcext_element_Fr_add(aux1, bap24_mgrkey->ask, uid) == IERROR) //aux == g^(uid)
+       GOTOENDRC(IERROR, bap24_join_mgr);
+    if (pbcext_element_G2_mul(bap24_grpkey->acc,bap24_grpkey->acc, aux1) == IERROR) //aux == g^(uid)
+       GOTOENDRC(IERROR, bap24_join_mgr);
+    
     /* Add the tuple (i,tau,ttau) to the GML */
 
     if(!(bap24_entry = bap24_gml_entry_init()))
@@ -202,11 +221,12 @@ int bap24_join_mgr(message_t **mout,
     
     /* Currently, BAP24 identities are just uint64_t's */
     bap24_entry->id = gml->n;
+    
     if (!(bap24_entry->data = mem_malloc(sizeof(bap24_gml_entry_data_t))))
       GOTOENDRC(IERROR, bap24_join_mgr);
     ((bap24_gml_entry_data_t *) bap24_entry->data)->tau = tau;
     ((bap24_gml_entry_data_t *) bap24_entry->data)->ttau = ttau;
-
+    ((bap24_gml_entry_data_t *) bap24_entry->data)->uid = uid;  
     if(gml_insert(gml, bap24_entry) == IERROR) GOTOENDRC(IERROR, bap24_join_mgr);
 
     /* Export the (partial) member key into a msg */

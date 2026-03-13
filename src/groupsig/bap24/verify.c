@@ -74,7 +74,7 @@ int bap24_verify(uint8_t *ok,
   aux_c = NULL;
 #endif
   aux_bytes = NULL;
-
+  //delete and rewrite the code here, since we need to parse the message content and scope
   if (!(aux_G1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
 
   /* e1 = e(sigma1^-1,X) */
