@@ -95,7 +95,7 @@ int bap24_mem_key_free(groupsig_key_t *key) {
       bap24_key->e = NULL;
     }
     if(bap24_key->w) {
-      pbcext_element_G2_free(bap24_key->w);
+      pbcext_element_G1_free(bap24_key->w);
       bap24_key->w = NULL;
     }
     if(bap24_key->uid) {
@@ -157,9 +157,9 @@ int bap24_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
   }
 
   if(bap24_src->w) {
-    if(!(bap24_dst->w = pbcext_element_G2_init()))
+    if(!(bap24_dst->w = pbcext_element_G1_init()))
       GOTOENDRC(IERROR, bap24_mem_key_copy);
-    if(pbcext_element_GT_set(bap24_dst->w, bap24_src->w) == IERROR)
+    if(pbcext_element_G1_set(bap24_dst->w, bap24_src->w) == IERROR)
       GOTOENDRC(IERROR, bap24_mem_key_copy);
   }
 
@@ -190,7 +190,7 @@ int bap24_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
       bap24_dst->e = NULL;
     }
     if(bap24_dst->w) {
-      pbcext_element_G2_free(bap24_dst->w);
+      pbcext_element_G1_free(bap24_dst->w);
       bap24_dst->w = NULL;
     }
     if(bap24_dst->uid) {
@@ -220,7 +220,7 @@ int bap24_mem_key_get_size(groupsig_key_t *key) {
   if(bap24_key->sigma1) { if(pbcext_element_G1_byte_size(&ssigma1) == IERROR) return -1; }
   if(bap24_key->sigma2) { if(pbcext_element_G1_byte_size(&ssigma2) == IERROR) return -1; }
   if(bap24_key->e) { if(pbcext_element_GT_byte_size(&se) == IERROR) return -1; }
-  if(bap24_key->w) { if(pbcext_element_G2_byte_size(&sw) == IERROR) return -1; }
+  if(bap24_key->w) { if(pbcext_element_G1_byte_size(&sw) == IERROR) return -1; }
   if(bap24_key->uid) { if(pbcext_element_Fr_byte_size(&suid) == IERROR) return -1; }
   size64 = sizeof(uint8_t)*2 + sizeof(int)*6+ ssk + ssigma1 + ssigma2 + se + sw+ suid;
 
@@ -303,7 +303,7 @@ int bap24_mem_key_export(byte_t **bytes,
   /* Dump w */
   if (bap24_key->w) {
     __bytes = &_bytes[ctr];
-    if(pbcext_dump_element_G2_bytes(&__bytes, &len, bap24_key->w) == IERROR)
+    if(pbcext_dump_element_G1_bytes(&__bytes, &len, bap24_key->w) == IERROR)
       GOTOENDRC(IERROR, bap24_mem_key_export);
     ctr += len;
   } else { ctr += sizeof(int); }
@@ -430,18 +430,18 @@ groupsig_key_t* bap24_mem_key_import(byte_t *source, uint32_t size) {
   }
 
   /* Get w */
-  if(!(bap24_key->w = pbcext_element_G2_init()))
+  if(!(bap24_key->w = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, bap24_mem_key_import);
-  if(pbcext_get_element_G2_bytes(bap24_key->w, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_G1_bytes(bap24_key->w, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, bap24_mem_key_import);
   if(!len) {
     ctr += sizeof(int); // @TODO: this is an artifact of pbcext_get_element_XX_bytes
-    pbcext_element_G2_free(bap24_key->w); bap24_key->w = NULL;
+    pbcext_element_G1_free(bap24_key->w); bap24_key->w = NULL;
   } else {
     ctr += len;
   }
 
-  /* Get w */
+  /* Get uid */
   if(!(bap24_key->uid = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, bap24_mem_key_import);
   if(pbcext_get_element_Fr_bytes(bap24_key->uid, &len, &source[ctr]) == IERROR)
@@ -504,7 +504,7 @@ char* bap24_mem_key_to_string(groupsig_key_t *key) {
     //goto mem_key_to_string_error;
   }
 
-  if(pbcext_element_G2_to_string(&w,
+  if(pbcext_element_G1_to_string(&w,
                                  &w_size,
                                  10,
                                  bap24_key->w) == IERROR) {

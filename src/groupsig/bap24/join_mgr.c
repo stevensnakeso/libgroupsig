@@ -150,7 +150,7 @@ int bap24_join_mgr(message_t **mout,
     if (pbcext_element_G1_to_bytes(&bn, &nlen, n) == IERROR)
       GOTOENDRC(IERROR, bap24_join_mgr);
 
-    /* Check the SPK and the pairings */
+    /* Check the SPK and the pairings */ 
     if (spk_dlog_G1_verify(&ok, tau, bap24_grpkey->g,
 			   pi, bn, nlen) == IERROR) {
       GOTOENDRC(IERROR, bap24_join_mgr);
@@ -207,9 +207,13 @@ int bap24_join_mgr(message_t **mout,
 			      u) == IERROR) 
       GOTOENDRC(IERROR, bap24_join_mgr);    
 
-    /* Compute and update acc*/
-    if (!(aux1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);  
-    if (pbcext_element_Fr_add(aux1, bap24_mgrkey->ask, uid) == IERROR) //aux == g^(uid)
+    /* Compute and update acc and compute witness w*/
+    // Set witness w first
+    if ( !(bap24_memkey->w = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_join_mgr);   
+    if((pbcext_element_G1_set(bap24_memkey->w,bap24_grpkey->acc)) == IERROR ) GOTOENDRC(IERROR, bap24_join_mgr);   
+    //Then compute and update acc
+    if (!(aux1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);   
+    if ((pbcext_element_Fr_add(aux1, bap24_mgrkey->ask, uid)) == IERROR) //aux == g^(uid)
        GOTOENDRC(IERROR, bap24_join_mgr);
     if (pbcext_element_G2_mul(bap24_grpkey->acc,bap24_grpkey->acc, aux1) == IERROR) //aux == g^(uid)
        GOTOENDRC(IERROR, bap24_join_mgr);

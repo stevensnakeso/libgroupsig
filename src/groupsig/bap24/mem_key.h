@@ -48,7 +48,7 @@ typedef struct {
   pbcext_element_G1_t *sigma1;
   pbcext_element_G1_t *sigma2; 
   pbcext_element_GT_t *e; /**< e(sigma1,grpkey->Y) */ 
-  pbcext_element_G2_t *w; 
+  pbcext_element_G1_t *w; 
   pbcext_element_Fr_t *uid;
 } bap24_mem_key_t;
 

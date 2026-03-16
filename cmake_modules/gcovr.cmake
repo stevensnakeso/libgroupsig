@@ -7,6 +7,7 @@ ExternalProject_Add(gcovr
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
+  UPDATE_DISCONNECTED 1
   )
 
 ExternalProject_Get_Property(gcovr source_dir)

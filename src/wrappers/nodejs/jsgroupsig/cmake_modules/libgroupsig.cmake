@@ -7,4 +7,7 @@ ExternalProject_Add(libgroupsig
   CMAKE_ARGS
   -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
   -DCMAKE_INSTALL_RPATH=${CMAKE_BINARY_DIR}/libgroupsig-prefix/src/libgroupsig-build/external/lib
-  -DUSE_MCL=ON)
+  -DUSE_MCL=ON
+  UPDATE_DISCONNECTED 1
+  )
+

@@ -154,6 +154,16 @@ int bap24_join_mem(message_t **mout, groupsig_key_t *memkey,
     _bap24_memkey = bap24_mem_key_import(min->bytes, min->length);
     if (!_bap24_memkey) GOTOENDRC(IERROR, bap24_join_mem);
 
+    /* update accumulator and gen witness w */
+    // if( = pbcext_element_G1_init())
+    //   GOTOENDRC(IERROR, bap24_join_mem);  
+    // if(pbcext_element_G1_set(bap24_memkey->w, bap24_grpkey->acc) == IERROR)
+    //   GOTOENDRC(IERROR, bap24_join_mem);
+    // /*accℓ+1 = acc^(ask+uid) */
+    // pbcext_element_Fr_t *aux;
+    // if (!(aux = pbcext_element_Fr_init()))GOTOENDRC(IERROR, bap24_join_mem);
+    // if (pbcext_element_Fr_add(aux,bap24_memkey->uid,bap24_mgrkey->ask))
+
     if (bap24_mem_key_copy(memkey, _bap24_memkey) == IERROR)
       GOTOENDRC(IERROR, bap24_join_mem);
 
