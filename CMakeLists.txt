@@ -2,8 +2,8 @@
 cmake_minimum_required (VERSION 3.13)
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 # Modify for MACOSX
-set (CMAKE_CXX_STANDARD  17)
-set (CMAKE_CXX_STANDARD_REQUIRED ON)
+# set (CMAKE_CXX_STANDARD  17)
+# set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # if(APPLE)
 #   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
@@ -52,7 +52,7 @@ if (HW3)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHW3")
 endif ()
 
-#add_link_options("LINKER:--allow-multiple-definition") # not works in MACOSX
+add_link_options("LINKER:--allow-multiple-definition") # not works in MACOSX
 
 # Add the binary tree to the search path for include files
 include_directories("${CMAKE_SOURCE_DIR}/src")

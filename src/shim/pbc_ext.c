@@ -2937,4 +2937,30 @@ int pbcext_element_GT_from_string(pbcext_element_GT_t **e,
 
 }
 
+ int pbcext_element_G1_setInt(pbcext_element_G1_t *dst,  mclInt  x)
+{
+  pbcext_element_Fp_t *aux;
+  aux = pbcext_element_Fp_init();
+  mclBnFp_setInt(aux, x);
+  return mclBnFp_mapToG1(dst, aux);
+
+}
+
+
+// int pbcext_element_Fp2_setInt(pbcext_element_Fp2_t *dst,  mclInt  lambda)
+// {
+
+
+//   if (!dst || !lambda) {
+//     LOG_EINVAL(&logger, __FILE__, "pbcext_element_Fp2_setInt", __LINE__, LOGERROR);
+//     return IERROR; 
+//   }
+
+//   mclBnFp2_setInt(dst, lambda);
+  
+//   return IOK;
+
+// }
+
+
 /* pbc_ext.c ends here */

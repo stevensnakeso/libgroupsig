@@ -89,6 +89,38 @@ int bap24_signature_free(groupsig_signature_t *sig) {
       pbcext_element_Fr_free(bap24_sig->s);
       bap24_sig->s = NULL;
     }
+    if(bap24_sig->z_zeta1){
+      pbcext_element_Fr_free(bap24_sig->z_zeta1);
+      bap24_sig->z_zeta1 = NULL;
+    }
+    if(bap24_sig->z_zeta2){
+      pbcext_element_Fr_free(bap24_sig->z_zeta2);
+      bap24_sig->z_zeta2 = NULL;
+    }
+    if(bap24_sig->z_theta1){
+      pbcext_element_Fr_free(bap24_sig->z_theta1);
+      bap24_sig->z_theta1 = NULL;
+    }
+    if(bap24_sig->z_theta2){
+      pbcext_element_Fr_free(bap24_sig->z_theta2);
+      bap24_sig->z_theta2 = NULL;
+    }
+    if(bap24_sig->z_sk){
+      pbcext_element_Fr_free(bap24_sig->z_sk);
+      bap24_sig->z_sk = NULL;
+    }
+    if(bap24_sig->z_uid){
+      pbcext_element_Fr_free(bap24_sig->z_uid);
+      bap24_sig->z_uid = NULL;
+    }
+    if(bap24_sig->z_w){
+      pbcext_element_Fr_free(bap24_sig->z_w);
+      bap24_sig->z_w = NULL;
+    }
+    if(bap24_sig->z_alpha){
+      pbcext_element_Fr_free(bap24_sig->z_alpha);
+      bap24_sig->z_alpha = NULL;
+    }
     mem_free(bap24_sig); bap24_sig = NULL;
   }
   
@@ -129,6 +161,38 @@ int bap24_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
   if(!(bap24_dst->s = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, bap24_signature_copy);
   if(pbcext_element_Fr_set(bap24_dst->s, bap24_src->s) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(!(bap24_dst->z_zeta1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(pbcext_element_Fr_set(bap24_dst->z_zeta1, bap24_src->z_zeta1) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(!(bap24_dst->z_zeta2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(pbcext_element_Fr_set(bap24_dst->z_zeta2, bap24_src->z_zeta2) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(!(bap24_dst->z_theta1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(pbcext_element_Fr_set(bap24_dst->z_theta1, bap24_src->z_theta1) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(!(bap24_dst->z_theta2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(pbcext_element_Fr_set(bap24_dst->z_theta2, bap24_src->z_theta2) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(!(bap24_dst->z_sk = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(pbcext_element_Fr_set(bap24_dst->z_sk, bap24_src->z_sk) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(!(bap24_dst->z_uid = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(pbcext_element_Fr_set(bap24_dst->z_uid, bap24_src->z_uid) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(!(bap24_dst->z_w = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(pbcext_element_Fr_set(bap24_dst->z_w, bap24_src->z_w) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(!(bap24_dst->z_alpha = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_copy);
+  if(pbcext_element_Fr_set(bap24_dst->z_alpha, bap24_src->z_alpha) == IERROR)
     GOTOENDRC(IERROR, bap24_signature_copy);  
 
  bap24_signature_copy_end:
@@ -150,6 +214,39 @@ int bap24_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
       pbcext_element_Fr_free(bap24_dst->s);
       bap24_dst->s = NULL;
     }
+    if(bap24_dst->z_zeta1){
+      pbcext_element_Fr_free(bap24_dst->z_zeta1);
+      bap24_dst->z_zeta1 = NULL;
+    }
+    if(bap24_dst->z_zeta2){
+      pbcext_element_Fr_free(bap24_dst->z_zeta2);
+      bap24_dst->z_zeta2 = NULL;
+    }
+    if(bap24_dst->z_theta1){
+      pbcext_element_Fr_free(bap24_dst->z_theta1);
+      bap24_dst->z_theta1 = NULL;
+    }
+    if(bap24_dst->z_theta2){
+      pbcext_element_Fr_free(bap24_dst->z_theta2);
+      bap24_dst->z_theta2 = NULL;
+    }
+    if(bap24_dst->z_sk){
+      pbcext_element_Fr_free(bap24_dst->z_sk);
+      bap24_dst->z_sk = NULL;
+    }
+    if(bap24_dst->z_uid){
+      pbcext_element_Fr_free(bap24_dst->z_uid);
+      bap24_dst->z_uid = NULL;
+    }
+    if(bap24_dst->z_w){
+      pbcext_element_Fr_free(bap24_dst->z_w);
+      bap24_dst->z_w = NULL;
+    }
+    if(bap24_dst->z_alpha){
+      pbcext_element_Fr_free(bap24_dst->z_alpha);
+      bap24_dst->z_alpha = NULL;
+    }
+
 
   }
   
@@ -160,7 +257,7 @@ int bap24_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
 int bap24_signature_get_size(groupsig_signature_t *sig) {
 
   bap24_signature_t *bap24_sig;
-  uint64_t size64, ssigma1, ssigma2, sc, ss;
+  uint64_t size64, ssigma1, ssigma2, sc, ss, sz_zeta1, sz_zeta2, sz_theta1, sz_theta2, sz_sk, sz_uid, sz_w, sz_alpha;
   
   if(!sig || sig->scheme != GROUPSIG_BAP24_CODE) {
     LOG_EINVAL(&logger, __FILE__, "bap24_signature_get_size",
@@ -174,8 +271,16 @@ int bap24_signature_get_size(groupsig_signature_t *sig) {
   if(pbcext_element_G1_byte_size(&ssigma2) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&sc) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&ss) == IERROR) return -1;
-      
-  size64 = sizeof(uint8_t) + sizeof(int)*4 + ssigma1 + ssigma2 +  sc + ss;
+  if(pbcext_element_Fr_byte_size(&sz_zeta1) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sz_zeta2) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sz_theta1) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sz_theta2) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sz_sk) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sz_uid) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sz_w) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sz_alpha) == IERROR) return -1;
+
+  size64 = sizeof(uint8_t) + sizeof(int)*12 + ssigma1 + ssigma2 +  sc + ss + sz_zeta1 + sz_zeta2 + sz_theta1 + sz_theta2 + sz_sk + sz_uid + sz_w + sz_alpha;
 
   if(size64 > INT_MAX) return -1;
   return (int) size64;
@@ -236,7 +341,56 @@ int bap24_signature_export(byte_t **bytes,
   __bytes = &_bytes[ctr];
   if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->s) == IERROR) 
     GOTOENDRC(IERROR, bap24_signature_export);
-  ctr += len;  
+  ctr += len; 
+  
+  /* Dump zeta1 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->z_zeta1) == IERROR) 
+    GOTOENDRC(IERROR, bap24_signature_export);
+  ctr += len;
+
+  /* Dump zeta2 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->z_zeta2) == IERROR) 
+    GOTOENDRC(IERROR, bap24_signature_export);
+  ctr += len;
+
+  /* Dump theta1 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->z_theta1) == IERROR) 
+    GOTOENDRC(IERROR, bap24_signature_export);
+  ctr += len;
+
+  /* Dump theta2 */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->z_theta2) == IERROR) 
+    GOTOENDRC(IERROR, bap24_signature_export);
+  ctr += len;
+
+  /* Dump sk */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->z_sk) == IERROR) 
+    GOTOENDRC(IERROR, bap24_signature_export);
+  ctr += len;
+
+  /* Dump uid */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->z_uid) == IERROR) 
+    GOTOENDRC(IERROR, bap24_signature_export);
+  ctr += len;
+
+  /* Dump w */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->z_w) == IERROR) 
+    GOTOENDRC(IERROR, bap24_signature_export);
+  ctr += len;
+
+  /* Dump alpha */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->z_alpha) == IERROR) 
+    GOTOENDRC(IERROR, bap24_signature_export);
+  ctr += len;
+
 
   /* Sanity check */
   if (ctr != _size) {
@@ -320,6 +474,63 @@ groupsig_signature_t* bap24_signature_import(byte_t *source, uint32_t size) {
   if(pbcext_get_element_Fr_bytes(bap24_sig->s, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, bap24_signature_import);
   ctr += len;
+
+  /* Get zeta1 */
+  if(!(bap24_sig->z_zeta1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_import);
+  if(pbcext_get_element_Fr_bytes(bap24_sig->z_zeta1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_import);
+  ctr += len;
+
+  /* Get zeta2 */
+  if(!(bap24_sig->z_zeta2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_import);
+  if(pbcext_get_element_Fr_bytes(bap24_sig->z_zeta2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_import);
+  ctr += len;
+
+  /* Get theta1 */
+  if(!(bap24_sig->z_theta1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_import);
+  if(pbcext_get_element_Fr_bytes(bap24_sig->z_theta1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_import);
+  ctr += len;
+
+  /* Get theta2 */
+  if(!(bap24_sig->z_theta2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_import);
+  if(pbcext_get_element_Fr_bytes(bap24_sig->z_theta2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_import);
+  ctr += len;
+
+  /* Get sk */
+  if(!(bap24_sig->z_sk = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_import);
+  if(pbcext_get_element_Fr_bytes(bap24_sig->z_sk, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_import);
+  ctr += len;
+
+  /* Get uid */
+  if(!(bap24_sig->z_uid = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_import);
+  if(pbcext_get_element_Fr_bytes(bap24_sig->z_uid, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_import);
+  ctr += len;
+
+  /* Get w */
+  if(!(bap24_sig->z_w = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_import);
+  if(pbcext_get_element_Fr_bytes(bap24_sig->z_w, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_import);
+  ctr += len;
+
+  /* Get alpha */
+  if(!(bap24_sig->z_alpha = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, bap24_signature_import);
+  if(pbcext_get_element_Fr_bytes(bap24_sig->z_alpha, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, bap24_signature_import);
+  ctr += len;
+
 
  bap24_signature_import_end:
 

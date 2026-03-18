@@ -35,6 +35,7 @@ typedef struct {
   pbcext_element_G1_t *sigma2;
   pbcext_element_Fr_t *c;
   pbcext_element_Fr_t *s;
+  pbcext_element_Fr_t *z_zeta1, *z_zeta2, *z_theta1, *z_theta2, *z_sk, *z_uid, *z_w, *z_alpha;
 } bap24_signature_t;
 
 /** 

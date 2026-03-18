@@ -77,27 +77,29 @@ int bap24_verify(uint8_t *ok,
   //delete and rewrite the code here, since we need to parse the message content and scope
   if (!(aux_G1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
 
-  /* e1 = e(sigma1^-1,X) */
-  if (pbcext_element_G1_neg(aux_G1, bap24_sig->sigma1) == IERROR)
-    GOTOENDRC(IERROR, bap24_verify);
-  if (!(e1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_pairing(e1, aux_G1, bap24_grpkey->X)) GOTOENDRC(IERROR, bap24_verify);
+  pbcext_element_G1_t *D1, *D2, *D5,*aux1_g1,*aux2_g1;
+  pbcext_element_G2_t *aux_g2;
+  pbcext_element_GT_t *D3, *D4, *D6, *aux_gt;
+  char *msg_msg, *msg_scp;
+  if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if(message_json_get_key(&msg_scp, msg, "$.scope") == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  
+  if (D1 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (D2 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (D3 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (D4 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (D5 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (D6 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (aux1_g1 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (aux2_g1 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (aux_g2 = pbcext_element_G2_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (D3 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (D4 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (D6 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
 
-  /* e2 = e(sigma2,gg) */
-  if (!(e2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_pairing(e2, bap24_sig->sigma2, bap24_grpkey->gg)) GOTOENDRC(IERROR, bap24_verify);
-
-  /* e3 = e(sigma1^s,Y) */
-  if (pbcext_element_G1_mul(aux_G1, bap24_sig->sigma1, bap24_sig->s) == IERROR)
-    GOTOENDRC(IERROR, bap24_verify);
-  if (!(e3 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_pairing(e3, aux_G1, bap24_grpkey->Y)) GOTOENDRC(IERROR, bap24_verify);
-
-  /* R = (e1*e2)^-c*e3 */
-  if (pbcext_element_GT_mul(e1, e1, e2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_element_GT_pow(e1, e1, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_element_GT_inv(e1, e1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_element_GT_mul(e1, e1, e3) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_mul(D1, B1, bap24_sig->s) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_mul(aux_G1, bap24_grpkey->g, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_add(D1, D1, aux_G1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
 
   /* c = Hash(sigma1,sigma2,R,m); */
 #if defined (SHA2) || defined (SHA3)
