@@ -1811,6 +1811,8 @@ extern "C" {
    * @return IOK or IERROR.
    */
   int pbcext_element_Fr_set2(pbcext_element_Fr_t *dst,  mclInt  lambda);
+
+  int pbcext_element_G1_setInt(pbcext_element_G1_t *dst,  mclInt  x);
 #ifdef __cplusplus
 }
 #endif

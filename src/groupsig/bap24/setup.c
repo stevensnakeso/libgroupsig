@@ -106,8 +106,8 @@ int bap24_setup(groupsig_key_t *grpkey,
   if(pbcext_element_G2_mul(gkey->apk,gkey->hh,mkey->ask) == IERROR)
     GOTOENDRC(IERROR, bap24_setup);
 
-  if(!(gkey->acc = pbcext_element_G2_init())) GOTOENDRC(IERROR,bap24_setup);
-  if(pbcext_element_G2_set(gkey->acc,gkey->h) == IERROR)
+  if(!(gkey->acc = pbcext_element_G1_init())) GOTOENDRC(IERROR,bap24_setup);
+  if(pbcext_element_G1_set(gkey->acc,gkey->h) == IERROR)
     GOTOENDRC(IERROR, bap24_setup);
 
     /* Set DP key pair */
@@ -137,7 +137,7 @@ int bap24_setup(groupsig_key_t *grpkey,
     if (gkey->Y) { pbcext_element_G2_free(gkey->Y); gkey->Y = NULL; }    
     if (mkey->ask) { pbcext_element_Fr_free(mkey->ask); mkey->ask = NULL; }
     if (gkey->apk) { pbcext_element_G2_free(gkey->apk); gkey->apk = NULL; }
-    if (gkey->acc) { pbcext_element_G2_free(gkey->acc); gkey->acc = NULL; }
+    if (gkey->acc) { pbcext_element_G1_free(gkey->acc); gkey->acc = NULL; }
   }
 
   return rc;

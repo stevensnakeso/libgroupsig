@@ -102,8 +102,8 @@ int scsl25_link(groupsig_proof_t **proof,
     hash_free(hc); hc = NULL;
     mem_free(msg_scp); msg_scp = NULL;
 
-    /* 累加（在 RSA 乘法群下为乘法）: hscp_ = \prod H(scp_i) */ //？？？
-    if(pbcext_element_G1_mul(hscp_, hscp_, hscp) == IERROR)
+    
+    if(pbcext_element_G1_set(hscp_, hscp) == IERROR)
       GOTOENDRC(IERROR, scsl25_link);
 
   }

@@ -44,7 +44,6 @@ int bap24_verify(uint8_t *ok,
 		 groupsig_key_t *grpkey) {
 
   pbcext_element_Fr_t *c;
-  pbcext_element_G1_t *aux_G1;
   pbcext_element_GT_t *e1, *e2, *e3;
   bap24_signature_t *bap24_sig;
   bap24_grp_key_t *bap24_grpkey;
@@ -68,38 +67,128 @@ int bap24_verify(uint8_t *ok,
   rc = IOK;
 
   c = NULL;
-  aux_G1 = NULL;
   e1 = e2 = e3 = NULL;
 #if !defined(SHA2) && !defined(SHA3)
   aux_c = NULL;
 #endif
   aux_bytes = NULL;
   //delete and rewrite the code here, since we need to parse the message content and scope
-  if (!(aux_G1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
 
-  pbcext_element_G1_t *D1, *D2, *D5,*aux1_g1,*aux2_g1;
+  pbcext_element_G1_t *D1, *D2, *aux1_g1,*aux2_g1;
   pbcext_element_G2_t *aux_g2;
   pbcext_element_GT_t *D3, *D4, *D6, *aux_gt;
   char *msg_msg, *msg_scp;
+  pbcext_element_GT_t *T1, *T2, *T3, *T4;  
+  pbcext_element_G2_t *D5, *T5, *aux1_g2;
+  pbcext_element_GT_t *T6, *T7, *T8, *T9,*aux_gt1, *aux_gt2;
+
+  
+
+  /*rebuild T1 to T9*/
+  if (!(aux_gt1 = pbcext_element_GT_init())) GOTOENDRC( IERROR, bap24_verify);
+  if (!(aux_gt2 = pbcext_element_GT_init())) GOTOENDRC( IERROR, bap24_verify);
+
+  if (!(T1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(T1,bap24_sig->sigma1,bap24_grpkey->X) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (!(T2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(T2,bap24_sig->sigma1,bap24_grpkey->Y) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (!(T3 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(T3,bap24_sig->sigma1,bap24_grpkey->YY) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (!(T4 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(T4,bap24_sig->sigma2,bap24_grpkey->gg) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (!(T5 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G2_set(T5, bap24_sig->hscp) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+  /*T6-T9*/
+  if ((T6 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(T6,bap24_sig->B2,bap24_grpkey->apk) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(aux_gt1,bap24_grpkey->acc,bap24_grpkey->hh) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_div(T6,T6,aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+
+  if (!(T7 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(T7,bap24_grpkey->h,bap24_grpkey->hh) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+  if (!(T8 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(T8,bap24_grpkey->h,bap24_grpkey->apk) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+  if (!(T9 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_pairing(T9,bap24_sig->B2,bap24_grpkey->hh) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+
   if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR) GOTOENDRC(IERROR, bap24_verify);
   if(message_json_get_key(&msg_scp, msg, "$.scope") == IERROR) GOTOENDRC(IERROR, bap24_verify);
   
-  if (D1 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (D2 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (D3 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (D4 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (D5 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (D6 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (aux1_g1 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (aux2_g1 = pbcext_element_G1_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (aux_g2 = pbcext_element_G2_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (D3 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (D4 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (D6 = pbcext_element_GT_init() == IERROR) GOTOENDRC(IERROR, bap24_verify);
 
-  if (pbcext_element_G1_mul(D1, B1, bap24_sig->s) == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_element_G1_mul(aux_G1, bap24_grpkey->g, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_element_G1_add(D1, D1, aux_G1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  /*rebuild D1 to T6*/
+  if (!(D1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(D2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(D3 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(D4 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(D5 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(D6 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(aux1_g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(aux2_g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(aux_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(D3 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(D4 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(D6 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+
+  //if (pbcext_element_G1_mul(D1, B1, bap24_sig->s) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (!(aux1_g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
+
+  if (pbcext_element_G1_mul(aux1_g1, bap24_sig->B1, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if ((pbcext_element_G1_set(D1, aux1_g1)) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_mul(aux1_g1, bap24_grpkey->g, bap24_sig->z_zeta1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if ((pbcext_element_G1_add(D1, D1, aux1_g1)) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_mul(aux1_g1, bap24_grpkey->h, bap24_sig->z_zeta2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if ((pbcext_element_G1_add(D1, D1, aux1_g1)) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  
+  pbcext_element_Fr_t *aux_fr;
+  if (!(aux_fr = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_Fr_neg(aux_fr, bap24_sig->z_uid) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_mul(D2, bap24_sig->B1, aux_fr) == IERROR) GOTOENDRC(IERROR, bap24_verify);  
+
+  if (pbcext_element_G1_mul(aux1_g1, bap24_grpkey->g, bap24_sig->z_theta1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if ((pbcext_element_G1_add(D2, D2, aux1_g1)) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_mul(aux1_g1, bap24_grpkey->h, bap24_sig->z_theta2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if ((pbcext_element_G1_add(D2, D2, aux1_g1)) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+
+  if (pbcext_element_GT_div(D3, T4, T1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_pow(D3, D3, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_set(aux_gt1, T2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_pow(aux_gt1,aux_gt1,bap24_sig->z_sk) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_mul(D3, D3, aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_set(aux_gt1, T3) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_pow(aux_gt1,aux_gt1,bap24_sig->z_uid) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_mul(D3, D3, aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+  if (pbcext_element_GT_set(aux_gt1, T6) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_pow(aux_gt1,aux_gt1,bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_set(D4, aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_pow(aux_gt1,T7,bap24_sig->z_theta2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_mul(D4, D4, aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_pow(aux_gt1,T8,bap24_sig->z_zeta2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_mul(D4, D4, aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_pow(aux_gt1,T9,aux_fr) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_mul(D4, D4, aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+
+  if (!(aux1_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_verify);
+
+  if (pbcext_element_G2_mul(D5, bap24_sig->cnym1, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G2_mul(aux1_g2, bap24_grpkey->gg, bap24_sig->z_alpha) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G2_add(D5, D5, aux1_g2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+
+  if (pbcext_element_G2_set(aux1_g2, bap24_sig->cnym2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G2_mul(aux1_g2,aux1_g2, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G2_mul(aux1_g2, bap24_grpkey->dpk, bap24_sig->z_alpha) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G2_add(aux1_g2, aux1_g2, aux1_g2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  // if (pbcext_element_G2_mul(aux1_g2, T6
+
+
 
   /* c = Hash(sigma1,sigma2,R,m); */
 #if defined (SHA2) || defined (SHA3)
@@ -209,7 +298,7 @@ int bap24_verify(uint8_t *ok,
 
  bap24_verify_end:
   if (c) { pbcext_element_Fr_free(c); c = NULL; }
-  if (aux_G1) { pbcext_element_G1_free(aux_G1); aux_G1 = NULL; }
+  if (aux1_g1) { pbcext_element_G1_free(aux1_g1); aux1_g1 = NULL; }
   if (e1) { pbcext_element_GT_free(e1); e1 = NULL; }
   if (e2) { pbcext_element_GT_free(e2); e2 = NULL; }
   if (e3) { pbcext_element_GT_free(e3); e3 = NULL; }

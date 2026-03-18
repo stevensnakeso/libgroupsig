@@ -92,7 +92,7 @@ int bap24_grp_key_free(groupsig_key_t *key) {
     if(bap24_key->YY) { pbcext_element_G2_free(bap24_key->YY); bap24_key->YY = NULL; }
     if(bap24_key->apk) { pbcext_element_G2_free(bap24_key->apk); bap24_key->apk = NULL; }
     if(bap24_key->dpk) { pbcext_element_G2_free(bap24_key->dpk); bap24_key->dpk = NULL; }
-    if(bap24_key->acc) { pbcext_element_G2_free(bap24_key->acc); bap24_key->acc = NULL; }
+    if(bap24_key->acc) { pbcext_element_G1_free(bap24_key->acc); bap24_key->acc = NULL; }
     mem_free(key->key); key->key = NULL;
   }
 
@@ -154,9 +154,9 @@ int bap24_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     GOTOENDRC(IERROR, bap24_grp_key_copy);
   if(pbcext_element_G2_set(bap24_dst->dpk, bap24_src->dpk) == IERROR)
     GOTOENDRC(IERROR, bap24_grp_key_copy);
-  if(!(bap24_dst->acc = pbcext_element_G2_init()))
+  if(!(bap24_dst->acc = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, bap24_grp_key_copy);
-  if(pbcext_element_G2_set(bap24_dst->acc, bap24_src->acc) == IERROR)
+  if(pbcext_element_G1_set(bap24_dst->acc, bap24_src->acc) == IERROR)
     GOTOENDRC(IERROR, bap24_grp_key_copy);
 
  bap24_grp_key_copy_end:
@@ -171,7 +171,7 @@ int bap24_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     if (bap24_dst->YY) { pbcext_element_G2_free(bap24_dst->YY); bap24_dst->YY = NULL; }
     if (bap24_dst->apk) { pbcext_element_G2_free(bap24_dst->apk); bap24_dst->apk = NULL; }
     if (bap24_dst->dpk) { pbcext_element_G2_free(bap24_dst->dpk); bap24_dst->dpk = NULL; }
-    if (bap24_dst->acc) { pbcext_element_G2_free(bap24_dst->acc); bap24_dst->acc = NULL; }
+    if (bap24_dst->acc) { pbcext_element_G1_free(bap24_dst->acc); bap24_dst->acc = NULL; }
   }
 
   return rc;
@@ -201,7 +201,7 @@ int bap24_grp_key_get_size(groupsig_key_t *key) {
   if(pbcext_element_G2_byte_size(&sYY) == IERROR) return -1;
   if(pbcext_element_G2_byte_size(&sapk) == IERROR) return -1;
   if(pbcext_element_G2_byte_size(&sdpk) == IERROR) return -1;
-  if(pbcext_element_G2_byte_size(&sacc) == IERROR) return -1;
+  if(pbcext_element_G1_byte_size(&sacc) == IERROR) return -1;
   size64 = sizeof(uint8_t)*2 + sizeof(int)*10 + sg + sh + sgg + shh + sX + sY + sY+ sapk + sdpk + sacc;
   if (size64 > INT_MAX) return -1;
 
@@ -303,7 +303,7 @@ int bap24_grp_key_export(byte_t **bytes,
 
   /* Dump acc */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G2_bytes(&__bytes, &len, bap24_key->acc) == IERROR)
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, bap24_key->acc) == IERROR)
     GOTOENDRC(IERROR, bap24_grp_key_export);
   ctr += len;
 
@@ -436,9 +436,9 @@ groupsig_key_t* bap24_grp_key_import(byte_t *source, uint32_t size) {
   ctr += len;
 
   /* Get acc */
-  if(!(bap24_key->apk = pbcext_element_G2_init()))
+  if(!(bap24_key->acc = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, bap24_grp_key_import);
-  if(pbcext_get_element_G2_bytes(bap24_key->acc, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_G1_bytes(bap24_key->acc, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, bap24_grp_key_import);
   ctr += len;
 
@@ -522,7 +522,7 @@ char* bap24_grp_key_to_string(groupsig_key_t *key) {
   }
 
 
-  if(pbcext_element_G2_to_string(&acc,
+  if(pbcext_element_G1_to_string(&acc,
                                  &acc_len,
                                  10,
                                  gkey->acc) == IERROR) {
@@ -555,9 +555,9 @@ char* bap24_grp_key_to_string(groupsig_key_t *key) {
 
  grp_key_to_string_error:
   if (g) { mem_free(g); g = NULL; }
-  if (h) { mem_free(h); g = NULL; }
+  if (h) { mem_free(h); h = NULL; }
   if (gg) { mem_free(gg); gg = NULL; }
-  if (hh) { mem_free(gg); hh = NULL; }
+  if (hh) { mem_free(hh); hh = NULL; }
   if (X) { mem_free(X); X = NULL; }
   if (Y) { mem_free(Y); Y = NULL; }
   if (YY) { mem_free(YY); YY = NULL; }

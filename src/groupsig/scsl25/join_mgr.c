@@ -51,14 +51,15 @@ int scsl25_join_mgr(message_t **mout,
       int seq,
       message_t *min,
       groupsig_key_t *grpkey) {
-
-  pbcext_element_G1_t *n, *u, *U, *inv_u;
+  pbcext_element_Fr_t *u, *inv_u;
+  pbcext_element_G1_t  *U;
+  pbcext_element_G1_t *n;
   scsl25_mem_key_t *scsl25_memkey;
   scsl25_grp_key_t *scsl25_grpkey;
   scsl25_mgr_key_t *scsl25_mgrkey;
   groupsig_key_t *memkey;
   message_t *_mout;
-  spk_dlog_t *spk;
+  spk_rep_t *spk;
   byte_t *bn, *bkey, *bu,*bU ;
   uint64_t len, _len;
   uint32_t size;
@@ -75,7 +76,10 @@ int scsl25_join_mgr(message_t **mout,
 
   rc = IOK;
   bn = bkey = bU = bu = NULL;
-  n = u = U = NULL;
+
+  n = NULL;
+  u = NULL;
+  U = NULL;
   inv_u = NULL;
   memkey = NULL;
   spk = NULL;

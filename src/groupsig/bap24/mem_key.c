@@ -164,7 +164,7 @@ int bap24_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
   }
 
   if(bap24_src->uid) {
-    if(!(bap24_dst->e = pbcext_element_Fr_init()))
+    if(!(bap24_dst->uid = pbcext_element_Fr_init()))
       GOTOENDRC(IERROR, bap24_mem_key_copy);
     if(pbcext_element_Fr_set(bap24_dst->uid, bap24_src->uid) == IERROR)
       GOTOENDRC(IERROR, bap24_mem_key_copy);
@@ -448,7 +448,7 @@ groupsig_key_t* bap24_mem_key_import(byte_t *source, uint32_t size) {
     GOTOENDRC(IERROR, bap24_mem_key_import);
   if(!len) {
     ctr += sizeof(int); // @TODO: this is an artifact of pbcext_get_element_XX_bytes
-    pbcext_element_G2_free(bap24_key->uid); bap24_key->uid = NULL;
+    pbcext_element_Fr_free(bap24_key->uid); bap24_key->uid = NULL;
   } else {
     ctr += len;
   }
@@ -512,7 +512,7 @@ char* bap24_mem_key_to_string(groupsig_key_t *key) {
     goto mem_key_to_string_error;
   }
 
-  if(pbcext_element_G2_to_string(&uid,
+  if(pbcext_element_Fr_to_string(&uid,
                                  &uid_size,
                                  10,
                                  bap24_key->uid) == IERROR) {

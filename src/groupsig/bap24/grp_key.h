@@ -43,7 +43,7 @@ typedef struct {
   pbcext_element_G2_t *YY;  /**< gg^y (y is part of mgrkey) */
   pbcext_element_G2_t *apk; /*accumulator key pair |pk|*/
   pbcext_element_G2_t *dpk; /**Data Processor Key Pair PK */
-  pbcext_element_G2_t *acc; /*accumulator*/
+  pbcext_element_G1_t *acc; /*accumulator*/
 } bap24_grp_key_t;
 
 /**

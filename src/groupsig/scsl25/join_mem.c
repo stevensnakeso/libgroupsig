@@ -47,7 +47,7 @@ int scsl25_join_mem(message_t **mout,
   groupsig_key_t *_scsl25_memkey;
   scsl25_grp_key_t *scsl25_grpkey;
   message_t *_mout;
-  spk_dlog_t *pi;
+  spk_rep_t *pi;
   byte_t *bn, *bmsg, *bU, *bpi, *bu ;
   uint64_t len, nlen, Ulen, pilen, ulen;
   int rc;
@@ -98,12 +98,12 @@ int scsl25_join_mem(message_t **mout,
 
     if(!(scsl25_memkey->y = prf_key_init()))
       GOTOENDRC(IERROR, scsl25_join_mem);
-    if(prf_key_init_random(scsl25_memkey->y) == IERROR)
+    if(!prf_key_init_random(scsl25_memkey->y))
       GOTOENDRC(IERROR, scsl25_join_mem);
 
     if(!(scsl25_memkey->yy = prf_key_init()))
       GOTOENDRC(IERROR, scsl25_join_mem);
-    if(prf_key_init_random(scsl25_memkey->yy) == IERROR)
+    if(!prf_key_init_random(scsl25_memkey->yy))
       GOTOENDRC(IERROR, scsl25_join_mem);  
 
     /* 3. 计算注册公钥 U = g1^e mod n */
@@ -235,7 +235,7 @@ int scsl25_join_mem(message_t **mout,
   if(aux) { pbcext_element_G1_free(aux); aux = NULL; }
   if(n) { pbcext_element_G1_free(n); n = NULL; }
     if(tmp_scsl25_memkey) {
-    scsl25_mem_key_free(tmp_scsl25_memkey);
+    mem_free(tmp_scsl25_memkey);
     tmp_scsl25_memkey = NULL;
   }
 

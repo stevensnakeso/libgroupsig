@@ -215,7 +215,7 @@ int bap24_join_mgr(message_t **mout,
     if (!(aux1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);   
     if ((pbcext_element_Fr_add(aux1, bap24_mgrkey->ask, uid)) == IERROR) //aux == g^(uid)
        GOTOENDRC(IERROR, bap24_join_mgr);
-    if (pbcext_element_G2_mul(bap24_grpkey->acc,bap24_grpkey->acc, aux1) == IERROR) //aux == g^(uid)
+    if (pbcext_element_G1_mul(bap24_grpkey->acc,bap24_grpkey->acc, aux1) == IERROR) //aux == g^(uid)
        GOTOENDRC(IERROR, bap24_join_mgr);
     
     /* Add the tuple (i,tau,ttau) to the GML */
