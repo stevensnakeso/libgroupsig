@@ -94,12 +94,12 @@ int scsl25_verify_link(uint8_t *ok,
     mem_free(msg_scp); msg_scp = NULL;
     
     /* RSA 累加：hscp_ = \prod H(scp_i) */
-    if(pbcext_element_G1_mul(hscp_, hscp_, hscp) == IERROR)
+    if(pbcext_element_G1_add(hscp_, hscp_, hscp) == IERROR)
       GOTOENDRC(IERROR, scsl25_verify_link);
 
     /* 累加签名的假名分量：nym_ = \prod psd_i */
     scsl25_sig = (scsl25_signature_t *) sigs[i]->sig;
-    if(pbcext_element_G1_mul(nym_, nym_, scsl25_sig->psd) == IERROR)
+    if(pbcext_element_G1_add(nym_, nym_, scsl25_sig->psd) == IERROR)
       GOTOENDRC(IERROR, scsl25_verify_link);
 
   }

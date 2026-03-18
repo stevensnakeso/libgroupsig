@@ -103,7 +103,7 @@ int scsl25_link(groupsig_proof_t **proof,
     mem_free(msg_scp); msg_scp = NULL;
 
     
-    if(pbcext_element_G1_set(hscp_, hscp) == IERROR)
+    if(pbcext_element_G1_add(hscp_, hscp_, hscp) == IERROR)
       GOTOENDRC(IERROR, scsl25_link);
 
   }

@@ -240,7 +240,7 @@ int scsl25_join_mem(message_t **mout,
   }
 
   if(_scsl25_memkey) {
-    scsl25_mem_key_free(_scsl25_memkey);
+    mem_free(_scsl25_memkey);
     _scsl25_memkey = NULL;
   }
 

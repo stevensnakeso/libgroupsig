@@ -79,9 +79,10 @@ int bap24_verify(uint8_t *ok,
   pbcext_element_GT_t *D3, *D4, *D6, *aux_gt;
   char *msg_msg, *msg_scp;
   pbcext_element_GT_t *T1, *T2, *T3, *T4;  
-  pbcext_element_G2_t *D5, *T5, *aux1_g2;
+  pbcext_element_G2_t *D5, *T5, *aux1_g2,*aux2_g2;
   pbcext_element_GT_t *T6, *T7, *T8, *T9,*aux_gt1, *aux_gt2;
-
+  pbcext_element_Fr_t *_c;
+  
   
 
   /*rebuild T1 to T9*/
@@ -181,21 +182,35 @@ int bap24_verify(uint8_t *ok,
   if (pbcext_element_G2_mul(aux1_g2, bap24_grpkey->gg, bap24_sig->z_alpha) == IERROR) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_element_G2_add(D5, D5, aux1_g2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
 
-
+  //D6 =cnym2^c dpk^z_alpha T6^z_sk
+  if (!(aux1_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_element_G2_set(aux1_g2, bap24_sig->cnym2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_element_G2_mul(aux1_g2,aux1_g2, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_element_G2_mul(aux1_g2, bap24_grpkey->dpk, bap24_sig->z_alpha) == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  if (pbcext_element_G2_add(aux1_g2, aux1_g2, aux1_g2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
-  // if (pbcext_element_G2_mul(aux1_g2, T6
+  if (pbcext_element_G2_mul(aux2_g2, bap24_grpkey->dpk, bap24_sig->z_alpha) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G2_add(aux1_g2, aux1_g2, aux2_g2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  
+  pbcext_element_G1_t *tmp_g1;
+  if (!(tmp_g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_setInt(tmp_g1, 1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+  if (pbcext_pairing(aux_gt1, tmp_g1, aux1_g2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+
+
+  if (pbcext_element_GT_set(D6, T6) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_pow(D6, D6, bap24_sig->z_sk) == IERROR) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_mul(D6, D6, aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
 
 
 
-  /* c = Hash(sigma1,sigma2,R,m); */
+
+
+  /* _c = hash(D1,D2,D3,D4,D5,D6,m) */
+  
 #if defined (SHA2) || defined (SHA3)
   EVP_MD_CTX *mdctx;
   if((mdctx = EVP_MD_CTX_new()) == NULL) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_verify", __LINE__, EDQUOT,
-		      "EVP_MD_CTX_new", LOGERROR);
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
+                      "EVP_MD_CTX_new", LOGERROR);
     GOTOENDRC(IERROR, bap24_verify);
   }
 #ifdef SHA3
@@ -203,7 +218,7 @@ int bap24_verify(uint8_t *ok,
 #else
   if(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL) != 1) {
 #endif
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_verify", __LINE__, EDQUOT,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
 		      "EVP_DigestInit_ex", LOGERROR);
     GOTOENDRC(IERROR, bap24_verify);
   }
@@ -211,12 +226,12 @@ int bap24_verify(uint8_t *ok,
   if (!(aux_c = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, bap24_verify);
 #endif
 
-  if (pbcext_element_G1_to_bytes(&aux_bytes, &len, bap24_sig->sigma1) == IERROR)
+  if (pbcext_element_G1_to_bytes(&aux_bytes, &len, D1) == IERROR)
     GOTOENDRC(IERROR, bap24_verify);
-
+  /* Put the message into the hash */
 #if defined (SHA2) || defined (SHA3)
   if(EVP_DigestUpdate(mdctx, aux_bytes, (int)len) != 1) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_verify", __LINE__, EDQUOT,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, bap24_verify);
   }
@@ -226,12 +241,12 @@ int bap24_verify(uint8_t *ok,
 #endif
   mem_free(aux_bytes); aux_bytes = NULL;
 
-  if (pbcext_element_G1_to_bytes(&aux_bytes, &len, bap24_sig->sigma2) == IERROR)
+  if (pbcext_element_G1_to_bytes(&aux_bytes, &len, D2) == IERROR)
     GOTOENDRC(IERROR, bap24_verify);
 
 #if defined (SHA2) || defined (SHA3)
   if(EVP_DigestUpdate(mdctx, aux_bytes, (int)len) != 1) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_verify", __LINE__, EDQUOT,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, bap24_verify);
   }
@@ -241,7 +256,52 @@ int bap24_verify(uint8_t *ok,
 #endif
   mem_free(aux_bytes); aux_bytes = NULL;
 
-  if (pbcext_element_GT_to_bytes(&aux_bytes, &len, e1) == IERROR)
+  if (pbcext_element_GT_to_bytes(&aux_bytes, &len, D3) == IERROR)
+    GOTOENDRC(IERROR, bap24_verify);
+
+#if defined (SHA2) || defined (SHA3)
+  if(EVP_DigestUpdate(mdctx, aux_bytes, (int)len) != 1) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
+		      "EVP_DigestUpdate", LOGERROR);
+    GOTOENDRC(IERROR, bap24_verify);
+  }
+#else
+  if (hash_update(aux_c, aux_bytes, len) == IERROR)
+    GOTOENDRC(IERROR, bap24_verify);
+#endif
+  mem_free(aux_bytes); aux_bytes = NULL;
+
+  if (pbcext_element_GT_to_bytes(&aux_bytes, &len, D4) == IERROR)
+    GOTOENDRC(IERROR, bap24_verify);
+
+#if defined (SHA2) || defined (SHA3)
+  if(EVP_DigestUpdate(mdctx, aux_bytes, (int)len) != 1) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
+		      "EVP_DigestUpdate", LOGERROR);
+    GOTOENDRC(IERROR, bap24_verify);
+  }
+#else
+  if (hash_update(aux_c, aux_bytes, len) == IERROR)
+    GOTOENDRC(IERROR, bap24_verify);
+#endif
+  mem_free(aux_bytes); aux_bytes = NULL;
+
+  if (pbcext_element_G2_to_bytes(&aux_bytes, &len, D5) == IERROR)
+    GOTOENDRC(IERROR, bap24_verify);
+
+#if defined (SHA2) || defined (SHA3)
+  if(EVP_DigestUpdate(mdctx, aux_bytes, (int)len) != 1) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
+		      "EVP_DigestUpdate", LOGERROR);
+    GOTOENDRC(IERROR, bap24_verify);
+  }
+#else
+  if (hash_update(aux_c, aux_bytes, len) == IERROR)
+    GOTOENDRC(IERROR, bap24_verify);
+#endif
+  mem_free(aux_bytes); aux_bytes = NULL;
+
+  if (pbcext_element_GT_to_bytes(&aux_bytes, &len, D6) == IERROR)
     GOTOENDRC(IERROR, bap24_verify);
 
 #if defined (SHA2) || defined (SHA3)
@@ -258,7 +318,7 @@ int bap24_verify(uint8_t *ok,
 
 #if defined (SHA2) || defined (SHA3)
   if(EVP_DigestUpdate(mdctx, msg->bytes, msg->length) != 1) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_verify", __LINE__, EDQUOT,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
 		      "EVP_DigestUpdate", LOGERROR);
     GOTOENDRC(IERROR, bap24_verify);
   }
@@ -270,7 +330,7 @@ int bap24_verify(uint8_t *ok,
 
 #if defined (SHA2) || defined (SHA3)
   if(EVP_DigestFinal_ex(mdctx, aux_sc, NULL) != 1) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_verify", __LINE__, EDQUOT,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
 			"EVP_DigestFinal_ex", LOGERROR);
       GOTOENDRC(IERROR, bap24_verify);
   }
@@ -279,25 +339,25 @@ int bap24_verify(uint8_t *ok,
 #endif
 
   /* Complete the sig */
-  if (!(c = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(_c = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_verify);
 
 #if defined (SHA2) || defined (SHA3)
-  if (pbcext_element_Fr_from_hash(c, aux_sc, HASH_DIGEST_LENGTH) == IERROR)
+  if (pbcext_element_Fr_from_hash(_c, aux_sc, HASH_DIGEST_LENGTH) == IERROR)
     GOTOENDRC(IERROR, bap24_verify);
 #else
-  if (pbcext_element_Fr_from_hash(c, aux_c->hash, aux_c->length) == IERROR)
+  if (pbcext_element_Fr_from_hash(_c, aux_c->hash, aux_c->length) == IERROR)
     GOTOENDRC(IERROR, bap24_verify);
 #endif
 
   /* Compare the result with the received challenge */
-  if (pbcext_element_Fr_cmp(bap24_sig->c, c)) { /* Different: sig fail */
+  if (pbcext_element_Fr_cmp(bap24_sig->c, _c)) { /* Different: sig fail */
     *ok = 0;
   } else { /* Same: sig OK */
     *ok = 1;
   }
 
  bap24_verify_end:
-  if (c) { pbcext_element_Fr_free(c); c = NULL; }
+  if (_c) { pbcext_element_Fr_free(_c); _c = NULL; }
   if (aux1_g1) { pbcext_element_G1_free(aux1_g1); aux1_g1 = NULL; }
   if (e1) { pbcext_element_GT_free(e1); e1 = NULL; }
   if (e2) { pbcext_element_GT_free(e2); e2 = NULL; }
