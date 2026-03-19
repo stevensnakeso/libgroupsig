@@ -128,7 +128,7 @@ int bap24_join_mgr(message_t **mout,
 
       _mout = *mout;
       if(message_set_bytes(*mout, bn, len) == IERROR)
-	GOTOENDRC(IERROR, bap24_join_mgr);
+	        GOTOENDRC(IERROR, bap24_join_mgr);
       
     }
     
@@ -165,10 +165,11 @@ int bap24_join_mgr(message_t **mout,
     if (!(e2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_join_mgr);
     if (pbcext_pairing(e2, bap24_grpkey->g, ttau) == IERROR)
       GOTOENDRC(IERROR, bap24_join_mgr);
-    if (pbcext_element_GT_cmp(e1, e2)) GOTOENDRC(IERROR, bap24_join_mgr);
+    
+    if (pbcext_element_GT_cmp(e1, e2) != 0) GOTOENDRC(IERROR, bap24_join_mgr);
 
     /* Compute the partial member key */
-    if (!(uid = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);
+    if (!(uid = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr); //The uid has not been transmitted by the member.
     if (pbcext_element_Fr_random(uid) == IERROR) GOTOENDRC(IERROR, bap24_join_mgr);
 
     if (!(u = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);
@@ -176,32 +177,43 @@ int bap24_join_mgr(message_t **mout,
 
     if (!(memkey = bap24_mem_key_init())) GOTOENDRC(IERROR, bap24_join_mgr);
     bap24_memkey = memkey->key;
-    
+
+    if (!(bap24_memkey->uid = pbcext_element_Fr_init()))
+      GOTOENDRC(IERROR, bap24_join_mgr);
+    if (pbcext_element_Fr_set(bap24_memkey->uid,uid) == IERROR)
+      GOTOENDRC(IERROR, bap24_join_mgr);
+    //sigma1
     if (!(bap24_memkey->sigma1 = pbcext_element_G1_init()))
       GOTOENDRC(IERROR, bap24_join_mgr);
-    if (pbcext_element_G1_mul(bap24_memkey->sigma1, bap24_grpkey->g, u) == IERROR)
+    if (pbcext_element_G1_mul(bap24_memkey->sigma1, bap24_grpkey->g, u) == IERROR) //u is t in paper
       GOTOENDRC(IERROR, bap24_join_mgr);
-
+    //simga2
     if (!(bap24_memkey->sigma2 = pbcext_element_G1_init()))
       GOTOENDRC(IERROR, bap24_join_mgr);
     if (!(aux = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_join_mgr);    
-    if (pbcext_element_G1_mul(aux, tau, bap24_mgrkey->y) == IERROR) //aux == g^(ski y)
-      GOTOENDRC(IERROR, bap24_join_mgr);
+    
     if (pbcext_element_G1_mul(bap24_memkey->sigma2, //simga2 ==g^x
 			      bap24_grpkey->g,
 			      bap24_mgrkey->x) == IERROR) 
       GOTOENDRC(IERROR, bap24_join_mgr);
-    if (pbcext_element_G1_add(bap24_memkey->sigma2,
-			      aux,
-			      bap24_memkey->sigma2) == IERROR)
+    if (pbcext_element_G1_mul(aux, tau, bap24_mgrkey->y) == IERROR) //aux == tao ^ y == g^(ski y1)
       GOTOENDRC(IERROR, bap24_join_mgr);
-    if (pbcext_element_G1_mul(aux, bap24_grpkey->g, uid) == IERROR) //aux == g^(uid)
-      GOTOENDRC(IERROR, bap24_join_mgr);
-    if (pbcext_element_G1_mul(aux, bap24_grpkey->g, bap24_mgrkey->yy) == IERROR) //aux == g^(uid)
-       GOTOENDRC(IERROR, bap24_join_mgr);
     if (pbcext_element_G1_add(bap24_memkey->sigma2,
-			      aux,
-			      bap24_memkey->sigma2) == IERROR)  
+			       bap24_memkey->sigma2,
+			     aux) == IERROR)
+      GOTOENDRC(IERROR, bap24_join_mgr);
+
+    pbcext_element_Fr_t *aux_fr;
+    if (!(aux_fr = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);    
+    if (pbcext_element_Fr_mul(aux_fr, uid, bap24_mgrkey->yy) == IERROR) //aux == g^(uid)
+    if (pbcext_element_G1_mul(aux, bap24_grpkey->g, aux_fr) == IERROR) //aux == g^(uid * y2)
+      GOTOENDRC(IERROR, bap24_join_mgr);
+    
+    if (pbcext_element_G1_add(bap24_memkey->sigma2,
+			      bap24_memkey->sigma2,
+			      aux) == IERROR)
+      GOTOENDRC(IERROR, bap24_join_mgr);  
+      
     if (pbcext_element_G1_mul(bap24_memkey->sigma2,
 			      bap24_memkey->sigma2,
 			      u) == IERROR) 
@@ -217,7 +229,8 @@ int bap24_join_mgr(message_t **mout,
        GOTOENDRC(IERROR, bap24_join_mgr);
     if (pbcext_element_G1_mul(bap24_grpkey->acc,bap24_grpkey->acc, aux1) == IERROR) //aux == g^(uid)
        GOTOENDRC(IERROR, bap24_join_mgr);
-    
+
+
     /* Add the tuple (i,tau,ttau) to the GML */
 
     if(!(bap24_entry = bap24_gml_entry_init()))
@@ -254,14 +267,14 @@ int bap24_join_mgr(message_t **mout,
     
   }
   
- bap24_join_mgr_end:
+  bap24_join_mgr_end:
 
   if (rc == IERROR) {
     if (tau) { pbcext_element_G1_free(tau); tau = NULL; }  
     if (ttau) { pbcext_element_G2_free(ttau); ttau = NULL; }
     if (bap24_entry) { bap24_gml_entry_free(bap24_entry); bap24_entry = NULL; }
   }
-
+  
   if (u) { pbcext_element_Fr_free(u); u = NULL; }
   if (n) { pbcext_element_G1_free(n); n = NULL; }  
   if (aux) { pbcext_element_G1_free(aux); aux = NULL; }
@@ -277,3 +290,4 @@ int bap24_join_mgr(message_t **mout,
 }
 
 /* join_mgr.c ends here */
+ 

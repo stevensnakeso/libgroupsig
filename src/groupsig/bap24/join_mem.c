@@ -98,7 +98,7 @@ int bap24_join_mem(message_t **mout, groupsig_key_t *memkey,
     if(!(ttau = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_join_mem);
     if(pbcext_element_G2_mul(ttau, bap24_grpkey->Y, bap24_memkey->sk) == IERROR)
       GOTOENDRC(IERROR, bap24_join_mem);
-
+ 
     /* Compute the SPK for sk */
     if(!(pi = spk_dlog_init())) GOTOENDRC(IERROR, bap24_join_mem);
     if(spk_dlog_G1_sign(pi, tau,
@@ -116,13 +116,13 @@ int bap24_join_mem(message_t **mout, groupsig_key_t *memkey,
 				    tau) == IERROR) 
       GOTOENDRC(IERROR, bap24_join_mem);
     len += taulen;
-
+    
     if(pbcext_dump_element_G2_bytes(&bttau,
 				    &ttaulen,
 				    ttau) == IERROR) 
       GOTOENDRC(IERROR, bap24_join_mem);
     len += ttaulen;
-   
+    
     if(spk_dlog_export(&bpi, &pilen, pi) == IERROR)
       GOTOENDRC(IERROR, bap24_join_mem);
     len += pilen;
@@ -146,7 +146,26 @@ int bap24_join_mem(message_t **mout, groupsig_key_t *memkey,
     }
     
   } else { /* Third (last) message of interactive protocol */
-
+    pbcext_element_GT_t *left_op, *right_op, *tem_op;
+  pbcext_element_G2_t *aux_g2_1, *aux_g2_2;
+  if (!(left_op = pbcext_element_GT_init())) GOTOENDRC(IERROR,bap24_join_mem);
+  if (!(right_op = pbcext_element_GT_init())) GOTOENDRC(IERROR,bap24_join_mem);
+  if (!(aux_g2_1 = pbcext_element_G2_init())) GOTOENDRC(IERROR,bap24_join_mem);
+  if (!(aux_g2_2 = pbcext_element_G2_init())) GOTOENDRC(IERROR,bap24_join_mem);
+  if (!(tem_op = pbcext_element_GT_init())) GOTOENDRC(IERROR,bap24_join_mem);
+  if (pbcext_element_G2_set(aux_g2_1, bap24_grpkey->X) == IERROR) GOTOENDRC(IERROR, bap24_join_mem);
+  if (pbcext_element_G2_mul(aux_g2_2,bap24_grpkey->Y, bap24_memkey->sk) == IERROR) GOTOENDRC(IERROR, bap24_join_mem);
+  if (pbcext_element_G2_add(aux_g2_1, aux_g2_1, aux_g2_2) == IERROR) GOTOENDRC(IERROR, bap24_join_mem);
+  if (pbcext_element_G2_mul(aux_g2_2, bap24_grpkey->YY, bap24_memkey->uid) == IERROR) GOTOENDRC(IERROR, bap24_join_mem);
+  if (pbcext_element_G2_add(aux_g2_1, aux_g2_1, aux_g2_2) == IERROR) GOTOENDRC(IERROR, bap24_join_mem);
+  if (pbcext_pairing(right_op, bap24_memkey->sigma1, aux_g2_1) == IERROR) GOTOENDRC(IERROR, bap24_join_mem);
+  
+  if (pbcext_pairing(left_op,bap24_memkey->sigma2,bap24_grpkey->gg) == IERROR) GOTOENDRC(IERROR, bap24_join_mem);
+  if (pbcext_element_GT_cmp(left_op, right_op) != 0) {
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "bap24_sign", __LINE__, EDQUOT,
+                      "SPK proof is wrong", LOGERROR);
+    GOTOENDRC(IERROR, bap24_join_mem);
+  }
     /* We have sk in memkey, so just need to copy the
        sigma1, sigma2 and e values from the received message,
        which is an exported (partial) memkey */

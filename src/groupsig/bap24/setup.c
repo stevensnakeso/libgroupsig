@@ -71,6 +71,9 @@ int bap24_setup(groupsig_key_t *grpkey,
   if(!(mkey->y = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_setup);
   if(pbcext_element_Fr_random(mkey->y) == IERROR)
     GOTOENDRC(IERROR, bap24_setup);
+  if (!(mkey->yy = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_setup);
+  if (pbcext_element_Fr_mul(mkey->yy, mkey->y, mkey->y) == IERROR)
+    GOTOENDRC(IERROR, bap24_setup);
 
   /* Set group key */
   if(!(gkey->g = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_setup);

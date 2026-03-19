@@ -80,14 +80,14 @@ int bap24_verify(uint8_t *ok,
   char *msg_msg, *msg_scp;
   pbcext_element_GT_t *T1, *T2, *T3, *T4;  
   pbcext_element_G2_t *D5, *T5, *aux1_g2,*aux2_g2;
-  pbcext_element_GT_t *T6, *T7, *T8, *T9,*aux_gt1, *aux_gt2;
+  pbcext_element_GT_t *T6, *T7, *T8, *T9, *aux_gt1;
   pbcext_element_Fr_t *_c;
   
   
 
   /*rebuild T1 to T9*/
   if (!(aux_gt1 = pbcext_element_GT_init())) GOTOENDRC( IERROR, bap24_verify);
-  if (!(aux_gt2 = pbcext_element_GT_init())) GOTOENDRC( IERROR, bap24_verify);
+
 
   if (!(T1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_pairing(T1,bap24_sig->sigma1,bap24_grpkey->X) == IERROR) GOTOENDRC(IERROR, bap24_verify);
@@ -101,7 +101,7 @@ int bap24_verify(uint8_t *ok,
   if (pbcext_element_G2_set(T5, bap24_sig->hscp) == IERROR) GOTOENDRC(IERROR, bap24_verify);
 
   /*T6-T9*/
-  if ((T6 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_verify);
+  if ((!(T6 = pbcext_element_GT_init()))) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_pairing(T6,bap24_sig->B2,bap24_grpkey->apk) == IERROR) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_pairing(aux_gt1,bap24_grpkey->acc,bap24_grpkey->hh) == IERROR) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_element_GT_div(T6,T6,aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
@@ -184,6 +184,7 @@ int bap24_verify(uint8_t *ok,
 
   //D6 =cnym2^c dpk^z_alpha T6^z_sk
   if (!(aux1_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_verify);
+  if (!(aux2_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_element_G2_set(aux1_g2, bap24_sig->cnym2) == IERROR) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_element_G2_mul(aux1_g2,aux1_g2, bap24_sig->c) == IERROR) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_element_G2_mul(aux2_g2, bap24_grpkey->dpk, bap24_sig->z_alpha) == IERROR) GOTOENDRC(IERROR, bap24_verify);
@@ -200,8 +201,13 @@ int bap24_verify(uint8_t *ok,
   if (pbcext_element_GT_pow(D6, D6, bap24_sig->z_sk) == IERROR) GOTOENDRC(IERROR, bap24_verify);
   if (pbcext_element_GT_mul(D6, D6, aux_gt1) == IERROR) GOTOENDRC(IERROR, bap24_verify);
 
-
-
+  if (pbcext_element_G1_cmp(D1, bap24_sig->D1) == 0) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G1_cmp(D2, bap24_sig->D2) == 0) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_GT_cmp(D3, bap24_sig->D3) == 0) GOTOENDRC(IERROR, bap24_verify); // not equal means failed to verify
+  if (pbcext_element_GT_cmp(D4, bap24_sig->D4) == 0) GOTOENDRC(IERROR, bap24_verify);
+  if (pbcext_element_G2_cmp(D5, bap24_sig->D5) == 0) GOTOENDRC(IERROR, bap24_verify); // not equal means failed to verify
+  if (pbcext_element_GT_cmp(D6, bap24_sig->D6) == 0) GOTOENDRC(IERROR, bap24_verify); // not equal means failed to verify
+ 
 
 
   /* _c = hash(D1,D2,D3,D4,D5,D6,m) */
@@ -350,7 +356,7 @@ int bap24_verify(uint8_t *ok,
 #endif
 
   /* Compare the result with the received challenge */
-  if (pbcext_element_Fr_cmp(bap24_sig->c, _c)) { /* Different: sig fail */
+  if (pbcext_element_Fr_cmp(bap24_sig->c, _c)) { /* Different: sig fail *///failed to verify!!!
     *ok = 0;
   } else { /* Same: sig OK */
     *ok = 1;

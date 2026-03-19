@@ -100,7 +100,7 @@ namespace groupsig {
 	m2 = message_init();
 	ASSERT_NE(m2, nullptr);
 
-        rc = groupsig_join_mem(&m2, memkey[i], 1, m1, grpkey);
+  rc = groupsig_join_mem(&m2, memkey[i], 1, m1, grpkey);
 	ASSERT_EQ(rc, IOK);
 
 	m3 = message_init();
@@ -243,13 +243,13 @@ namespace groupsig {
     addMembers(1);
 
     /* Initialize a message with a test string */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
     rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
     EXPECT_EQ(rc, IOK);
-
+    
     /* Verify the signature */
     rc = groupsig_verify(&b, sig, msg, grpkey);
     EXPECT_EQ(rc, IOK);

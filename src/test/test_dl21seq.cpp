@@ -222,6 +222,7 @@ namespace groupsig {
 
     groupsig_signature_t *sig;
     message_t *msg;
+
     int rc;
     uint8_t b;
 
@@ -246,6 +247,7 @@ namespace groupsig {
     rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
     EXPECT_EQ(rc, IOK);
 
+   
     /* Verify the signature */
     rc = groupsig_verify(&b, sig, msg, grpkey);
     EXPECT_EQ(rc, IOK);
