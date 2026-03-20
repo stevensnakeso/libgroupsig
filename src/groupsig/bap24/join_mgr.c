@@ -247,7 +247,7 @@ int bap24_join_mgr(message_t **mout,
     if(gml_insert(gml, bap24_entry) == IERROR) GOTOENDRC(IERROR, bap24_join_mgr);
 
     /* Export the (partial) member key into a msg */
-    bkey = NULL; 
+    bkey = NULL;
     if (bap24_mem_key_export(&bkey, &size, memkey) == IERROR)
       GOTOENDRC(IERROR, bap24_join_mgr);
 
@@ -264,7 +264,7 @@ int bap24_join_mgr(message_t **mout,
 	GOTOENDRC(IERROR, bap24_join_mgr);
 
     }    
-    
+  
   }
   
   bap24_join_mgr_end:

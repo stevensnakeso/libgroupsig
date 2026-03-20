@@ -94,7 +94,7 @@ namespace groupsig {
 	m2 = message_init();
 	ASSERT_NE(m2, nullptr);
 
-        rc = groupsig_join_mem(&m2, memkey[i], 1, m1, grpkey);
+  rc = groupsig_join_mem(&m2, memkey[i], 1, m1, grpkey);
 	ASSERT_EQ(rc, IOK);	
 
 	m3 = message_init();
