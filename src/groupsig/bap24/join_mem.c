@@ -146,6 +146,28 @@ int bap24_join_mem(message_t **mout, groupsig_key_t *memkey,
     }
     
   } else { /* Third (last) message of interactive protocol */
+  //import memkey from message 
+  groupsig_key_t *tmp_bap24_memkeygp;
+  bap24_mem_key_t *tmp_bap24_memkey;
+  tmp_bap24_memkeygp = bap24_mem_key_import(min->bytes, min->length);
+if (!tmp_bap24_memkeygp) GOTOENDRC(IERROR, bap24_join_mem);
+
+tmp_bap24_memkey = tmp_bap24_memkeygp->key;
+if (!(bap24_memkey->uid = pbcext_element_Fr_init())) GOTOENDRC(IERROR,bap24_join_mem);
+if (pbcext_element_Fr_set(bap24_memkey->uid, tmp_bap24_memkey->uid) == IERROR)
+  GOTOENDRC(IERROR, bap24_join_mem);
+if (!(bap24_memkey->sigma1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_join_mem);
+if (pbcext_element_G1_set(bap24_memkey->sigma1, tmp_bap24_memkey->sigma1) == IERROR)
+  GOTOENDRC(IERROR, bap24_join_mem);
+if (!(bap24_memkey->sigma2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_join_mem);
+if (pbcext_element_G1_set(bap24_memkey->sigma2, tmp_bap24_memkey->sigma2) == IERROR)
+  GOTOENDRC(IERROR, bap24_join_mem);
+if (!(bap24_memkey->w = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_join_mem); 
+if (pbcext_element_G1_set(bap24_memkey->w, tmp_bap24_memkey->w) == IERROR)
+  GOTOENDRC(IERROR, bap24_join_mem);
+
+
+
     pbcext_element_GT_t *left_op, *right_op, *tem_op;
   pbcext_element_G2_t *aux_g2_1, *aux_g2_2;
   if (!(left_op = pbcext_element_GT_init())) GOTOENDRC(IERROR,bap24_join_mem);

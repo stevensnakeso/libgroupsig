@@ -45,7 +45,8 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   pbcext_element_Fr_t *t, *k, *alpha;
   pbcext_element_GT_t *e;
   pbcext_element_G1_t *aux;
-  pbcext_element_G2_t *aux_g2, *hscp,*cnym1,*cnym2;
+  pbcext_element_G2_t *aux_g2, *hscp,*cnym1;
+  pbcext_element_GT_t *cnym2;
   hash_t *hc;
 #if defined (SHA2) || defined (SHA3)
   byte_t aux_sc[HASH_DIGEST_LENGTH+1];
@@ -71,6 +72,8 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   bap24_memkey = memkey->key;
   t = k = NULL;
   e = NULL;
+  msg_msg = msg_scp = NULL;
+
 #if !defined(SHA2) && !defined(SHA3)
   aux_c = NULL;
 #endif
@@ -119,25 +122,7 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (!(bap24_sig->hscp = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_G2_set(bap24_sig->hscp, hscp) == IERROR) GOTOENDRC(IERROR, bap24_sign);
 
-  /* gen alpha*/
-  alpha = pbcext_element_Fr_init();
-  if (pbcext_element_Fr_random(alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  /*cnym1 = g^a*/
-  cnym1 = pbcext_element_G2_init();
-  if( pbcext_element_G2_mul(cnym1, bap24_grpkey->gg, alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-
-  if (!(bap24_sig->cnym1 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_G2_set(bap24_sig->cnym1, cnym1) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-
-  /*cnuym2 = dpk^alpha hscp^sk*/
-  if (!(cnym2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_sign);
-  if (!(aux_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_G2_mul(cnym2, bap24_grpkey->dpk, alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_G2_mul(aux_g2, hscp, bap24_memkey->sk) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_G2_add(cnym2, cnym2, aux_g2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-
-  if (!(bap24_sig->cnym2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_G2_set(bap24_sig->cnym2, cnym2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  
 
 
   /*Manually do the SOK. Wrapper later*/
@@ -179,7 +164,7 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (pbcext_element_G1_mul(B2, bap24_grpkey->h, zeta2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_G1_add(B2, B2, bap24_memkey->w) == IERROR) GOTOENDRC(IERROR, bap24_sign);
 
-  pbcext_element_GT_t *T6, *T7, *T8, *T9;
+  pbcext_element_GT_t *T6, *T7, *T8, *T9, *aux1, *aux2;
   if (!(T6 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_pairing(T6, B2, bap24_grpkey->apk) == IERROR) GOTOENDRC(IERROR, bap24_sign);
   if (!(T7 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
@@ -191,10 +176,53 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (!(T9 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_pairing(T9,B2,bap24_grpkey->hh) == IERROR) GOTOENDRC(IERROR, bap24_sign);
 
+
+  pbcext_element_Fr_t *_uid;
+  if (!(_uid = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_Fr_neg(_uid, bap24_memkey->uid) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (!(aux1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_GT_pow(aux1, T7, theta2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (!(aux2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
+  if  (pbcext_element_GT_pow(aux2, T8, zeta2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_GT_mul(aux1, aux1, aux2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_GT_pow(aux2, T9, _uid) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_GT_mul(aux1, aux1, aux2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_GT_cmp(T6, aux1) != 0) GOTOENDRC(IERROR, bap24_sign);
+
   if (!(bap24_sig->B1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_G1_set(bap24_sig->B1, B1) == IERROR) GOTOENDRC(IERROR, bap24_sign);
   if (!(bap24_sig->B2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_G1_set(bap24_sig->B2, B2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+
+  /* gen alpha*/
+  alpha = pbcext_element_Fr_init();
+  if (pbcext_element_Fr_random(alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  /*cnym1 = g^a*/
+  cnym1 = pbcext_element_G2_init();
+  if( pbcext_element_G2_mul(cnym1, bap24_grpkey->gg, alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+
+  if (!(bap24_sig->cnym1 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_G2_set(bap24_sig->cnym1, cnym1) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+
+  /*cnuym2 = dpk^alpha hscp^sk*/
+  if (!(cnym2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (!(aux_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_G2_mul(aux_g2, bap24_grpkey->dpk, alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  pbcext_element_G1_t *tmp_g1;
+  if (!(tmp_g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_G1_setInt(tmp_g1, 1) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  pbcext_element_GT_t *aux_gt1,*aux_gt2;
+  if (!(aux_gt1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (!(aux_gt2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_pairing(aux_gt1, tmp_g1, aux_g2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_GT_pow(aux_gt2, T6, bap24_memkey->sk) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_GT_mul(cnym2, aux_gt1, aux_gt2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+
+
+  if (!(bap24_sig->cnym2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_GT_set(bap24_sig->cnym2, cnym2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+
+
 
   pbcext_element_Fr_t *rho_zeta1, *rho_zeta2, *rho_theta1, *rho_theta2, *rho_sk, *rho_uid, *rho_w, *rho_alpha, *_rho_uid;
   pbcext_element_G1_t *D1, *D2;
@@ -257,9 +285,8 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (pbcext_element_G1_setInt(aux, 1) != IOK) GOTOENDRC(IERROR,bap24_sign);
   if (!(aux_g2 =pbcext_element_G2_init())) GOTOENDRC(IERROR,bap24_sign);
   if (pbcext_element_G2_mul(aux_g2, bap24_grpkey->dpk, rho_alpha)==IERROR) GOTOENDRC(IERROR,bap24_sign);
-  if (pbcext_pairing(D6, aux, aux_g2) == IERROR) GOTOENDRC(IERROR,bap24_sign);
   if (!(aux_gt = pbcext_element_GT_init())) GOTOENDRC(IERROR,bap24_sign);
-  if (pbcext_element_GT_pow(aux_gt, T6, rho_sk) == IERROR) GOTOENDRC(IERROR,bap24_sign);
+  if (pbcext_pairing(aux_gt, aux, aux_g2) == IERROR) GOTOENDRC(IERROR,bap24_sign);
   if (pbcext_element_GT_mul(D6, D6, aux_gt) == IERROR) GOTOENDRC(IERROR,bap24_sign);
 
 
@@ -443,7 +470,7 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   
 pbcext_element_Fr_t *aux_fr, *z_zeta1, *z_zeta2, *z_theta1, *z_theta2, *z_sk, *z_uid, *z_w, *z_alpha;
   if (!(aux_fr = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_Fr_random(aux_fr) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  
   if (!(z_zeta1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_Fr_mul(aux_fr, bap24_sig->c, zeta1) == IERROR) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_Fr_sub(z_zeta1, rho_zeta1, aux_fr) == IERROR) GOTOENDRC(IERROR, bap24_sign);
@@ -469,6 +496,7 @@ pbcext_element_Fr_t *aux_fr, *z_zeta1, *z_zeta2, *z_theta1, *z_theta2, *z_sk, *z
   if (!(z_alpha = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_Fr_mul(aux_fr, bap24_sig->c, alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_Fr_sub(z_alpha, rho_alpha, aux_fr) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  
   
   if(!(bap24_sig->z_zeta1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
   if(pbcext_element_Fr_set(bap24_sig->z_zeta1, z_zeta1) == IERROR) GOTOENDRC(IERROR, bap24_sign);

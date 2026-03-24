@@ -285,7 +285,7 @@ namespace groupsig {
     addMembers(1);
 
     /* Import the message from the external file into the initialized message object */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -293,7 +293,7 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     /* Use a wrong message for verification */
-    msg2 = message_from_string((char *) "Hello, Worlds!");
+    msg2 =message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, Worlds!\" }");
     EXPECT_NE(msg2, nullptr);
 
     /* Verify the signature */
@@ -335,7 +335,7 @@ namespace groupsig {
     addMembers(2);
 
     /* Import the message from the external file into the initialized message object */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -393,7 +393,7 @@ namespace groupsig {
     addMembers(2);
 
     /* Import the message from the external file into the initialized message object */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -626,7 +626,7 @@ namespace groupsig {
     addMembers(1);
 
     /* Initialize a message with a test string */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -676,7 +676,7 @@ namespace groupsig {
     addMembers(1);
 
     /* Initialize a message with a test string */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -732,7 +732,7 @@ namespace groupsig {
     addMembers(1);
 
     /* Initialize a message with a test string */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -835,7 +835,7 @@ namespace groupsig {
     EXPECT_NE(imported, nullptr);
 
     /* Import the message from the external file into the initialized message object */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */

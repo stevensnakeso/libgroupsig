@@ -84,7 +84,7 @@ int bap24_join_mgr(message_t **mout,
   message_t *_mout;
   byte_t *bn, *bkey;
   uint64_t len, nlen, taulen, ttaulen, pilen;
-  uint32_t size;
+  uint32_t size = 0;
   uint8_t ok;
   int rc;
 
@@ -205,7 +205,8 @@ int bap24_join_mgr(message_t **mout,
 
     pbcext_element_Fr_t *aux_fr;
     if (!(aux_fr = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_join_mgr);    
-    if (pbcext_element_Fr_mul(aux_fr, uid, bap24_mgrkey->yy) == IERROR) //aux == g^(uid)
+    if (pbcext_element_Fr_mul(aux_fr, uid, bap24_mgrkey->yy) == IERROR) 
+      GOTOENDRC(IERROR, bap24_join_mgr);//aux == g^(uid)
     if (pbcext_element_G1_mul(aux, bap24_grpkey->g, aux_fr) == IERROR) //aux == g^(uid * y2)
       GOTOENDRC(IERROR, bap24_join_mgr);
     
