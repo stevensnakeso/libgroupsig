@@ -65,6 +65,8 @@ int bap24_open(uint64_t *index,
   bap24_mgrkey = mgrkey->key;
   rc = IOK;
   e1 = e2 = e3 = NULL;
+  bsig = NULL;
+  bap24_proof = NULL;
   
   if (!(e1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_open);
   if (pbcext_pairing(e1, bap24_sig->sigma2, bap24_grpkey->gg) == IERROR)
@@ -76,15 +78,24 @@ int bap24_open(uint64_t *index,
 
   if (!(e3 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_open);
   
+
   /* Look up the recovered e1 in the GML */
   match = 0;
   for (i=0; i<gml->n; i++) {  
 
     if (!(bap24_entry = gml_get(gml, i))) GOTOENDRC(IERROR, bap24_open);
 
-    if (pbcext_pairing(e3, bap24_sig->sigma1,
-		       ((bap24_gml_entry_data_t *) bap24_entry->data)->ttau) == IERROR)
+    pbcext_element_G2_t *aux_g2;
+    if (!(aux_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_open);
+
+    if (pbcext_element_G2_mul(aux_g2, bap24_grpkey->YY, ((bap24_gml_entry_data_t *) bap24_entry->data)->uid) == IERROR)
       GOTOENDRC(IERROR, bap24_open);
+    if (pbcext_element_G2_add(aux_g2, aux_g2,  ((bap24_gml_entry_data_t *) bap24_entry->data)->ttau) == IERROR) 
+        GOTOENDRC(IERROR, bap24_open);
+    if (pbcext_pairing(e3, bap24_sig->sigma1, aux_g2) == IERROR)
+      GOTOENDRC(IERROR, bap24_open);
+    
+
 
     if (!pbcext_element_GT_cmp(e1, e3)) {
 
@@ -94,6 +105,8 @@ int bap24_open(uint64_t *index,
       break;
 
     }
+   
+    if (aux_g2) { pbcext_element_G2_free(aux_g2); aux_g2 = NULL; }
 
   }
 
@@ -107,7 +120,13 @@ int bap24_open(uint64_t *index,
      make the process non-interactive.
   */
 
+  pbcext_element_G2_t *aux_g2;
+    if (!(aux_g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_open);
 
+    if (pbcext_element_G2_mul(aux_g2, bap24_grpkey->YY, ((bap24_gml_entry_data_t *) bap24_entry->data)->uid) == IERROR)
+      GOTOENDRC(IERROR, bap24_open);
+    if (pbcext_element_G2_add(aux_g2, aux_g2,  ((bap24_gml_entry_data_t *) bap24_entry->data)->ttau) == IERROR) 
+        GOTOENDRC(IERROR, bap24_open);
   /* Export the signature as an array of bytes */
   bsig = NULL;
   if (bap24_signature_export(&bsig, &slen, sig) == IERROR)
@@ -119,13 +138,13 @@ int bap24_open(uint64_t *index,
   if (spk_pairing_homomorphism_G2_sign(proof->proof,
 				       bap24_sig->sigma1,
 				       e3,
-				       ((bap24_gml_entry_data_t *) bap24_entry->data)->ttau,
+				       aux_g2,
 				       bsig,
 				       slen) == IERROR)
     GOTOENDRC(IERROR, bap24_open);
 
  bap24_open_end:
-
+  
   if (e1) { pbcext_element_GT_free(e1); e1 = NULL; }
   if (e2) { pbcext_element_GT_free(e2); e2 = NULL; }
   if (e3) { pbcext_element_GT_free(e3); e3 = NULL; }

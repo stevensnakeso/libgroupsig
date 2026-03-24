@@ -65,7 +65,7 @@ int bap24_open_verify(uint8_t *ok,
   if (pbcext_pairing(e2, bap24_sig->sigma1, bap24_grpkey->X) == IERROR)
     GOTOENDRC(IERROR, bap24_open_verify);
   if (pbcext_element_GT_div(e1, e1, e2) == IERROR) GOTOENDRC(IERROR, bap24_open_verify);
-
+  
   /* Export the signature as an array of bytes */
   bsig = NULL;
   if (bap24_signature_export(&bsig, &slen, sig) == IERROR)

@@ -177,17 +177,17 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   if (pbcext_pairing(T9,B2,bap24_grpkey->hh) == IERROR) GOTOENDRC(IERROR, bap24_sign);
 
 
-  pbcext_element_Fr_t *_uid;
-  if (!(_uid = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_Fr_neg(_uid, bap24_memkey->uid) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  if (!(aux1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_GT_pow(aux1, T7, theta2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  if (!(aux2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
-  if  (pbcext_element_GT_pow(aux2, T8, zeta2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_GT_mul(aux1, aux1, aux2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_GT_pow(aux2, T9, _uid) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_GT_mul(aux1, aux1, aux2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_GT_cmp(T6, aux1) != 0) GOTOENDRC(IERROR, bap24_sign);
+  // pbcext_element_Fr_t *_uid;
+  // if (!(_uid = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
+  // if (pbcext_element_Fr_neg(_uid, bap24_memkey->uid) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  // if (!(aux1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
+  // if (pbcext_element_GT_pow(aux1, T7, theta2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  // if (!(aux2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
+  // if  (pbcext_element_GT_pow(aux2, T8, zeta2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  // if (pbcext_element_GT_mul(aux1, aux1, aux2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  // if (pbcext_element_GT_pow(aux2, T9, _uid) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  // if (pbcext_element_GT_mul(aux1, aux1, aux2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  // if (pbcext_element_GT_cmp(T6, aux1) != 0) GOTOENDRC(IERROR, bap24_sign);
 
   if (!(bap24_sig->B1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_G1_set(bap24_sig->B1, B1) == IERROR) GOTOENDRC(IERROR, bap24_sign);

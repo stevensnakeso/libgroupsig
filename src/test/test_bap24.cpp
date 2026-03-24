@@ -323,7 +323,7 @@ namespace groupsig {
     uint64_t index;
     int rc;
     uint8_t b;
-
+    index = 0;
     rc = groupsig_setup(GROUPSIG_BAP24_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
 

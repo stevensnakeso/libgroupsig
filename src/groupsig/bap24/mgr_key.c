@@ -327,7 +327,7 @@ groupsig_key_t* bap24_mgr_key_import(byte_t *source, uint32_t size) {
   ctr += len;
 
   /* Get dsk */
-  if(!(bap24_key->ask = pbcext_element_Fr_init()))
+  if(!(bap24_key->dsk = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, bap24_mgr_key_import);
   if(pbcext_get_element_Fr_bytes(bap24_key->dsk, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, bap24_mgr_key_import);

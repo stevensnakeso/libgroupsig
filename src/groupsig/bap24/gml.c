@@ -289,7 +289,7 @@ int bap24_gml_entry_free(gml_entry_t *entry) {
 
 int bap24_gml_entry_get_size(gml_entry_t *entry) {
 
-  uint64_t sG1, sG2;
+  uint64_t sG1, sG2, sFr;
 
   if (!entry) {
     LOG_EINVAL(&logger, __FILE__, "bap24_gml_entry_get_size", __LINE__, LOGERROR);
@@ -302,9 +302,12 @@ int bap24_gml_entry_get_size(gml_entry_t *entry) {
   if (pbcext_element_G2_byte_size(&sG2) == -1)
     return -1;
 
-  if (sG1 + sG2 + sizeof(int)*2 + sizeof(uint64_t) > INT_MAX) return -1;
+  if (pbcext_element_Fr_byte_size(&sFr) == -1)
+    return -1;
 
-  return (int) sG1 + sG2 + sizeof(int)*2 + sizeof(uint64_t);
+  if (sG1 + sG2 + sFr + sizeof(int)*3 + sizeof(uint64_t) > INT_MAX) return -1;
+
+  return (int) sG1 + sG2 + sFr + sizeof(int)*3 + sizeof(uint64_t);
 
 }
 
