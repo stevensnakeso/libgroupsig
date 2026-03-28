@@ -873,4 +873,59 @@ namespace groupsig {
   }
 
 
+
+  TEST_F(BAP24Test, SuccessfullyLinkSigsSameUser) {
+
+    groupsig_signature_t *sig1, *sig2, **sigs;
+    groupsig_proof_t *proof;
+    message_t *msg, **msgs;
+    int rc;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_BAP24_CODE, grpkey, mgrkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    sig1 = groupsig_signature_init(grpkey->scheme);
+    sig2 = groupsig_signature_init(grpkey->scheme);
+
+    addMembers(1);
+
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+    EXPECT_NE(msg, nullptr);
+
+    rc = groupsig_sign(sig1, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_sign(sig2, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);    
+
+    proof = groupsig_proof_init(grpkey->scheme);
+    EXPECT_NE(proof, nullptr);
+
+    msgs = (message_t **) malloc(sizeof(message_t *)*2);
+    msgs[0] = msg;
+    msgs[1] = msg;
+
+    sigs = (groupsig_signature_t **) malloc(sizeof(groupsig_signature_t *)*2);
+    sigs[0] = sig1;
+    sigs[1] = sig2;
+    
+    rc = groupsig_link(&proof, grpkey, memkey[0], msg, sigs, msgs, 2);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_verify_link(&b, grpkey, proof, msg, sigs, msgs, 2);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 1);
+    
+    groupsig_signature_free(sig1);
+    groupsig_signature_free(sig2);
+    groupsig_proof_free(proof);
+    message_free(msg);
+
+    free(msgs);
+    free(sigs);
+
+  }
+
+
 }  // namespace groupsig

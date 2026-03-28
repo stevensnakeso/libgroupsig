@@ -33,13 +33,26 @@
 groupsig_proof_t* bap24_proof_init() {
 
   groupsig_proof_t *proof;
+  bap24_proof_t *bap24_proof;
 
+  
   if(!(proof = (groupsig_proof_t *) mem_malloc(sizeof(groupsig_proof_t)))) {
     return NULL;
   }
 
   proof->scheme = GROUPSIG_BAP24_CODE;
-  proof->proof = NULL;
+
+  if(!(bap24_proof = (bap24_proof_t *) mem_malloc(sizeof(bap24_proof_t)))) {
+    mem_free(proof); proof = NULL;
+    return NULL;
+  }
+
+
+  if(!( proof->proof = spk_dlog_init())) {
+    mem_free( proof->proof);  proof->proof = NULL;
+    mem_free(bap24_proof); bap24_proof = NULL;
+    return NULL;
+  }
 
   return proof;
 }
@@ -57,7 +70,7 @@ int bap24_proof_free(groupsig_proof_t *proof) {
   bap24_proof = proof->proof;
 
   if (bap24_proof) {
-    spk_pairing_homomorphism_G2_free(bap24_proof);
+    spk_dlog_free(bap24_proof);
     bap24_proof = NULL;
   }
   
@@ -79,7 +92,7 @@ int bap24_proof_get_size(groupsig_proof_t *proof) {
 
   bap24_proof = proof->proof;
 
-  if ((proof_len = spk_pairing_homomorphism_G2_get_size(bap24_proof)) == -1)
+  if ((proof_len = spk_dlog_get_size(bap24_proof)) == -1)
     return -1;
 
   size = proof_len + /* sizeof(int)*1 */ + 1;
@@ -119,9 +132,9 @@ int bap24_proof_export(byte_t **bytes, uint32_t *size, groupsig_proof_t *proof) 
   /* Export the SPK */
   __bytes = &_bytes[1];
 
-  if (spk_pairing_homomorphism_G2_export(&__bytes,
-					 &proof_len,
-					 bap24_proof) == IERROR)
+  if (spk_dlog_export(&__bytes,
+		      &proof_len,
+		      bap24_proof) == IERROR)
     GOTOENDRC(IERROR, bap24_proof_export);
 
   /* Sanity check */
@@ -174,8 +187,8 @@ groupsig_proof_t* bap24_proof_import(byte_t *source, uint32_t size) {
     GOTOENDRC(IERROR, bap24_proof_import);
   }
 
-  if (!(proof->proof = spk_pairing_homomorphism_G2_import(&source[1],
-							&proof_len)))
+  if (!(proof->proof = spk_dlog_import(&source[1],
+				       &proof_len)))
     GOTOENDRC(IERROR, bap24_proof_import);
   
   if (proof_len != size - 1) {

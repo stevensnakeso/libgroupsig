@@ -13,7 +13,9 @@ if (HW)
     open.c
     open_verify.c
     gml.c gml.h
-    proof.c proof.h)
+    proof.c proof.h
+    link.c
+    verify_link.c)
 else ()
   add_library (bap24 
     grp_key.c grp_key.h 
@@ -27,7 +29,9 @@ else ()
     open.c
     open_verify.c
     gml.c gml.h
-    proof.c proof.h)
+    proof.c proof.h
+    link.c
+    verify_link.c)
 endif ()
 
 target_include_directories (bap24 PRIVATE ${OPENSSL_INCLUDE_DIR})

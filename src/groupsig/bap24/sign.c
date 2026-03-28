@@ -47,6 +47,7 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
   pbcext_element_G1_t *aux;
   pbcext_element_G2_t *aux_g2, *hscp,*cnym1;
   pbcext_element_GT_t *cnym2;
+  pbcext_element_G2_t *cnym3;
   hash_t *hc;
 #if defined (SHA2) || defined (SHA3)
   byte_t aux_sc[HASH_DIGEST_LENGTH+1];
@@ -221,6 +222,11 @@ int bap24_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey
 
   if (!(bap24_sig->cnym2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_GT_set(bap24_sig->cnym2, cnym2) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+
+  /*cnym3 = T5^sk*/
+  if (!(bap24_sig->cnym3 = pbcext_element_G2_init())) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_G2_set(bap24_sig->cnym3, T5) == IERROR) GOTOENDRC(IERROR, bap24_sign);
+  if (pbcext_element_G2_mul(bap24_sig->cnym3, bap24_sig->cnym3, bap24_memkey->sk) == IERROR) GOTOENDRC(IERROR, bap24_sign);
 
 
 

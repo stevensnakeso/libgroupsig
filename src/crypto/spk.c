@@ -228,6 +228,148 @@ int spk_dlog_G1_verify(uint8_t *ok,
   
 }
 
+int spk_dlog_G2_sign(spk_dlog_t *pi,
+		     pbcext_element_G2_t *G,
+		     pbcext_element_G2_t *g,
+		     pbcext_element_Fr_t *x,
+		     byte_t *msg,
+		     uint32_t size) {
+  
+  pbcext_element_Fr_t *c, *s, *r, *cx;
+  pbcext_element_G2_t *gr;
+  byte_t *bG, *bg, *bgr;
+  hash_t *hc;
+  uint64_t len;
+  int rc;
+  
+  if (!pi || !G || !g || !x || !msg || !size) {
+    LOG_EINVAL(&logger, __FILE__, "spk_dlog_G2_sign", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  bG = NULL; bg = NULL; bgr = NULL;
+  hc = NULL;
+  rc = IOK;
+
+  /* Pick random r and compute g^r mod q */
+  r = pbcext_element_Fr_init();
+  pbcext_element_Fr_random(r);
+  gr = pbcext_element_G2_init();
+  pbcext_element_G2_mul(gr, g, r);
+  
+  /* Make hc = Hash(msg||G||g||g^r) */
+  if(!(hc = hash_init(HASH_SHA1))) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+  if(hash_update(hc, msg, size) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+  if(pbcext_element_G2_to_bytes(&bG, &len, G) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+  if(hash_update(hc, bG, len) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+  if(pbcext_element_G2_to_bytes(&bg, &len, g) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+  if(hash_update(hc, bg, len) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+  if(pbcext_element_G2_to_bytes(&bgr, &len, gr) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+  if(hash_update(hc, bgr, len) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+  if(hash_finalize(hc) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_sign);
+			       
+  /* Convert the hash to an integer */
+  c = pbcext_element_Fr_init();
+  pbcext_element_Fr_from_hash(c, hc->hash, hc->length);
+  
+  /* s = r - cx */
+  cx = pbcext_element_Fr_init();
+  pbcext_element_Fr_mul(cx, c, x);
+  s = pbcext_element_Fr_init();
+  pbcext_element_Fr_sub(s, r, cx);
+  
+  /* pi = (s,c) */
+  pi->s = pbcext_element_Fr_init();
+  pbcext_element_Fr_set(pi->s, s);
+  pi->c = pbcext_element_Fr_init();
+  pbcext_element_Fr_set(pi->c, c);
+  
+ spk_dlog_G2_sign_end:
+
+  pbcext_element_Fr_free(c);
+  pbcext_element_Fr_free(cx);
+  pbcext_element_Fr_free(s);
+  pbcext_element_Fr_free(r);
+  pbcext_element_G2_free(gr);
+  if(bG) mem_free(bG);
+  if(bg) mem_free(bg);
+  if(bgr) mem_free(bgr);
+  if(hc) { hash_free(hc); hc = NULL; }
+  
+  return rc;
+  
+}
+
+int spk_dlog_G2_verify(uint8_t *ok,
+		       pbcext_element_G2_t *G,
+		       pbcext_element_G2_t *g,
+		       spk_dlog_t *pi,
+		       byte_t *msg,
+		       uint32_t size) {
+
+  pbcext_element_G2_t *gs, *Gc, *gsGc;
+  pbcext_element_Fr_t *c;
+  byte_t *bG, *bg, *bgsGc;
+  hash_t *hc;
+  uint64_t len;
+  int rc;
+
+  if (!ok || !G || !g || !pi || !msg || !size) {
+    LOG_EINVAL(&logger, __FILE__, "spk_dlog_G2_verify", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  bG = NULL; bg = NULL; bgsGc = NULL;
+  rc = IOK;
+  
+  /* If pi is correct, then pi->c must equal Hash(msg||G||g||g^pi->s*g^pi->c) */
+
+  /* Compute g^pi->s * g^pi->c */
+  gs = pbcext_element_G2_init();
+  pbcext_element_G2_mul(gs, g, pi->s);
+  Gc = pbcext_element_G2_init();
+  pbcext_element_G2_mul(Gc, G, pi->c);
+  gsGc = pbcext_element_G2_init();
+  pbcext_element_G2_add(gsGc, gs, Gc);
+  
+  /* Compute the hash */
+  if(!(hc = hash_init(HASH_SHA1))) GOTOENDRC(IERROR, spk_dlog_G2_verify);
+  if(hash_update(hc, msg, size) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_verify);
+  if(pbcext_element_G2_to_bytes(&bG, &len, G) == IERROR)
+    GOTOENDRC(IERROR, spk_dlog_G2_verify);
+  if(hash_update(hc, bG, len) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_verify);
+  if(pbcext_element_G2_to_bytes(&bg, &len, g) == IERROR)
+    GOTOENDRC(IERROR, spk_dlog_G2_verify);
+  if(hash_update(hc, bg, len) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_verify);
+  if(pbcext_element_G2_to_bytes(&bgsGc, &len, gsGc) == IERROR)
+    GOTOENDRC(IERROR, spk_dlog_G2_verify);
+  if(hash_update(hc, bgsGc, len) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_verify);
+  if(hash_finalize(hc) == IERROR) GOTOENDRC(IERROR, spk_dlog_G2_verify);
+
+  /* Compare the result with c */
+  c = pbcext_element_Fr_init();
+  pbcext_element_Fr_from_hash(c, hc->hash, hc->length);
+
+  if(pbcext_element_Fr_cmp(c, pi->c)) {
+    *ok = 0;
+  } else {
+    *ok = 1;
+  }
+    
+ spk_dlog_G2_verify_end:
+  pbcext_element_Fr_free(c);  
+  pbcext_element_G2_free(gs);
+  pbcext_element_G2_free(Gc);
+  pbcext_element_G2_free(gsGc);
+  if(bG) { mem_free(bG); bG = NULL; }
+  if(bg) { mem_free(bg); bg = NULL; }
+  if(bgsGc) { mem_free(bgsGc); bgsGc = NULL; }
+  if(hc) { hash_free(hc); hc = NULL; }
+  
+  return rc;
+  
+}
+
 int spk_dlog_GT_sign(spk_dlog_t *pi,
 		     pbcext_element_GT_t *G,
 		     pbcext_element_GT_t *g,

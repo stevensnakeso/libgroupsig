@@ -277,6 +277,86 @@ int bap24_open_verify(uint8_t *ok,
                      groupsig_key_t *grpkey);
 
 /**
+ * @typedef int bap24_link(groupsig_proof_t **proof,
+ *                        groupsig_key_t *grpkey,
+ *                        groupsig_key_t *memkey,
+ *                        message_t *msg,
+ *                        groupsig_signature_t **sigs,
+ *                        message_t **msgs,
+ *                        uint32_t n)
+ * @brief Issues a proof of several BAP24 signatures being
+ *        linked (issued by the same member.)
+ *
+ * @param[in,out] proof The proof to be issued.
+ * @param[in] grpkey The group key.
+ * @param[in] memkey The key used for issuing the individual signatures.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures to link.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+ * @return IOK or IERROR.
+ */
+int bap24_link(groupsig_proof_t **proof,
+                 groupsig_key_t *grpkey,
+                 groupsig_key_t *memkey,
+                 message_t *msg,
+                 groupsig_signature_t **sigs,
+                 message_t **msgs,
+                 uint32_t n);
+
+/**
+ * @fn int groupsig_verify_link(uint8_t *ok,
+ *                              groupsig_key_t *grpkey,
+ *                              groupsig_proof_t *proof,
+ *                              message_t *msg,
+ *                              groupsig_signature_t **sigs,
+ *                              message_t **msgs,
+ *                              uint32_t n)
+ * @brief Verifies proofs of several BAP24 signatures being linked.
+ *
+ * @param[in,out] ok Will be set to 1 (proof valid) or 0 (proof invalid).
+ * @param[in] proof The proof to be verified.
+ * @param[in] grpkey The group key.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+ * @return IOK or IERROR.
+ */
+int bap24_verify_link(uint8_t *ok,
+                       groupsig_key_t *grpkey,
+                       groupsig_proof_t *proof,
+                       message_t *msg,
+                       groupsig_signature_t **sigs,
+                       message_t **msgs,
+                       uint32_t n);
+
+
+/**
+ * @typedef int bap24_seqlink(groupsig_proof_t **proof,
+ *                              groupsig_key_t *grpkey,
+ *                              groupsig_key_t *memkey,
+ *                              message_t *msg,
+ *                              groupsig_signature_t **sigs,
+ *                              message_t **msgs,
+ *                              uint32_t n)
+ * @brief Issues a proof of several BAP24 signatures being
+ *        sequentially linked (issued by the same member.)
+ *
+ * @param[in,out] proof The proof to be issued.
+ * @param[in] grpkey The group key.
+ * @param[in] memkey The key used for issuing the individual signatures.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures to link.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+ * @return IOK or IERROR.
+ */
+                     
+/**
  * @var bap24_groupsig_bundle
  * @brief The set of functions to manage BAP24 groups.
  */
@@ -304,8 +384,8 @@ static const groupsig_t bap24_groupsig_bundle = {
  convert: NULL,
  unblind: NULL,
  identify: NULL,
- link: NULL,
- verify_link: NULL,
+ link: &bap24_link, /**< Issues proofs of several signatures being linked. */
+ verify_link: &bap24_verify_link, /**< Verifies proofs of several signatures being linked. */
  seqlink: NULL,
  verify_seqlink: NULL
 };

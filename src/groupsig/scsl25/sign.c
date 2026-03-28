@@ -142,7 +142,8 @@ int scsl25_sign(groupsig_signature_t *sig,
   scsl25_memkey = memkey->key;
   rc = IOK;
 
-  r = r1 = r2 = r3 = hscp = NULL;
+  r = r1 = r2 = r3 = NULL;
+  hscp = NULL;
   msg_msg = msg_scp = NULL;
   seq = NULL; hc = NULL;
 

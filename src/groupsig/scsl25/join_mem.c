@@ -63,7 +63,8 @@ int scsl25_join_mem(message_t **mout,
   rc = IOK;
   pi = NULL; bn = bmsg = bU = bpi = bu = NULL;
   n = NULL; U = NULL; aux = NULL;
-  _scsl25_memkey = tmp_scsl25_memkey = NULL;
+  _scsl25_memkey = NULL;
+  tmp_scsl25_memkey = NULL;
   
   scsl25_memkey = (scsl25_mem_key_t *) memkey->key;
   scsl25_grpkey = (scsl25_grp_key_t *) grpkey->key;

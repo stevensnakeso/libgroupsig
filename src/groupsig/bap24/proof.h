@@ -32,7 +32,7 @@
  * reference to is needed in order to verify the proof. Therefore, BAP24 proofs
  * are kind of detached signatures of a signature.
  */
-typedef spk_pairing_homomorphism_G2_t bap24_proof_t;
+typedef spk_dlog_t bap24_proof_t;
 
 /** 
  * @fn struct groupsig_proof_t* bap24_proof_init()

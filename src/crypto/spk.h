@@ -136,6 +136,58 @@ int spk_dlog_G1_verify(uint8_t *ok,
 		       pbcext_element_G1_t *g,
 		       spk_dlog_t *pi,
 		       byte_t *msg, uint32_t size);
+/**
+ * @fn int spk_dlog_G2_sign(spk_dlog_t_t *pi, 
+ *                          pbcext_element_G2_t *G, 
+ *                          pbcext_element_G2_t *g,
+ *                          pbcext_element_Fr_t *x, 
+ *                          byte_t *msg, 
+ *                          uint32_t size)
+ * Computes a conventional discrete log signature proof of knowledge for:
+ *   SPK[x: g^x mod p = G](msg).
+ * Where g and G are elements of G2 in a bilinear pairing.
+ *
+ * @param[in,out] pi An initialized spk_dlog_t structure.
+ * @param[in] G The result of g^x mod p.
+ * @param[in] g The modular exponentiation base.
+ * @param[in] x The (secret) exponent.
+ * @param[in] msg The message to sign.
+ * @param[in] size The size, in bytes, of the message. 
+ *
+ * @return IOR or IERROR.
+ */
+int spk_dlog_G2_sign(spk_dlog_t *pi,
+		     pbcext_element_G2_t *G,
+		     pbcext_element_G2_t *g,
+		     pbcext_element_Fr_t *x,
+		     byte_t *msg,
+		     uint32_t size);
+
+/**
+ * @fn int spk_dlog_G2_verify(uint8_t *ok,
+ *                            pbcext_element_G2_t *G, 
+ *                            pbcext_element_G2_t *g,
+ *                            byte_t *msg, 
+ *                            uint32_t size)
+ * Verifies a conventional discrete log signature proof of knowledge for:
+ *   SPK[x: g^x mod p = G](msg).
+ * Where g and G are elements of G2 in a bilinear pairing.
+ *
+ * @param[in,out] ok 1 if the proof verifies, 0 if not.
+ * @param[in] G The result of g^x mod p.
+ * @param[in] g The modular exponentiation base.
+ * @param[in] q The working modulo.
+ * @param[in] pi The proof.
+ * @param[in] msg The signed message.
+ * @param[in] size The size, in bytes, of the message.
+ *
+ * @return IOR or IERROR.
+ */
+int spk_dlog_G2_verify(uint8_t *ok,
+		       pbcext_element_G2_t *G,
+		       pbcext_element_G2_t *g,
+		       spk_dlog_t *pi,
+		       byte_t *msg, uint32_t size);
 
 /**
  * @fn int spk_dlog_GT_sign(spk_dlog_t_t *pi, 
