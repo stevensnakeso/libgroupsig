@@ -31,6 +31,7 @@
 #include "groupsig/dl21seq/grp_key.h"
 #include "groupsig/scsl25/grp_key.h"
 #include "groupsig/bap24/grp_key.h"
+#include "groupsig/sltgs23/grp_key.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,7 +40,7 @@ extern "C" {
  * @def GROUPSIG_GRP_KEY_HANDLES_N
  * @brief Number of supported group key implementations.
  */
-#define GROUPSIG_GRP_KEY_HANDLES_N 10
+#define GROUPSIG_GRP_KEY_HANDLES_N 11
 
 /**
  * @var GROUPSIG_GRP_KEY_HANDLES
@@ -56,6 +57,7 @@ static const grp_key_handle_t *GROUPSIG_GRP_KEY_HANDLES[GROUPSIG_GRP_KEY_HANDLES
   &dl21seq_grp_key_handle,
   &scsl25_grp_key_handle,
   &bap24_grp_key_handle,
+  &sltgs23_grp_key_handle,
 };
 
 #ifdef __cplusplus

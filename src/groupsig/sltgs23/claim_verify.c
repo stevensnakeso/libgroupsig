@@ -18,32 +18,32 @@
  */
 
 #include "sys/mem.h"
-#include "bbs04.h"
+#include "sltgs23.h"
 
-int bbs04_claim_verify(uint8_t *ok, groupsig_proof_t *proof, 
+int sltgs23_claim_verify(uint8_t *ok, groupsig_proof_t *proof, 
 		       groupsig_signature_t *sig, groupsig_key_t *grpkey) {
   
   /* groupsig_signature_t **sigs; */
   /* int rc; */
 
   /* if(!ok ||  */
-  /*    !proof || proof->scheme != GROUPSIG_BBS04_CODE || */
-  /*    !grpkey || grpkey->scheme != GROUPSIG_BBS04_CODE || */
-  /*    !sig || sig->scheme != GROUPSIG_BBS04_CODE) { */
-  /*   LOG_EINVAL(&logger, __FILE__, "bbs04_claim_verify", __LINE__, LOGERROR); */
+  /*    !proof || proof->scheme != GROUPSIG_SLTGS23_CODE || */
+  /*    !grpkey || grpkey->scheme != GROUPSIG_SLTGS23_CODE || */
+  /*    !sig || sig->scheme != GROUPSIG_SLTGS23_CODE) { */
+  /*   LOG_EINVAL(&logger, __FILE__, "sltgs23_claim_verify", __LINE__, LOGERROR); */
   /*   return IERROR; */
   /* } */
 
   /* /\* A claim is just similar to proving "equality" of N sigature, but just  */
   /*    for 1 signature *\/ */
   /* if(!(sigs = (groupsig_signature_t **) mem_malloc(sizeof(groupsig_signature_t *)))) { */
-  /*   LOG_ERRORCODE(&logger, __FILE__, "bbs04_claim", __LINE__, errno, LOGERROR); */
+  /*   LOG_ERRORCODE(&logger, __FILE__, "sltgs23_claim", __LINE__, errno, LOGERROR); */
   /*   return IERROR; */
   /* } */
 
   /* sigs[0] = sig; */
 
-  /* rc = bbs04_prove_equality_verify(ok, proof, grpkey, sigs, 1); */
+  /* rc = sltgs23_prove_equality_verify(ok, proof, grpkey, sigs, 1); */
   /* mem_free(sigs); sigs = NULL; */
 
   /* return rc; */

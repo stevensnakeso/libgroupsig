@@ -22,75 +22,75 @@
 #include "types.h"
 #include "sys/mem.h"
 #include "misc/misc.h"
-#include "groupsig/bbs04/identity.h"
+#include "groupsig/sltgs23/identity.h"
 
-identity_t* bbs04_identity_init() {
+identity_t* sltgs23_identity_init() {
 
   identity_t *id;
-  bbs04_identity_t *bbs04_id;
+  sltgs23_identity_t *sltgs23_id;
 
   if(!(id = (identity_t *) mem_malloc(sizeof(identity_t)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "bbs04_identity_init", __LINE__, errno, LOGERROR);
+    LOG_ERRORCODE(&logger, __FILE__, "sltgs23_identity_init", __LINE__, errno, LOGERROR);
     return NULL;
   }
 
-  if(!(bbs04_id = (bbs04_identity_t *) mem_malloc(sizeof(bbs04_identity_t)))) {
+  if(!(sltgs23_id = (sltgs23_identity_t *) mem_malloc(sizeof(sltgs23_identity_t)))) {
     mem_free(id); id = NULL;
-    LOG_ERRORCODE(&logger, __FILE__, "bbs04_identity_init", __LINE__, errno, LOGERROR);
+    LOG_ERRORCODE(&logger, __FILE__, "sltgs23_identity_init", __LINE__, errno, LOGERROR);
     return NULL;
   }
 
-  /* A BBS04 identity is the index pointing to an entry in the GML, we initialize
+  /* A SLTGS23 identity is the index pointing to an entry in the GML, we initialize
      it to UINT64_MAX */
-  *bbs04_id = UINT64_MAX;
+  *sltgs23_id = UINT64_MAX;
   
-  id->scheme = GROUPSIG_BBS04_CODE;
-  id->id = bbs04_id;
+  id->scheme = GROUPSIG_SLTGS23_CODE;
+  id->id = sltgs23_id;
 
   return id;
 
 }
 
-int bbs04_identity_free(identity_t *id) {
+int sltgs23_identity_free(identity_t *id) {
 
   if(!id) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "bbs04_identity_free", __LINE__,
+    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_identity_free", __LINE__,
   		   "Nothing to free.", LOGWARN);
     return IOK;
   }
 
-  if(id->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_identity_free", __LINE__, LOGERROR);
+  if(id->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_identity_free", __LINE__, LOGERROR);
     return IERROR;
   }
 
   /* Currently, it is just an uint64_t* */
-  mem_free((bbs04_identity_t *)id->id); id->id = NULL;
+  mem_free((sltgs23_identity_t *)id->id); id->id = NULL;
   mem_free(id); id = NULL;
 
   return IOK;
 
 }
 
-int bbs04_identity_copy(identity_t *dst, identity_t *src) {
+int sltgs23_identity_copy(identity_t *dst, identity_t *src) {
 
-  if(!dst || dst->scheme != GROUPSIG_BBS04_CODE ||
-     !src || src->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_identity_copy", __LINE__, LOGERROR);
+  if(!dst || dst->scheme != GROUPSIG_SLTGS23_CODE ||
+     !src || src->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_identity_copy", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  *((bbs04_identity_t *) dst->id) = *((bbs04_identity_t *) src->id);
+  *((sltgs23_identity_t *) dst->id) = *((sltgs23_identity_t *) src->id);
   
   return IOK;
 
 }
 
-uint8_t bbs04_identity_cmp(identity_t *id1, identity_t *id2) {
+uint8_t sltgs23_identity_cmp(identity_t *id1, identity_t *id2) {
 
   if(!id1 || !id2 || id1->scheme != id2->scheme || 
-     id1->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_identity_cmp", __LINE__, LOGERROR);
+     id1->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_identity_cmp", __LINE__, LOGERROR);
     return UINT8_MAX;
   }
 
@@ -100,41 +100,41 @@ uint8_t bbs04_identity_cmp(identity_t *id1, identity_t *id2) {
 
 }
 
-char* bbs04_identity_to_string(identity_t *id) {
+char* sltgs23_identity_to_string(identity_t *id) {
 
-  if(!id || id->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_identity_to_string", __LINE__, LOGERROR);
+  if(!id || id->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_identity_to_string", __LINE__, LOGERROR);
     return NULL;
   }
 
-  /* Currently, the BBS04 identities are uint64_t's */
-  return misc_uint642string(*((bbs04_identity_t *)id->id));
+  /* Currently, the SLTGS23 identities are uint64_t's */
+  return misc_uint642string(*((sltgs23_identity_t *)id->id));
 
 }
 
-identity_t* bbs04_identity_from_string(char *sid) {
+identity_t* sltgs23_identity_from_string(char *sid) {
 
   identity_t *id;
   uint64_t uid;
 
   if(!sid) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_identity_from_string", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_identity_from_string", __LINE__, LOGERROR);
     return NULL;
   }
 
-  if(!(id = bbs04_identity_init())) {
+  if(!(id = sltgs23_identity_init())) {
     return NULL;
   }
 
-  /* Currently, BBS04 identities are uint64_t's */
+  /* Currently, SLTGS23 identities are uint64_t's */
   errno = 0;
   uid = strtoul(sid, NULL, 10);
   if(errno) {
-    bbs04_identity_free(id); id = NULL;
+    sltgs23_identity_free(id); id = NULL;
     return NULL;
   }
 
-  *((bbs04_identity_t *) id->id) = uid;
+  *((sltgs23_identity_t *) id->id) = uid;
 
   return id;
 

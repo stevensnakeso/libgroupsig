@@ -28,19 +28,19 @@
 #include "misc/misc.h"
 #include "shim/pbc_ext.h"
 #include "sys/mem.h"
-#include "bbs04.h"
-#include "groupsig/bbs04/gml.h"
+#include "sltgs23.h"
+#include "groupsig/sltgs23/gml.h"
 
-gml_t* bbs04_gml_init() {
+gml_t* sltgs23_gml_init() {
 
   gml_t *gml;
 
   if(!(gml = (gml_t *) malloc(sizeof(gml_t)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "bbs04_gml_init", __LINE__, errno, LOGERROR);
+    LOG_ERRORCODE(&logger, __FILE__, "sltgs23_gml_init", __LINE__, errno, LOGERROR);
     return NULL;
   }
 
-  gml->scheme = GROUPSIG_BBS04_CODE;
+  gml->scheme = GROUPSIG_SLTGS23_CODE;
   gml->entries = NULL;
   gml->n = 0;
 
@@ -48,18 +48,18 @@ gml_t* bbs04_gml_init() {
 
 }
 
-int bbs04_gml_free(gml_t *gml) {
+int sltgs23_gml_free(gml_t *gml) {
 
   uint64_t i;
 
-  if(!gml || gml->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "bbs04_gml_free", __LINE__,
+  if(!gml || gml->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_gml_free", __LINE__,
   		   "Nothing to free.", LOGWARN);
     return IOK;
   }
 
   for(i=0; i<gml->n; i++) {
-    bbs04_gml_entry_free(gml->entries[i]); gml->entries[i] = NULL;
+    sltgs23_gml_entry_free(gml->entries[i]); gml->entries[i] = NULL;
   }
 
   mem_free(gml->entries); gml->entries = NULL;
@@ -69,17 +69,17 @@ int bbs04_gml_free(gml_t *gml) {
 
 }
 
-int bbs04_gml_insert(gml_t *gml, gml_entry_t *entry) {
+int sltgs23_gml_insert(gml_t *gml, gml_entry_t *entry) {
 
-  if(!gml || gml->scheme != GROUPSIG_BBS04_CODE ||
+  if(!gml || gml->scheme != GROUPSIG_SLTGS23_CODE ||
      gml->scheme != entry->scheme) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_insert", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_insert", __LINE__, LOGERROR);
     return IERROR;
   }
 
   if(!(gml->entries = (gml_entry_t **)
        realloc(gml->entries, sizeof(gml_entry_t *)*(gml->n+1)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "bbs04_gml_insert", __LINE__, errno,
+    LOG_ERRORCODE(&logger, __FILE__, "sltgs23_gml_insert", __LINE__, errno,
 		  LOGERROR);
     return IERROR;
   }
@@ -91,15 +91,15 @@ int bbs04_gml_insert(gml_t *gml, gml_entry_t *entry) {
 
 }
 
-int bbs04_gml_remove(gml_t *gml, uint64_t index) {
+int sltgs23_gml_remove(gml_t *gml, uint64_t index) {
 
-  if(!gml || gml->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_remove", __LINE__, LOGERROR);
+  if(!gml || gml->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_remove", __LINE__, LOGERROR);
     return IERROR;
   }
 
   if(index >= gml->n) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "bbs04_gml_remove", __LINE__,
+    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_gml_remove", __LINE__,
 		   "Invalid index.", LOGERROR);
     return IERROR;
   }
@@ -115,15 +115,15 @@ int bbs04_gml_remove(gml_t *gml, uint64_t index) {
 
 }
 
-gml_entry_t* bbs04_gml_get(gml_t *gml, uint64_t index) {
+gml_entry_t* sltgs23_gml_get(gml_t *gml, uint64_t index) {
 
-  if(!gml || gml->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_get", __LINE__, LOGERROR);
+  if(!gml || gml->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_get", __LINE__, LOGERROR);
     return NULL;
   }
 
   if(index >= gml->n) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "bbs04_gml_get", __LINE__, "Invalid index.",
+    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_gml_get", __LINE__, "Invalid index.",
   		   LOGERROR);
     return NULL;
   }
@@ -132,15 +132,15 @@ gml_entry_t* bbs04_gml_get(gml_t *gml, uint64_t index) {
 
 }
 
-int bbs04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml) {
+int sltgs23_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml) {
 
   byte_t *bentry, *_bytes;
   uint64_t i;
   int rc;
   uint32_t total_size, entry_size;
 
-  if (!bytes || !size || !gml || gml->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_export", __LINE__, LOGERROR);
+  if (!bytes || !size || !gml || gml->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
@@ -150,17 +150,17 @@ int bbs04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml) {
 
   /* Dump the number of entries */
   if (!(_bytes = mem_malloc(sizeof(uint64_t))))
-    GOTOENDRC(IERROR, bbs04_gml_export);
+    GOTOENDRC(IERROR, sltgs23_gml_export);
   memcpy(_bytes, &gml->n, sizeof(uint64_t));
   total_size = sizeof(uint64_t);
 
   /* Export the entries one by one */
   for (i=0; i<gml->n; i++) {
     if (gml_entry_export(&bentry, &entry_size, gml->entries[i]) == IERROR)
-      GOTOENDRC(IERROR, bbs04_gml_export);
+      GOTOENDRC(IERROR, sltgs23_gml_export);
     total_size += entry_size;
     if (!(_bytes = mem_realloc(_bytes, total_size)))
-      GOTOENDRC(IERROR, bbs04_gml_export);
+      GOTOENDRC(IERROR, sltgs23_gml_export);
     memcpy(&_bytes[total_size-entry_size], bentry, entry_size);
     mem_free(bentry); bentry = NULL;
   }
@@ -174,7 +174,7 @@ int bbs04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml) {
 
   *size = total_size;
 
- bbs04_gml_export_end:
+ sltgs23_gml_export_end:
 
   if (rc == IERROR) {
     if (_bytes) { mem_free(_bytes); _bytes = NULL; }
@@ -186,7 +186,7 @@ int bbs04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml) {
 
 }
 
-gml_t* bbs04_gml_import(byte_t *bytes, uint32_t size) {
+gml_t* sltgs23_gml_import(byte_t *bytes, uint32_t size) {
 
   gml_t *gml;
   uint64_t i;
@@ -194,7 +194,7 @@ gml_t* bbs04_gml_import(byte_t *bytes, uint32_t size) {
   int entry_size, rc, _entry_size;
 
   if(!bytes || !size) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_import", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_import", __LINE__, LOGERROR);
     return NULL;
   }
 
@@ -202,7 +202,7 @@ gml_t* bbs04_gml_import(byte_t *bytes, uint32_t size) {
   gml = NULL;
   rc = IOK;
 
-  if (!(gml = bbs04_gml_init())) GOTOENDRC(IERROR, bbs04_gml_import);
+  if (!(gml = sltgs23_gml_init())) GOTOENDRC(IERROR, sltgs23_gml_import);
 
   /* Read the nubmer of entries to process */
   memcpy(&gml->n, bytes, sizeof(uint64_t));
@@ -211,25 +211,25 @@ gml_t* bbs04_gml_import(byte_t *bytes, uint32_t size) {
   _entry_size = (size - read) / gml->n;
 
   if (!(gml->entries = mem_malloc(sizeof(gml_entry_t *)*gml->n)))
-    GOTOENDRC(IERROR, bbs04_gml_import);
+    GOTOENDRC(IERROR, sltgs23_gml_import);
 
   /* Import the entries one by one */
   for (i=0; i<gml->n; i++) {
 
-    if (!(gml->entries[i] = bbs04_gml_entry_import(&bytes[read], _entry_size)))
-      GOTOENDRC(IERROR, bbs04_gml_import);
+    if (!(gml->entries[i] = sltgs23_gml_entry_import(&bytes[read], _entry_size)))
+      GOTOENDRC(IERROR, sltgs23_gml_import);
 
-    if ((entry_size = bbs04_gml_entry_get_size(gml->entries[i])) == -1)
-      GOTOENDRC(IERROR, bbs04_gml_import);
+    if ((entry_size = sltgs23_gml_entry_get_size(gml->entries[i])) == -1)
+      GOTOENDRC(IERROR, sltgs23_gml_import);
 
     read += entry_size;
 
   }
 
- bbs04_gml_import_end:
+ sltgs23_gml_import_end:
 
   if (rc == IERROR) {
-    bbs04_gml_free(gml);
+    sltgs23_gml_free(gml);
     gml = NULL;
   }
 
@@ -237,17 +237,17 @@ gml_t* bbs04_gml_import(byte_t *bytes, uint32_t size) {
 
 }
 
-gml_entry_t* bbs04_gml_entry_init() {
+gml_entry_t* sltgs23_gml_entry_init() {
 
   gml_entry_t *entry;
 
   if(!(entry = (gml_entry_t *) malloc(sizeof(gml_entry_t)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "bbs04_gml_entry_init", __LINE__,
+    LOG_ERRORCODE(&logger, __FILE__, "sltgs23_gml_entry_init", __LINE__,
 		  errno, LOGERROR);
     return NULL;
   }
 
-  entry->scheme = GROUPSIG_BBS04_CODE;
+  entry->scheme = GROUPSIG_SLTGS23_CODE;
   entry->id = 0;
   entry->data = NULL;
 
@@ -256,12 +256,12 @@ gml_entry_t* bbs04_gml_entry_init() {
 }
 
 
-int bbs04_gml_entry_free(gml_entry_t *entry) {
+int sltgs23_gml_entry_free(gml_entry_t *entry) {
 
   int rc;
 
   if(!entry) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "bbs04_gml_entry_free", __LINE__,
+    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_gml_entry_free", __LINE__,
 		   "Nothing to free.", LOGWARN);
     return IOK;
   }
@@ -279,12 +279,12 @@ int bbs04_gml_entry_free(gml_entry_t *entry) {
 
 }
 
-int bbs04_gml_entry_get_size(gml_entry_t *entry) {
+int sltgs23_gml_entry_get_size(gml_entry_t *entry) {
 
   uint64_t sG1;
 
   if (!entry) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_entry_get_size", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_entry_get_size", __LINE__, LOGERROR);
     return -1;
   }
 
@@ -298,7 +298,7 @@ int bbs04_gml_entry_get_size(gml_entry_t *entry) {
 
 }
 
-int bbs04_gml_entry_export(byte_t **bytes,
+int sltgs23_gml_entry_export(byte_t **bytes,
 			   uint32_t *size,
 			   gml_entry_t *entry) {
 
@@ -306,12 +306,12 @@ int bbs04_gml_entry_export(byte_t **bytes,
   uint64_t _size, len, offset;
 
   if (!bytes || !size || !entry) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_entry_export", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_entry_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
   /* Calculate size */
-  if ((_size = bbs04_gml_entry_get_size(entry)) == -1) return IERROR;
+  if ((_size = sltgs23_gml_entry_get_size(entry)) == -1) return IERROR;
   /* _size += sizeof(int) + sizeof(uint64_t); */
 
   if (!(_bytes = mem_malloc(sizeof(byte_t)*_size))) return IERROR;
@@ -320,7 +320,7 @@ int bbs04_gml_entry_export(byte_t **bytes,
   memcpy(_bytes, &entry->id, sizeof(uint64_t));
   offset = sizeof(uint64_t);
 
-  /* Next, dump the data, which for BBS04 is just the G1 element */
+  /* Next, dump the data, which for SLTGS23 is just the G1 element */
   __bytes = &_bytes[offset];
   if (pbcext_dump_element_G1_bytes(&__bytes,
 				   &len,
@@ -332,7 +332,7 @@ int bbs04_gml_entry_export(byte_t **bytes,
 
   /* Sanity check */
   if (offset != _size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_gml_entry_export", __LINE__,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_gml_entry_export", __LINE__,
 		      EDQUOT, "Unexpected size.", LOGERROR);
     mem_free(_bytes); _bytes = NULL;
     return IERROR;
@@ -352,17 +352,17 @@ int bbs04_gml_entry_export(byte_t **bytes,
 
 }
 
-gml_entry_t* bbs04_gml_entry_import(byte_t *bytes, uint32_t size) {
+gml_entry_t* sltgs23_gml_entry_import(byte_t *bytes, uint32_t size) {
 
   gml_entry_t *entry;
   uint64_t len, offset;
 
   if (!bytes || !size) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_entry_import", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_entry_import", __LINE__, LOGERROR);
     return NULL;
   }
 
-  if (!(entry = bbs04_gml_entry_init())) return NULL;
+  if (!(entry = sltgs23_gml_entry_init())) return NULL;
 
   /* First, read the identity */
   memcpy(&entry->id, bytes, sizeof(uint64_t));
@@ -370,19 +370,19 @@ gml_entry_t* bbs04_gml_entry_import(byte_t *bytes, uint32_t size) {
 
   /* Next, read the data (just a G1 element) */
   if(!(entry->data = pbcext_element_G1_init())) {
-    bbs04_gml_entry_free(entry); entry = NULL;
+    sltgs23_gml_entry_free(entry); entry = NULL;
     return NULL;
   }
 
   if (pbcext_get_element_G1_bytes(entry->data,
 				  &len,
 				  &bytes[offset]) == IERROR) {
-    bbs04_gml_entry_free(entry); entry = NULL;
+    sltgs23_gml_entry_free(entry); entry = NULL;
     return NULL;
   }
 
   if (!len) {
-    bbs04_gml_entry_free(entry); entry = NULL;
+    sltgs23_gml_entry_free(entry); entry = NULL;
     return NULL;
   }
 
@@ -390,9 +390,9 @@ gml_entry_t* bbs04_gml_entry_import(byte_t *bytes, uint32_t size) {
 
     /* Sanity check */
   if (offset != size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_gml_entry_import", __LINE__,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_gml_entry_import", __LINE__,
 		      EDQUOT, "Unexpected size.", LOGERROR);
-    bbs04_gml_entry_free(entry); entry = NULL;
+    sltgs23_gml_entry_free(entry); entry = NULL;
     return NULL;
   }
 
@@ -400,13 +400,13 @@ gml_entry_t* bbs04_gml_entry_import(byte_t *bytes, uint32_t size) {
 
 }
 
-char* bbs04_gml_entry_to_string(gml_entry_t *entry) {
+char* sltgs23_gml_entry_to_string(gml_entry_t *entry) {
 
   char *sdata, *sid, *sentry;
   uint64_t sdata_len, sentry_len;
 
   if(!entry) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_gml_entry_to_string",
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_gml_entry_to_string",
 	       __LINE__, LOGERROR);
     return NULL;
   }
@@ -428,7 +428,7 @@ char* bbs04_gml_entry_to_string(gml_entry_t *entry) {
   sentry_len = strlen(sid)+sdata_len+strlen("\t");
 
   if(!(sentry = (char *) mem_malloc(sizeof(char)*sentry_len+1))) {
-    LOG_ERRORCODE(&logger, __FILE__, "bbs04_gml_entry_to_string",
+    LOG_ERRORCODE(&logger, __FILE__, "sltgs23_gml_entry_to_string",
 		  __LINE__, errno, LOGERROR);
     free(sdata); sdata = NULL;
     mem_free(sid); sid = NULL;

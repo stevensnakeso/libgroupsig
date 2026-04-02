@@ -71,7 +71,7 @@ int bap24_verify_link(uint8_t *ok,
   if(pbcext_element_G2_clear(nym_) == IERROR) GOTOENDRC(IERROR, bap24_verify_link);
   
   /* 遍历所有签名：验证单签名并累加假名和范围哈希 */
-  for (i=0; i<n; i++ ) {s
+  for (i=0; i<n; i++ ) {
 
 #ifndef PROFILE
     /* 验证单个群签名的有效性 */

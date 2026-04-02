@@ -33,10 +33,10 @@
 #include "shim/base64.h"
 #include "shim/pbc_ext.h"
 
-#include "bbs04.h"
-#include "groupsig/bbs04/grp_key.h"
+#include "sltgs23.h"
+#include "groupsig/sltgs23/grp_key.h"
 
-groupsig_key_t* bbs04_grp_key_init() {
+groupsig_key_t* sltgs23_grp_key_init() {
 
   groupsig_key_t *key;
 
@@ -44,43 +44,43 @@ groupsig_key_t* bbs04_grp_key_init() {
     return NULL;
   }
 
-  if(!(key->key = (bbs04_grp_key_t *) mem_malloc(sizeof(bbs04_grp_key_t)))) {
+  if(!(key->key = (sltgs23_grp_key_t *) mem_malloc(sizeof(sltgs23_grp_key_t)))) {
     mem_free(key); key = NULL;
     return NULL;
   }
 
-  key->scheme = GROUPSIG_BBS04_CODE;
+  key->scheme = GROUPSIG_SLTGS23_CODE;
   
   return key;
   
 }
 
-int bbs04_grp_key_free(groupsig_key_t *key) {
+int sltgs23_grp_key_free(groupsig_key_t *key) {
 
-  bbs04_grp_key_t *bbs04_key;
+  sltgs23_grp_key_t *sltgs23_key;
 
   if(!key) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "bbs04_grp_key_free", __LINE__, 
+    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_grp_key_free", __LINE__, 
 		   "Nothing to free.", LOGWARN);
     return IOK;  
   }
 
-  if(key->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_grp_key_free", __LINE__, LOGERROR);
+  if(key->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_grp_key_free", __LINE__, LOGERROR);
     return IERROR;	       
   }
 
   if(key->key) {
-    bbs04_key = key->key;
-    if(bbs04_key->g1) { pbcext_element_G1_free(bbs04_key->g1); bbs04_key->g1 = NULL; }
-    if(bbs04_key->g2) { pbcext_element_G2_free(bbs04_key->g2); bbs04_key->g2 = NULL; }
-    if(bbs04_key->h) { pbcext_element_G1_free(bbs04_key->h); bbs04_key->h = NULL; }
-    if(bbs04_key->u) { pbcext_element_G1_free(bbs04_key->u); bbs04_key->u = NULL; }
-    if(bbs04_key->v) { pbcext_element_G1_free(bbs04_key->v); bbs04_key->v = NULL; }
-    if(bbs04_key->w) { pbcext_element_G2_free(bbs04_key->w); bbs04_key->w = NULL; }
-    if(bbs04_key->hg2) { pbcext_element_GT_free(bbs04_key->hg2); bbs04_key->hg2 = NULL; }
-    if(bbs04_key->hw) { pbcext_element_GT_free(bbs04_key->hw); bbs04_key->hw = NULL; }
-    if(bbs04_key->g1g2) { pbcext_element_GT_free(bbs04_key->g1g2); bbs04_key->g1g2 = NULL; }
+    sltgs23_key = key->key;
+    if(sltgs23_key->g1) { pbcext_element_G1_free(sltgs23_key->g1); sltgs23_key->g1 = NULL; }
+    if(sltgs23_key->g2) { pbcext_element_G2_free(sltgs23_key->g2); sltgs23_key->g2 = NULL; }
+    if(sltgs23_key->h) { pbcext_element_G1_free(sltgs23_key->h); sltgs23_key->h = NULL; }
+    if(sltgs23_key->u) { pbcext_element_G1_free(sltgs23_key->u); sltgs23_key->u = NULL; }
+    if(sltgs23_key->v) { pbcext_element_G1_free(sltgs23_key->v); sltgs23_key->v = NULL; }
+    if(sltgs23_key->w) { pbcext_element_G2_free(sltgs23_key->w); sltgs23_key->w = NULL; }
+    if(sltgs23_key->hg2) { pbcext_element_GT_free(sltgs23_key->hg2); sltgs23_key->hg2 = NULL; }
+    if(sltgs23_key->hw) { pbcext_element_GT_free(sltgs23_key->hw); sltgs23_key->hw = NULL; }
+    if(sltgs23_key->g1g2) { pbcext_element_GT_free(sltgs23_key->g1g2); sltgs23_key->g1g2 = NULL; }
     mem_free(key->key); key->key = NULL;
   }
 
@@ -90,88 +90,88 @@ int bbs04_grp_key_free(groupsig_key_t *key) {
 
 }
 
-int bbs04_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
+int sltgs23_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
-  bbs04_grp_key_t *bbs04_dst, *bbs04_src;
+  sltgs23_grp_key_t *sltgs23_dst, *sltgs23_src;
   int rc;
   
-  if(!dst || dst->scheme != GROUPSIG_BBS04_CODE ||
-     !src || src->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_grp_key_copy", __LINE__, LOGERROR);
+  if(!dst || dst->scheme != GROUPSIG_SLTGS23_CODE ||
+     !src || src->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_grp_key_copy", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  bbs04_dst = dst->key;
-  bbs04_src = src->key;
+  sltgs23_dst = dst->key;
+  sltgs23_src = src->key;
   rc = IOK;
 
   /* Copy the elements */
-  if(!(bbs04_dst->g1 = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);
-  if(pbcext_element_G1_set(bbs04_dst->g1, bbs04_src->g1) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);
-  if(!(bbs04_dst->g2 = pbcext_element_G2_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(pbcext_element_G2_set(bbs04_dst->g2, bbs04_src->g2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);
-  if(!(bbs04_dst->h = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(pbcext_element_G1_set(bbs04_dst->h, bbs04_src->h) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);
-  if(!(bbs04_dst->u = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(pbcext_element_G1_set(bbs04_dst->u, bbs04_src->u) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(!(bbs04_dst->v = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(pbcext_element_G1_set(bbs04_dst->v, bbs04_src->v) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(!(bbs04_dst->w = pbcext_element_G2_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(pbcext_element_G2_set(bbs04_dst->w, bbs04_src->w) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);
-  if(!(bbs04_dst->hw = pbcext_element_GT_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(pbcext_element_GT_set(bbs04_dst->hw, bbs04_src->hw) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(!(bbs04_dst->hg2 = pbcext_element_GT_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(pbcext_element_GT_set(bbs04_dst->hg2, bbs04_src->hg2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(!(bbs04_dst->g1g2 = pbcext_element_GT_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);  
-  if(pbcext_element_GT_set(bbs04_dst->g1g2, bbs04_src->g1g2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_copy);
+  if(!(sltgs23_dst->g1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);
+  if(pbcext_element_G1_set(sltgs23_dst->g1, sltgs23_src->g1) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);
+  if(!(sltgs23_dst->g2 = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(pbcext_element_G2_set(sltgs23_dst->g2, sltgs23_src->g2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);
+  if(!(sltgs23_dst->h = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(pbcext_element_G1_set(sltgs23_dst->h, sltgs23_src->h) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);
+  if(!(sltgs23_dst->u = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(pbcext_element_G1_set(sltgs23_dst->u, sltgs23_src->u) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(!(sltgs23_dst->v = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(pbcext_element_G1_set(sltgs23_dst->v, sltgs23_src->v) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(!(sltgs23_dst->w = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(pbcext_element_G2_set(sltgs23_dst->w, sltgs23_src->w) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);
+  if(!(sltgs23_dst->hw = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(pbcext_element_GT_set(sltgs23_dst->hw, sltgs23_src->hw) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(!(sltgs23_dst->hg2 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(pbcext_element_GT_set(sltgs23_dst->hg2, sltgs23_src->hg2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(!(sltgs23_dst->g1g2 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);  
+  if(pbcext_element_GT_set(sltgs23_dst->g1g2, sltgs23_src->g1g2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_copy);
 
- bbs04_grp_key_copy_end:
+ sltgs23_grp_key_copy_end:
 
   if(rc == IERROR) {
-    if (bbs04_dst->g1) { pbcext_element_G1_free(bbs04_dst->g1); bbs04_dst->g1 = NULL; }
-    if (bbs04_dst->g2) { pbcext_element_G2_free(bbs04_dst->g2); bbs04_dst->g2 = NULL; }
-    if (bbs04_dst->h) { pbcext_element_G1_free(bbs04_dst->h); bbs04_dst->h = NULL; }
-    if (bbs04_dst->u) { pbcext_element_G1_free(bbs04_dst->u); bbs04_dst->u = NULL; }
-    if (bbs04_dst->v) { pbcext_element_G1_free(bbs04_dst->v); bbs04_dst->v = NULL; }
-    if (bbs04_dst->w) { pbcext_element_G2_free(bbs04_dst->w); bbs04_dst->w = NULL; }
-    if (bbs04_dst->hw) { pbcext_element_GT_free(bbs04_dst->hw); bbs04_dst->hw = NULL; }
-    if (bbs04_dst->hg2) { pbcext_element_GT_free(bbs04_dst->hg2); bbs04_dst->hg2 = NULL; }
-    if (bbs04_dst->g1g2) { pbcext_element_GT_free(bbs04_dst->g1g2); bbs04_dst->g1g2 = NULL; }
+    if (sltgs23_dst->g1) { pbcext_element_G1_free(sltgs23_dst->g1); sltgs23_dst->g1 = NULL; }
+    if (sltgs23_dst->g2) { pbcext_element_G2_free(sltgs23_dst->g2); sltgs23_dst->g2 = NULL; }
+    if (sltgs23_dst->h) { pbcext_element_G1_free(sltgs23_dst->h); sltgs23_dst->h = NULL; }
+    if (sltgs23_dst->u) { pbcext_element_G1_free(sltgs23_dst->u); sltgs23_dst->u = NULL; }
+    if (sltgs23_dst->v) { pbcext_element_G1_free(sltgs23_dst->v); sltgs23_dst->v = NULL; }
+    if (sltgs23_dst->w) { pbcext_element_G2_free(sltgs23_dst->w); sltgs23_dst->w = NULL; }
+    if (sltgs23_dst->hw) { pbcext_element_GT_free(sltgs23_dst->hw); sltgs23_dst->hw = NULL; }
+    if (sltgs23_dst->hg2) { pbcext_element_GT_free(sltgs23_dst->hg2); sltgs23_dst->hg2 = NULL; }
+    if (sltgs23_dst->g1g2) { pbcext_element_GT_free(sltgs23_dst->g1g2); sltgs23_dst->g1g2 = NULL; }
   }
   
   return rc;
 
 }
 
-int bbs04_grp_key_get_size(groupsig_key_t *key) {
+int sltgs23_grp_key_get_size(groupsig_key_t *key) {
 
-  bbs04_grp_key_t *bbs04_key;
+  sltgs23_grp_key_t *sltgs23_key;
   uint64_t size64, sg1, sg2, sh, su, sv, sw, shw, shg2, sg1g2;
   
-  if(!key || key->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_grp_key_get_size", __LINE__, LOGERROR);
+  if(!key || key->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_grp_key_get_size", __LINE__, LOGERROR);
     return -1;
   }
 
-  bbs04_key = key->key;
+  sltgs23_key = key->key;
 
   if(pbcext_element_G1_byte_size(&sg1) == IERROR) return -1;
   if(pbcext_element_G2_byte_size(&sg2) == IERROR) return -1;
@@ -191,11 +191,11 @@ int bbs04_grp_key_get_size(groupsig_key_t *key) {
 
 }
 
-int bbs04_grp_key_export(byte_t **bytes,
+int sltgs23_grp_key_export(byte_t **bytes,
 			 uint32_t *size,
 			 groupsig_key_t *key) {
 
-  bbs04_grp_key_t *bbs04_key;
+  sltgs23_grp_key_t *sltgs23_key;
   byte_t *_bytes, *__bytes;
   uint64_t len;
   int _size, ctr, rc;
@@ -203,17 +203,17 @@ int bbs04_grp_key_export(byte_t **bytes,
 
   if(!bytes ||
      !size ||
-     !key || key->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_grp_key_export", __LINE__, LOGERROR);
+     !key || key->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_grp_key_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
   rc = IOK;
   ctr = 0;
-  bbs04_key = key->key;
+  sltgs23_key = key->key;
   
   /* Get the number of bytes to represent the key */
-  if ((_size = bbs04_grp_key_get_size(key)) == -1) {
+  if ((_size = sltgs23_grp_key_get_size(key)) == -1) {
     return IERROR;
   }
 
@@ -221,8 +221,8 @@ int bbs04_grp_key_export(byte_t **bytes,
     return IERROR;
   }
   
-  /* Dump GROUPSIG_BBS04_CODE */
-  code = GROUPSIG_BBS04_CODE;
+  /* Dump GROUPSIG_SLTGS23_CODE */
+  code = GROUPSIG_SLTGS23_CODE;
   _bytes[ctr++] = code;
 
   /* Dump key type */
@@ -231,56 +231,56 @@ int bbs04_grp_key_export(byte_t **bytes,
 
   /* Dump g1 */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, bbs04_key->g1) == IERROR) 
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_key->g1) == IERROR) 
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
   
   /* Dump g2 */
   __bytes = &_bytes[ctr];  
-  if(pbcext_dump_element_G2_bytes(&__bytes, &len, bbs04_key->g2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_G2_bytes(&__bytes, &len, sltgs23_key->g2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
   
   /* Dump h */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, bbs04_key->h) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_key->h) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
 
   /* Dump u */
   __bytes = &_bytes[ctr];  
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, bbs04_key->u) == IERROR)    
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_key->u) == IERROR)    
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
 
   /* Dump v */
   __bytes = &_bytes[ctr];  
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, bbs04_key->v) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_key->v) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
 
   /* Dump w */
   __bytes = &_bytes[ctr];  
-  if(pbcext_dump_element_G2_bytes(&__bytes, &len, bbs04_key->w) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_G2_bytes(&__bytes, &len, sltgs23_key->w) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
 
   /* Dump hw */
   __bytes = &_bytes[ctr];  
-  if(pbcext_dump_element_GT_bytes(&__bytes, &len, bbs04_key->hw) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, sltgs23_key->hw) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
 
   /* Dump hg2 */
   __bytes = &_bytes[ctr];  
-  if(pbcext_dump_element_GT_bytes(&__bytes, &len, bbs04_key->hg2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, sltgs23_key->hg2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
 
   /* Dump g1g2 */
   __bytes = &_bytes[ctr];  
-  if(pbcext_dump_element_GT_bytes(&__bytes, &len, bbs04_key->g1g2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+  if(pbcext_dump_element_GT_bytes(&__bytes, &len, sltgs23_key->g1g2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   ctr += len;
 
   /* Prepare the return */
@@ -293,14 +293,14 @@ int bbs04_grp_key_export(byte_t **bytes,
 
   /* Sanity check */
   if (ctr != _size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_grp_key_export", __LINE__, 
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_grp_key_export", __LINE__, 
 		      EDQUOT, "Unexpected size.", LOGERROR);
-    GOTOENDRC(IERROR, bbs04_grp_key_export);
+    GOTOENDRC(IERROR, sltgs23_grp_key_export);
   }
 
   *size = ctr;  
   
- bbs04_grp_key_export_end:
+ sltgs23_grp_key_export_end:
 
   if (rc == IERROR) {
     if(_bytes) { mem_free(_bytes); _bytes = NULL; }
@@ -310,117 +310,117 @@ int bbs04_grp_key_export(byte_t **bytes,
   
 }
 
-groupsig_key_t* bbs04_grp_key_import(byte_t *source, uint32_t size) {
+groupsig_key_t* sltgs23_grp_key_import(byte_t *source, uint32_t size) {
 
   groupsig_key_t *key;
-  bbs04_grp_key_t *bbs04_key;
+  sltgs23_grp_key_t *sltgs23_key;
   uint64_t len;
   byte_t scheme, type;
   int rc, ctr;
   
   if(!source || !size) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_grp_key_import", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_grp_key_import", __LINE__, LOGERROR);
     return NULL;
   }
 
   rc = IOK;
   ctr = 0;
   
-  if(!(key = bbs04_grp_key_init())) {
+  if(!(key = sltgs23_grp_key_init())) {
     return NULL;
   }
 
-  bbs04_key = key->key;
+  sltgs23_key = key->key;
 
   /* First byte: scheme */
   scheme = source[ctr++];
   if(scheme != key->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_grp_key_import", __LINE__, 
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_grp_key_import", __LINE__, 
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   }
 
   /* Next  byte: key type */
   type = source[ctr++];
   if(type != GROUPSIG_KEY_GRPKEY) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_grp_key_import", __LINE__,
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_grp_key_import", __LINE__,
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   }
 
   /* Get g1 */
-  if(!(bbs04_key->g1 = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_G1_bytes(bbs04_key->g1, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->g1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_G1_bytes(sltgs23_key->g1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;  
 
   /* Get g2 */
-  if(!(bbs04_key->g2 = pbcext_element_G2_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_G2_bytes(bbs04_key->g2, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->g2 = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_G2_bytes(sltgs23_key->g2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;  
 
   /* Get h */
-  if(!(bbs04_key->h = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_G1_bytes(bbs04_key->h, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->h = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_G1_bytes(sltgs23_key->h, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;  
 
   /* Get u */
-  if(!(bbs04_key->u = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_G1_bytes(bbs04_key->u, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->u = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_G1_bytes(sltgs23_key->u, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;  
 
   /* Get v */
-  if(!(bbs04_key->v = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_G1_bytes(bbs04_key->v, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->v = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_G1_bytes(sltgs23_key->v, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;   
 
   /* Get w */
-  if(!(bbs04_key->w = pbcext_element_G2_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_G2_bytes(bbs04_key->w, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->w = pbcext_element_G2_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_G2_bytes(sltgs23_key->w, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;  
 
   /* Get hw */
-  if(!(bbs04_key->hw = pbcext_element_GT_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_GT_bytes(bbs04_key->hw, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->hw = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_GT_bytes(sltgs23_key->hw, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;
   
   /* Get hg2 */
-  if(!(bbs04_key->hg2 = pbcext_element_GT_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_GT_bytes(bbs04_key->hg2, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->hg2 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_GT_bytes(sltgs23_key->hg2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;  
 
   /* Get g1g2 */
-  if(!(bbs04_key->g1g2 = pbcext_element_GT_init()))
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
-  if(pbcext_get_element_GT_bytes(bbs04_key->g1g2, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_grp_key_import);
+  if(!(sltgs23_key->g1g2 = pbcext_element_GT_init()))
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
+  if(pbcext_get_element_GT_bytes(sltgs23_key->g1g2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_grp_key_import);
   ctr += len;  
   
- bbs04_grp_key_import_end:
+ sltgs23_grp_key_import_end:
   
-  if(rc == IERROR && key) { bbs04_grp_key_free(key); key = NULL; }
+  if(rc == IERROR && key) { sltgs23_grp_key_free(key); key = NULL; }
   if(rc == IOK) return key;
   
   return NULL; 
   
 }
 
-char* bbs04_grp_key_to_string(groupsig_key_t *key) { 
+char* sltgs23_grp_key_to_string(groupsig_key_t *key) { 
   return NULL;
 }
 

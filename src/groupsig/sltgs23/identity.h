@@ -17,37 +17,37 @@
  * under the License.
  */
 
-#ifndef _BBS04_IDENTITY_H
-#define _BBS04_IDENTITY_H
+#ifndef _SLTGS23_IDENTITY_H
+#define _SLTGS23_IDENTITY_H
 
 #include "include/identity.h"
-#include "bbs04.h"
+#include "sltgs23.h"
 
 /**
- * BBS04 identities.
+ * SLTGS23 identities.
  */
-typedef uint64_t bbs04_identity_t;
+typedef uint64_t sltgs23_identity_t;
 
 /** 
- * @fn void* bbs04_identity_init()
- * @brief Allocates memory for a BBS04 identity and sets its values to defaults.
+ * @fn void* sltgs23_identity_init()
+ * @brief Allocates memory for a SLTGS23 identity and sets its values to defaults.
  * 
  * @return A pointer to the allocated memory or NULL if error.
  */
-identity_t* bbs04_identity_init();
+identity_t* sltgs23_identity_init();
 
 /** 
- * @fn int bbs04_identity_free(void *id)
- * @brief Frees the memory allocated for a BBS04 identity.
+ * @fn int sltgs23_identity_free(void *id)
+ * @brief Frees the memory allocated for a SLTGS23 identity.
  *
  * @param[in,out] id The identity to free.
  * 
  * @return IOK.
  */
-int bbs04_identity_free(identity_t *id);
+int sltgs23_identity_free(identity_t *id);
 
 /** 
- * @fn int bbs04_identity_copy(identity_t *dst, identity_t *src)
+ * @fn int sltgs23_identity_copy(identity_t *dst, identity_t *src)
  * @brief Copies the source identity into the destination identity.
  *
  * @param[in,out] dst The destination identity. Initialized by the caller.
@@ -55,10 +55,10 @@ int bbs04_identity_free(identity_t *id);
  * 
  * @return IOK or IERROR.
  */
-int bbs04_identity_copy(identity_t *dst, identity_t *src);
+int sltgs23_identity_copy(identity_t *dst, identity_t *src);
 
 /** 
- * @fn uint8_t bbs04_identity_cmp(identity_t *id1, identity_t *id2);
+ * @fn uint8_t sltgs23_identity_cmp(identity_t *id1, identity_t *id2);
  * @brief Returns 0 if both ids are the same, != 0 otherwise.
  *
  * @param[in] id1 The first id to compare. 
@@ -67,42 +67,42 @@ int bbs04_identity_copy(identity_t *dst, identity_t *src);
  * @return 0 if both ids are the same, != otherwise. In case of error,
  *  errno is set consequently.
  */
-uint8_t bbs04_identity_cmp(identity_t *id1, identity_t *id2);
+uint8_t sltgs23_identity_cmp(identity_t *id1, identity_t *id2);
 
 /** 
- * @fn char* bbs04_identity_to_string(identity_t *id)
- * @brief Converts the given BBS04 id into a printable string.
+ * @fn char* sltgs23_identity_to_string(identity_t *id)
+ * @brief Converts the given SLTGS23 id into a printable string.
  *
  * @param[in] id The ID to convert.
  * 
  * @return A pointer to the produced string or NULL if error.
  */
-char* bbs04_identity_to_string(identity_t *id);
+char* sltgs23_identity_to_string(identity_t *id);
 
 /** 
- * @fn identity_t* bbs04_identity_from_string(char *sid)
- * @brief Parses the given string as  BBS04 identity.
+ * @fn identity_t* sltgs23_identity_from_string(char *sid)
+ * @brief Parses the given string as  SLTGS23 identity.
  *
- * @param[in] sid The string containing the BBS04 identity.
+ * @param[in] sid The string containing the SLTGS23 identity.
  * 
- * @return A pointer to the retrieved BBS04 identity or NULL if error.
+ * @return A pointer to the retrieved SLTGS23 identity or NULL if error.
  */
-identity_t* bbs04_identity_from_string(char *sid);
+identity_t* sltgs23_identity_from_string(char *sid);
 
 /**
- * @var bbs04_identity_handle
- * @brief Set of functions to manage BBS04 identities.
+ * @var sltgs23_identity_handle
+ * @brief Set of functions to manage SLTGS23 identities.
  */
-static const identity_handle_t bbs04_identity_handle = {
-  GROUPSIG_BBS04_CODE, /**< Scheme code. */
-  &bbs04_identity_init, /**< Identity initialization. */
-  &bbs04_identity_free, /**< Identity free.*/
-  &bbs04_identity_copy, /**< Copies identities. */
-  &bbs04_identity_cmp, /**< Compares identities. */
-  &bbs04_identity_to_string, /**< Converts identities to printable strings. */
-  &bbs04_identity_from_string /**< Imports identities from strings. */
+static const identity_handle_t sltgs23_identity_handle = {
+  GROUPSIG_SLTGS23_CODE, /**< Scheme code. */
+  &sltgs23_identity_init, /**< Identity initialization. */
+  &sltgs23_identity_free, /**< Identity free.*/
+  &sltgs23_identity_copy, /**< Copies identities. */
+  &sltgs23_identity_cmp, /**< Compares identities. */
+  &sltgs23_identity_to_string, /**< Converts identities to printable strings. */
+  &sltgs23_identity_from_string /**< Imports identities from strings. */
 };
 
-#endif /* _BBS04_IDENTITY_H */
+#endif /* _SLTGS23_IDENTITY_H */
 
 /* identity.h ends here */

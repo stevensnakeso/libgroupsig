@@ -21,14 +21,14 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "bbs04.h"
-#include "groupsig/bbs04/grp_key.h"
-#include "groupsig/bbs04/mem_key.h"
+#include "sltgs23.h"
+#include "groupsig/sltgs23/grp_key.h"
+#include "groupsig/sltgs23/mem_key.h"
 #include "bigz.h"
 #include "sys/mem.h"
 
 /** 
- * @fn int bbs04_join_mem(groupsig_key_t *memkey, groupsig_key_t *grpkey)
+ * @fn int sltgs23_join_mem(groupsig_key_t *memkey, groupsig_key_t *grpkey)
  * @brief Member side join procedure.
  * 
  * The original proposal does not include a "join" procedure. Instead, it is the
@@ -41,15 +41,15 @@
  * 
  * @return IOK or IERROR.
  */
-int bbs04_join_mem(message_t **mout, groupsig_key_t *memkey,
+int sltgs23_join_mem(message_t **mout, groupsig_key_t *memkey,
 		   int seq, message_t *min, groupsig_key_t *grpkey) {
 
   groupsig_key_t *_memkey;
   int rc;
   
-  if(!memkey || memkey->scheme != GROUPSIG_BBS04_CODE ||
+  if(!memkey || memkey->scheme != GROUPSIG_SLTGS23_CODE ||
      !min || seq != 1) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_join_mem", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_join_mem", __LINE__, LOGERROR);
     return IERROR;
   }
 
@@ -59,15 +59,15 @@ int bbs04_join_mem(message_t **mout, groupsig_key_t *memkey,
   /* This is mainly an utility function to keep uniformity across schemes: 
      Just import the memkey from the received message and copy it into the
      provided memkey*/
-  if(!(_memkey = bbs04_mem_key_import(min->bytes, min->length)))
-    GOTOENDRC(IERROR, bbs04_join_mem);
+  if(!(_memkey = sltgs23_mem_key_import(min->bytes, min->length)))
+    GOTOENDRC(IERROR, sltgs23_join_mem);
 
-  if(bbs04_mem_key_copy(memkey, _memkey) == IERROR)
-    GOTOENDRC(IERROR, bbs04_join_mem);
+  if(sltgs23_mem_key_copy(memkey, _memkey) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_join_mem);
 
- bbs04_join_mem_end:
+ sltgs23_join_mem_end:
 
-  bbs04_mem_key_free(_memkey); _memkey = NULL;
+  sltgs23_mem_key_free(_memkey); _memkey = NULL;
   
   return rc;
 

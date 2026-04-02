@@ -31,6 +31,7 @@
 #include "groupsig/dl21seq/signature.h"
 #include "groupsig/scsl25/signature.h"
 #include "groupsig/bap24/signature.h"
+#include "groupsig/sltgs23/signature.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

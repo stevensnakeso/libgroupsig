@@ -117,6 +117,19 @@ target_link_libraries(SCSL25Test
   pthread)
 add_test(NAME SCSL25Test COMMAND SCSL25Test)
 
+# Tests for SLTGS23
+add_executable(SLTGS23Test test_sltgs23.cpp)
+target_link_libraries(SLTGS23Test
+  PUBLIC
+  groupsig
+  big
+  sys
+  logger
+  gtest_main
+  gtest
+  pthread)
+add_test(NAME SLTGS23Test COMMAND SLTGS23Test)
+
 # Tests for PBC
 add_executable(PBCTest test_pbc.cpp)
 target_link_libraries(PBCTest

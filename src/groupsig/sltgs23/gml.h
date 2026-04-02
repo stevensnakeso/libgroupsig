@@ -17,34 +17,34 @@
  * under the License.
  */
 
-#ifndef _BBS04_GML_H
-#define _BBS04_GML_H
+#ifndef _SLTGS23_GML_H
+#define _SLTGS23_GML_H
 
 #include "types.h"
 #include "sysenv.h"
 #include "include/gml.h"
-#include "bbs04.h"
+#include "sltgs23.h"
 
 /**
- * @fn gml_entry_t* bbs04_gml_entry_init()
+ * @fn gml_entry_t* sltgs23_gml_entry_init()
  * @brief Creates a new GML entry and initializes its fields.
  *
  * @return The created gml entry or NULL if error.
  */
-gml_entry_t* bbs04_gml_entry_init();
+gml_entry_t* sltgs23_gml_entry_init();
 
 /**
- * @fn int bbs04_gml_entry_free(gml_entry_t *entry)
+ * @fn int sltgs23_gml_entry_free(gml_entry_t *entry)
  * @brief Frees the fields of the given GML entry.
  *
  * @param[in,out] entry The GML entry to free.
  *
  * @return IOK or IERROR
  */
-int bbs04_gml_entry_free(gml_entry_t *entry);
+int sltgs23_gml_entry_free(gml_entry_t *entry);
 
 /**
- * @fn int bbs04_gml_entry_get_size(gml_entry_t *entry)
+ * @fn int sltgs23_gml_entry_get_size(gml_entry_t *entry)
  * @brief Returns the number of bytes needed to represent the given
  *  entry as an array of bytes.
  *
@@ -52,10 +52,10 @@ int bbs04_gml_entry_free(gml_entry_t *entry);
  *
  * @return The number of bytes needed to represent entry, or -1 if error.
  */
-int bbs04_gml_entry_get_size(gml_entry_t *entry);
+int sltgs23_gml_entry_get_size(gml_entry_t *entry);
 
 /**
- * @fn int bbs04_gml_entry_export(byte_t **bytes,
+ * @fn int sltgs23_gml_entry_export(byte_t **bytes,
  *                                uint32_t *size,
  *                                gml_entry_t *entry)
  * @brief Exports a GML entry into an array of bytes.
@@ -73,12 +73,12 @@ int bbs04_gml_entry_get_size(gml_entry_t *entry);
  * 
  * @return IOK or IERROR with errno set.
  */
-int bbs04_gml_entry_export(byte_t **bytes,
+int sltgs23_gml_entry_export(byte_t **bytes,
 			   uint32_t *size,
 			   gml_entry_t *entry);
 
 /**
- * @fn gml_t* bbs04_gml_entry_import(byte_t *bytes, uint32_t size)
+ * @fn gml_t* sltgs23_gml_entry_import(byte_t *bytes, uint32_t size)
  * @brief Imports a GML of the specified scheme, from the given array of bytes.
  *
  * @param[in] bytes The bytes to read the GML from.
@@ -86,28 +86,28 @@ int bbs04_gml_entry_export(byte_t **bytes,
  * 
  * @return A pointer to the imported GML or NULL with errno set.
  */
-gml_entry_t* bbs04_gml_entry_import(byte_t *bytes, uint32_t size);
+gml_entry_t* sltgs23_gml_entry_import(byte_t *bytes, uint32_t size);
 
 /** 
- * @fn char* bbs04_gml_entry_to_string(bbs04_gml_entry_t *entry)
- * @brief Converts the received BBS04 GML entry to a printable string.
+ * @fn char* sltgs23_gml_entry_to_string(sltgs23_gml_entry_t *entry)
+ * @brief Converts the received SLTGS23 GML entry to a printable string.
  *
  * @param[in] entry The GML entry.
  * 
  * @return The converted string or NULL if error.
  */
-char* bbs04_gml_entry_to_string(gml_entry_t *entry);
+char* sltgs23_gml_entry_to_string(gml_entry_t *entry);
 
 /** 
- * @fn gml_t* bbs04_gml_init()
+ * @fn gml_t* sltgs23_gml_init()
  * @brief Initializes a GML structure.
  * 
  * @return A pointer to the initialized structure.
  */
-gml_t* bbs04_gml_init();
+gml_t* sltgs23_gml_init();
 
 /** 
- * @fn int bbs04_gml_free(gml_t *gml)
+ * @fn int sltgs23_gml_free(gml_t *gml)
  * @brief Frees the received GML structure. 
  *
  * Note that it does not free the entries. If memory has been allocated for 
@@ -117,10 +117,10 @@ gml_t* bbs04_gml_init();
  * 
  * @return IOK.
  */
-int bbs04_gml_free(gml_t *gml);
+int sltgs23_gml_free(gml_t *gml);
 
 /** 
- * @fn int bbs04_gml_insert(gml_t *gml, gml_entry_t *entry)
+ * @fn int sltgs23_gml_insert(gml_t *gml, gml_entry_t *entry)
  * @brief Inserts the given entry into the gml. The memory pointed by the new entry is
  * not duplicated.
  *
@@ -129,10 +129,10 @@ int bbs04_gml_free(gml_t *gml);
  * 
  * @return IOK or IERROR with errno updated.
  */
-int bbs04_gml_insert(gml_t *gml, gml_entry_t *entry);
+int sltgs23_gml_insert(gml_t *gml, gml_entry_t *entry);
 
 /** 
- * @fn int bbs04_gml_remove(gml_t *gml, uint64_t index)
+ * @fn int sltgs23_gml_remove(gml_t *gml, uint64_t index)
  * @brief Removes the entry at position <i>index</i> from the GML. The caller is 
  * responsible for removing the contents of the entry itself.
  *
@@ -141,10 +141,10 @@ int bbs04_gml_insert(gml_t *gml, gml_entry_t *entry);
  * 
  * @return IOK or IERROR with errno updated.
  */
-int bbs04_gml_remove(gml_t *gml, uint64_t index);
+int sltgs23_gml_remove(gml_t *gml, uint64_t index);
 
 /** 
- * @fn gml_entry_t* bbs04_gml_get(gml_t *gml, uint64_t index)
+ * @fn gml_entry_t* sltgs23_gml_get(gml_t *gml, uint64_t index)
  * @brief Returns a pointer to the GML entry at the specified position.
  *
  * @param[in] gml The GML.
@@ -152,10 +152,10 @@ int bbs04_gml_remove(gml_t *gml, uint64_t index);
  * 
  * @return A pointer to the specified entry or NULL if error.
  */
-gml_entry_t* bbs04_gml_get(gml_t *gml, uint64_t index);
+gml_entry_t* sltgs23_gml_get(gml_t *gml, uint64_t index);
 
 /**
- * @fn int bbs04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml)
+ * @fn int sltgs23_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml)
  * @brief Exports the given Group Members List structure into the given
  *  destination.
  *
@@ -172,10 +172,10 @@ gml_entry_t* bbs04_gml_get(gml_t *gml, uint64_t index);
  *
  * @return IOK or IERROR
  */
-int bbs04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml);
+int sltgs23_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml);
 
 /**
- * @fn gml_t* bbs04_gml_import(byte_t *bytes, uint32_t size);
+ * @fn gml_t* sltgs23_gml_import(byte_t *bytes, uint32_t size);
  * @brief Loads the Group Members List stored in the given byte array.
  *
  * @param[in] bytes The byte array containing the GML to import.
@@ -183,32 +183,32 @@ int bbs04_gml_export(byte_t **bytes, uint32_t *size, gml_t *gml);
  *
  * @return The imported GML or NULL if error.
  */
-gml_t* bbs04_gml_import(byte_t *bytes, uint32_t size);
+gml_t* sltgs23_gml_import(byte_t *bytes, uint32_t size);
 
 /**
- * @var bbs04_gml_handle
- * @brief Set of functions for managing BBS04 GMLs.
+ * @var sltgs23_gml_handle
+ * @brief Set of functions for managing SLTGS23 GMLs.
  */
-static const gml_handle_t bbs04_gml_handle = {
-  .scheme = GROUPSIG_BBS04_CODE, /**< Scheme code. */
-  .init = &bbs04_gml_init, /**< GML initialization. */
-  .free = &bbs04_gml_free, /**< GML free. */
-  .insert = &bbs04_gml_insert, /**< Insert a new entry. */
-  .remove = &bbs04_gml_remove, /**< Remove an existing entry. */
-  .get = &bbs04_gml_get, /**< Gets (without removing) a specific entry. */
-  .gimport = &bbs04_gml_import, /**< Import a GML at an external source. */
-  .gexport = &bbs04_gml_export, /**< Export the GML to an external destination. */
-  .entry_init = &bbs04_gml_entry_init, /**< Initializes a GML entry. */
-  .entry_free = &bbs04_gml_entry_free, /**< Frees a GML entry. */
-  .entry_get_size = &bbs04_gml_entry_get_size,  /**< Returns the size in bytes 
+static const gml_handle_t sltgs23_gml_handle = {
+  .scheme = GROUPSIG_SLTGS23_CODE, /**< Scheme code. */
+  .init = &sltgs23_gml_init, /**< GML initialization. */
+  .free = &sltgs23_gml_free, /**< GML free. */
+  .insert = &sltgs23_gml_insert, /**< Insert a new entry. */
+  .remove = &sltgs23_gml_remove, /**< Remove an existing entry. */
+  .get = &sltgs23_gml_get, /**< Gets (without removing) a specific entry. */
+  .gimport = &sltgs23_gml_import, /**< Import a GML at an external source. */
+  .gexport = &sltgs23_gml_export, /**< Export the GML to an external destination. */
+  .entry_init = &sltgs23_gml_entry_init, /**< Initializes a GML entry. */
+  .entry_free = &sltgs23_gml_entry_free, /**< Frees a GML entry. */
+  .entry_get_size = &sltgs23_gml_entry_get_size,  /**< Returns the size in bytes 
                                                    of a GML entry. */
-  .entry_export = &bbs04_gml_entry_export, /**< Exports a GML entry. */
-  .entry_import = &bbs04_gml_entry_import, /**< Imports a GML entry. */
-  .entry_to_string = &bbs04_gml_entry_to_string, /**< Returns a human readable
+  .entry_export = &sltgs23_gml_entry_export, /**< Exports a GML entry. */
+  .entry_import = &sltgs23_gml_entry_import, /**< Imports a GML entry. */
+  .entry_to_string = &sltgs23_gml_entry_to_string, /**< Returns a human readable
 						    string of a GML entry. */
   
 };
 
-#endif /* BBS04_GML_H */
+#endif /* SLTGS23_GML_H */
 
 /* gml.h ends here */

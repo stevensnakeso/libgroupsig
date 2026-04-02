@@ -24,13 +24,13 @@
 #include "types.h"
 #include "sysenv.h"
 #include "bigz.h"
-#include "bbs04.h"
-#include "groupsig/bbs04/grp_key.h"
-#include "groupsig/bbs04/mgr_key.h"
-#include "groupsig/bbs04/signature.h"
-#include "groupsig/bbs04/gml.h"
+#include "sltgs23.h"
+#include "groupsig/sltgs23/grp_key.h"
+#include "groupsig/sltgs23/mgr_key.h"
+#include "groupsig/sltgs23/signature.h"
+#include "groupsig/sltgs23/gml.h"
 
-int bbs04_open(uint64_t *index,
+int sltgs23_open(uint64_t *index,
 	       groupsig_proof_t *proof, 
 	       crl_t *crl,
 	       groupsig_signature_t *sig, 
@@ -39,25 +39,25 @@ int bbs04_open(uint64_t *index,
 	       gml_t *gml) {
 
   pbcext_element_G1_t *A, *aux;
-  bbs04_signature_t *bbs04_sig;
-  bbs04_grp_key_t *bbs04_grpkey;
-  bbs04_mgr_key_t *bbs04_mgrkey;
+  sltgs23_signature_t *sltgs23_sig;
+  sltgs23_grp_key_t *sltgs23_grpkey;
+  sltgs23_mgr_key_t *sltgs23_mgrkey;
   gml_entry_t *entry;
   uint64_t i;
   uint8_t match;
   int rc;
 
-  if(!index || !sig || sig->scheme != GROUPSIG_BBS04_CODE ||
-     !grpkey || grpkey->scheme != GROUPSIG_BBS04_CODE ||
-     !mgrkey || mgrkey->scheme != GROUPSIG_BBS04_CODE ||
+  if(!index || !sig || sig->scheme != GROUPSIG_SLTGS23_CODE ||
+     !grpkey || grpkey->scheme != GROUPSIG_SLTGS23_CODE ||
+     !mgrkey || mgrkey->scheme != GROUPSIG_SLTGS23_CODE ||
      !gml) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_open", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_open", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  bbs04_sig = sig->sig;
-  bbs04_grpkey = grpkey->key;
-  bbs04_mgrkey = mgrkey->key;
+  sltgs23_sig = sig->sig;
+  sltgs23_grpkey = grpkey->key;
+  sltgs23_mgrkey = mgrkey->key;
   rc = IOK;
   A = aux = NULL;
 
@@ -66,21 +66,21 @@ int bbs04_open(uint64_t *index,
      processes (verify can always be called before opening...) */
   
   /* Recover the signer's A as: A = T3/(T1^xi1 * T2^xi2) */
-  if(!(A = pbcext_element_G1_init())) GOTOENDRC(IERROR, bbs04_open);
-  if(!(aux = pbcext_element_G1_init())) GOTOENDRC(IERROR, bbs04_open);
-  if(pbcext_element_G1_mul(A, bbs04_sig->T1, bbs04_mgrkey->xi1) == IERROR)
-    GOTOENDRC(IERROR, bbs04_open);
-  if(pbcext_element_G1_mul(aux, bbs04_sig->T2, bbs04_mgrkey->xi2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_open);
-  if(pbcext_element_G1_add(A, A, aux) == IERROR) GOTOENDRC(IERROR, bbs04_open);
-  if(pbcext_element_G1_sub(A, bbs04_sig->T3, A) == IERROR)
-    GOTOENDRC(IERROR, bbs04_open);
+  if(!(A = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_open);
+  if(!(aux = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_open);
+  if(pbcext_element_G1_mul(A, sltgs23_sig->T1, sltgs23_mgrkey->xi1) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_open);
+  if(pbcext_element_G1_mul(aux, sltgs23_sig->T2, sltgs23_mgrkey->xi2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_open);
+  if(pbcext_element_G1_add(A, A, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_open);
+  if(pbcext_element_G1_sub(A, sltgs23_sig->T3, A) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_open);
 
   /* Look up the recovered A in the GML */
   match = 0;
   for(i=0; i<gml->n; i++) {  
 
-    if(!(entry = gml_get(gml, i))) GOTOENDRC(IERROR, bbs04_open);
+    if(!(entry = gml_get(gml, i))) GOTOENDRC(IERROR, sltgs23_open);
 
     if(!pbcext_element_G1_cmp(entry->data, A)) {
 
@@ -94,30 +94,30 @@ int bbs04_open(uint64_t *index,
   }
 
   /* No match: FAIL */
-  if(!match) GOTOENDRC(IFAIL, bbs04_open);
+  if(!match) GOTOENDRC(IFAIL, sltgs23_open);
   
   /* /\* If we have received a CRL, update it with the "revoked" member *\/ */
   /* if(crl) { */
 
-  /*   if(!(crl_entry = bbs04_crl_entry_init())) { */
+  /*   if(!(crl_entry = sltgs23_crl_entry_init())) { */
   /*     return IERROR; */
   /*   } */
     
-  /*   if(bbs04_identity_copy(crl_entry->id, gml_entry->id) == IERROR) { */
-  /*     bbs04_crl_entry_free(crl_entry); */
+  /*   if(sltgs23_identity_copy(crl_entry->id, gml_entry->id) == IERROR) { */
+  /*     sltgs23_crl_entry_free(crl_entry); */
   /*     return IERROR; */
   /*   } */
     
   /*   crl_entry->trapdoor = trap; */
 
-  /*   if(bbs04_crl_insert(crl, crl_entry) == IERROR) { */
-  /*     bbs04_crl_entry_free(crl_entry); */
+  /*   if(sltgs23_crl_insert(crl, crl_entry) == IERROR) { */
+  /*     sltgs23_crl_entry_free(crl_entry); */
   /*     return IERROR; */
   /*   } */
 
   /* } */
 
- bbs04_open_end:
+ sltgs23_open_end:
 
   if(A) { pbcext_element_G1_free(A); A = NULL; }
   if(aux) { pbcext_element_G1_free(aux); aux = NULL; }

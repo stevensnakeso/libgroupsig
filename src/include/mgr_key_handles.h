@@ -31,6 +31,7 @@
 #include "groupsig/dl21seq/mgr_key.h"
 #include "groupsig/scsl25/mgr_key.h"
 #include "groupsig/bap24/mgr_key.h"
+#include "groupsig/sltgs23/mgr_key.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,6 +57,7 @@ static const mgr_key_handle_t *GROUPSIG_MGR_KEY_HANDLES[GROUPSIG_MGR_KEY_HANDLES
   &dl21seq_mgr_key_handle,
   &scsl25_mgr_key_handle,
   &bap24_mgr_key_handle,
+  &sltgs23_mgr_key_handle,
 };
 
 #ifdef __cplusplus

@@ -17,31 +17,31 @@
  * under the License.
  */
 
-#ifndef _BBS04_MEM_KEY_H
-#define _BBS04_MEM_KEY_H
+#ifndef _SLTGS23_MEM_KEY_H
+#define _SLTGS23_MEM_KEY_H
 
 #include <stdint.h>
 #include "types.h"
 #include "sysenv.h"
-#include "bbs04.h"
+#include "sltgs23.h"
 #include "include/mem_key.h"
 #include "shim/pbc_ext.h"
 
 /**
- * @def BBS04_MEM_KEY_BEGIN_MSG
- * @brief Begin string to prepend to headers of files containing BBS04 member keys
+ * @def SLTGS23_MEM_KEY_BEGIN_MSG
+ * @brief Begin string to prepend to headers of files containing SLTGS23 member keys
  */
-#define BBS04_MEM_KEY_BEGIN_MSG "BEGIN BBS04 MEMBERKEY"
+#define SLTGS23_MEM_KEY_BEGIN_MSG "BEGIN SLTGS23 MEMBERKEY"
 
 /**
- * @def BBS04_MEM_KEY_END_MSG
- * @brief End string to prepend to headers of files containing BBS04 member keys
+ * @def SLTGS23_MEM_KEY_END_MSG
+ * @brief End string to prepend to headers of files containing SLTGS23 member keys
  */
-#define BBS04_MEM_KEY_END_MSG "END BBS04 MEMBERKEY"
+#define SLTGS23_MEM_KEY_END_MSG "END SLTGS23 MEMBERKEY"
 
 /**
- * @struct bbs04_mem_key_t
- * @brief BBS04 member keys.
+ * @struct sltgs23_mem_key_t
+ * @brief SLTGS23 member keys.
  */
 typedef struct {
   pbcext_element_Fr_t *x; /**< 1st element of the member's key. */
@@ -49,28 +49,28 @@ typedef struct {
 			     A = g_1^(1/(gamma+x))*/
   /* Optimizations */
   pbcext_element_GT_t *Ag2; /**< e(A, g2) */
-} bbs04_mem_key_t;
+} sltgs23_mem_key_t;
 
 /** 
- * @fn groupsig_key_t* bbs04_mem_key_init()
+ * @fn groupsig_key_t* sltgs23_mem_key_init()
  * @brief Creates a new group key.
  *
  * @return A pointer to the initialized group key or NULL in case of error.
  */
-groupsig_key_t* bbs04_mem_key_init();
+groupsig_key_t* sltgs23_mem_key_init();
 
 /** 
- * @fn int bbs04_mem_key_free(groupsig_key_t *key)
+ * @fn int sltgs23_mem_key_free(groupsig_key_t *key)
  * @brief Frees the variables of the given member key.
  *
  * @param[in,out] key The member key to initialize.
  * 
  * @return IOK or IERROR
  */
-int bbs04_mem_key_free(groupsig_key_t *key);
+int sltgs23_mem_key_free(groupsig_key_t *key);
 
 /** 
- * @fn int bbs04_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src)
+ * @fn int sltgs23_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src)
  * @brief Copies the source key into the destination key (which must be initialized 
  *  by the caller).
  *
@@ -79,10 +79,10 @@ int bbs04_mem_key_free(groupsig_key_t *key);
  * 
  * @return IOK or IERROR.
  */
-int bbs04_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
+int sltgs23_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 
 /** 
- * @fn int bbs04_mem_key_get_size(groupsig_key_t *key)
+ * @fn int sltgs23_mem_key_get_size(groupsig_key_t *key)
  * @brief Returns the size that the given key would require in order to be 
  *  represented as an array of bytes.
  *
@@ -90,13 +90,13 @@ int bbs04_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
  * 
  * @return The required number of bytes, or -1 if error.
  */
-int bbs04_mem_key_get_size(groupsig_key_t *key);
+int sltgs23_mem_key_get_size(groupsig_key_t *key);
 
 /**
- * @fn int bbs04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
+ * @fn int sltgs23_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
  * @brief Writes a bytearray representation of the given key, with format:
  *
- *   BBS04_CODE | KEYTYPE | size x | x | size A | A |
+ *   SLTGS23_CODE | KEYTYPE | size x | x | size A | A |
  *
  * @param[in,out] bytes A pointer to the array that will contain the exported
  *  member key. If <i>*bytes</i> is NULL, memory will be internally allocated.
@@ -105,48 +105,48 @@ int bbs04_mem_key_get_size(groupsig_key_t *key);
  *
  * @return IOK or IERROR
  */
-int bbs04_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
+int sltgs23_mem_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
 /** 
- * @fn groupsig_key_t* bbs04_mem_key_import(byte_t *source, uint32_t size)
+ * @fn groupsig_key_t* sltgs23_mem_key_import(byte_t *source, uint32_t size)
  * @brief Imports a member key.
  *
- * Imports a BBS04 member key from the specified array of bytes.
+ * Imports a SLTGS23 member key from the specified array of bytes.
  * 
  * @param[in] source The array of bytes containing the key to import.
  * @param[in] source The number of bytes in the passed array.
  * 
  * @return A pointer to the imported key, or NULL if error.
  */
-groupsig_key_t* bbs04_mem_key_import(byte_t *source, uint32_t size);
+groupsig_key_t* sltgs23_mem_key_import(byte_t *source, uint32_t size);
 
 /** 
- * @fn char* bbs04_mem_key_to_string(groupsig_key_t *key)
+ * @fn char* sltgs23_mem_key_to_string(groupsig_key_t *key)
  * @brief Gets a printable representation of the specified member key.
  *
  * @param[in] key The member key.
  * 
  * @return A pointer to the obtained string, or NULL if error.
  */
-char* bbs04_mem_key_to_string(groupsig_key_t *key);
+char* sltgs23_mem_key_to_string(groupsig_key_t *key);
 
 /**
- * @var bbs04_mem_key_handle
- * @brief Set of functions for managing BBS04 member keys.
+ * @var sltgs23_mem_key_handle
+ * @brief Set of functions for managing SLTGS23 member keys.
  */
-static const mem_key_handle_t bbs04_mem_key_handle = {
-  .code = GROUPSIG_BBS04_CODE, /**< The scheme code. */
-  .init = &bbs04_mem_key_init, /**< Initializes member keys. */
-  .free = &bbs04_mem_key_free, /**< Frees member keys. */
-  .copy = &bbs04_mem_key_copy, /**< Copies member keys. */
-  .get_size = &bbs04_mem_key_get_size, /**< Gets the size of the key in specific
+static const mem_key_handle_t sltgs23_mem_key_handle = {
+  .code = GROUPSIG_SLTGS23_CODE, /**< The scheme code. */
+  .init = &sltgs23_mem_key_init, /**< Initializes member keys. */
+  .free = &sltgs23_mem_key_free, /**< Frees member keys. */
+  .copy = &sltgs23_mem_key_copy, /**< Copies member keys. */
+  .get_size = &sltgs23_mem_key_get_size, /**< Gets the size of the key in specific
 					formats. */
-  .gexport = &bbs04_mem_key_export, /**< Exports member keys. */
-  .gimport = &bbs04_mem_key_import, /**< Imports member keys. */
-  .to_string = &bbs04_mem_key_to_string, /**< Converts member keys to printable 
+  .gexport = &sltgs23_mem_key_export, /**< Exports member keys. */
+  .gimport = &sltgs23_mem_key_import, /**< Imports member keys. */
+  .to_string = &sltgs23_mem_key_to_string, /**< Converts member keys to printable 
 					    strings. */
 };
 
-#endif /* _BBS04_MEM_KEY_H */
+#endif /* _SLTGS23_MEM_KEY_H */
 
 /* mem_key.h ends here */

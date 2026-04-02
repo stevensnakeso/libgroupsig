@@ -32,6 +32,7 @@
 #include "dl21seq.h"
 #include "scsl25.h"
 #include "bap24.h"
+#include "sltgs23.h"
 
 #ifdef __cplusplus
 extern "C" {

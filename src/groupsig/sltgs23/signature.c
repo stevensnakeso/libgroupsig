@@ -32,58 +32,58 @@
 #include "shim/base64.h"
 #include "shim/pbc_ext.h"
 #include "misc/misc.h"
-#include "bbs04.h"
-#include "groupsig/bbs04/signature.h"
+#include "sltgs23.h"
+#include "groupsig/sltgs23/signature.h"
 
 /* Public functions */
-groupsig_signature_t* bbs04_signature_init() {
+groupsig_signature_t* sltgs23_signature_init() {
 
   groupsig_signature_t *sig;
-  bbs04_signature_t *bbs04_sig;
+  sltgs23_signature_t *sltgs23_sig;
 
-  bbs04_sig = NULL;
+  sltgs23_sig = NULL;
 
   /* Initialize the signature contents */
   if(!(sig = (groupsig_signature_t *) mem_malloc(sizeof(groupsig_signature_t)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "bbs04_signature_init", __LINE__, errno, 
+    LOG_ERRORCODE(&logger, __FILE__, "sltgs23_signature_init", __LINE__, errno, 
 		  LOGERROR);
   }
 
-  if(!(bbs04_sig = (bbs04_signature_t *) mem_malloc(sizeof(bbs04_signature_t)))) {
-    LOG_ERRORCODE(&logger, __FILE__, "bbs04_signature_init", __LINE__, errno, 
+  if(!(sltgs23_sig = (sltgs23_signature_t *) mem_malloc(sizeof(sltgs23_signature_t)))) {
+    LOG_ERRORCODE(&logger, __FILE__, "sltgs23_signature_init", __LINE__, errno, 
 		  LOGERROR);
     return NULL;
   }
 
-  sig->scheme = GROUPSIG_BBS04_CODE;
-  sig->sig = bbs04_sig;
+  sig->scheme = GROUPSIG_SLTGS23_CODE;
+  sig->sig = sltgs23_sig;
 
   return sig;
 
 }
 
-int bbs04_signature_free(groupsig_signature_t *sig) {
+int sltgs23_signature_free(groupsig_signature_t *sig) {
 
-  bbs04_signature_t *bbs04_sig;
+  sltgs23_signature_t *sltgs23_sig;
 
-  if(!sig || sig->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "bbs04_signature_free", __LINE__,
+  if(!sig || sig->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_signature_free", __LINE__,
 		   "Nothing to free.", LOGWARN);    
     return IOK;
   }
 
   if(sig->sig) {
-    bbs04_sig = sig->sig;
-    if(bbs04_sig->T1) { pbcext_element_G1_free(bbs04_sig->T1); bbs04_sig->T1 = NULL; }
-    if(bbs04_sig->T2) { pbcext_element_G1_free(bbs04_sig->T2); bbs04_sig->T2 = NULL; }
-    if(bbs04_sig->T3) { pbcext_element_G1_free(bbs04_sig->T3); bbs04_sig->T3 = NULL; }
-    if(bbs04_sig->c) { pbcext_element_Fr_free(bbs04_sig->c); bbs04_sig->c = NULL; }
-    if(bbs04_sig->salpha) { pbcext_element_Fr_free(bbs04_sig->salpha); bbs04_sig->salpha = NULL; }
-    if(bbs04_sig->sbeta) { pbcext_element_Fr_free(bbs04_sig->sbeta); bbs04_sig->sbeta = NULL; }
-    if(bbs04_sig->sx) { pbcext_element_Fr_free(bbs04_sig->sx); bbs04_sig->sx = NULL; }
-    if(bbs04_sig->sdelta1) { pbcext_element_Fr_free(bbs04_sig->sdelta1); bbs04_sig->sdelta1 = NULL; }
-    if(bbs04_sig->sdelta2) { pbcext_element_Fr_free(bbs04_sig->sdelta2); bbs04_sig->sdelta2 = NULL; }
-    mem_free(bbs04_sig); bbs04_sig = NULL;
+    sltgs23_sig = sig->sig;
+    if(sltgs23_sig->T1) { pbcext_element_G1_free(sltgs23_sig->T1); sltgs23_sig->T1 = NULL; }
+    if(sltgs23_sig->T2) { pbcext_element_G1_free(sltgs23_sig->T2); sltgs23_sig->T2 = NULL; }
+    if(sltgs23_sig->T3) { pbcext_element_G1_free(sltgs23_sig->T3); sltgs23_sig->T3 = NULL; }
+    if(sltgs23_sig->c) { pbcext_element_Fr_free(sltgs23_sig->c); sltgs23_sig->c = NULL; }
+    if(sltgs23_sig->salpha) { pbcext_element_Fr_free(sltgs23_sig->salpha); sltgs23_sig->salpha = NULL; }
+    if(sltgs23_sig->sbeta) { pbcext_element_Fr_free(sltgs23_sig->sbeta); sltgs23_sig->sbeta = NULL; }
+    if(sltgs23_sig->sx) { pbcext_element_Fr_free(sltgs23_sig->sx); sltgs23_sig->sx = NULL; }
+    if(sltgs23_sig->sdelta1) { pbcext_element_Fr_free(sltgs23_sig->sdelta1); sltgs23_sig->sdelta1 = NULL; }
+    if(sltgs23_sig->sdelta2) { pbcext_element_Fr_free(sltgs23_sig->sdelta2); sltgs23_sig->sdelta2 = NULL; }
+    mem_free(sltgs23_sig); sltgs23_sig = NULL;
   }
   
   mem_free(sig); sig = NULL;
@@ -92,89 +92,89 @@ int bbs04_signature_free(groupsig_signature_t *sig) {
 
 }
 
-int bbs04_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
+int sltgs23_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
 
-  bbs04_signature_t *bbs04_dst, *bbs04_src;
+  sltgs23_signature_t *sltgs23_dst, *sltgs23_src;
   int rc;
 
-  if(!dst || dst->scheme != GROUPSIG_BBS04_CODE ||
-     !src || src->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_signature_copy", __LINE__, LOGERROR);
+  if(!dst || dst->scheme != GROUPSIG_SLTGS23_CODE ||
+     !src || src->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_signature_copy", __LINE__, LOGERROR);
     return IERROR;
   }
 
-  bbs04_dst = dst->sig;
-  bbs04_src = src->sig;
+  sltgs23_dst = dst->sig;
+  sltgs23_src = src->sig;
   rc = IOK;
 
   /* Copy the elements */
-  if(!(bbs04_dst->T1 = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);
-  if(pbcext_element_G1_set(bbs04_dst->T1, bbs04_src->T1) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);
-  if(!(bbs04_dst->T2 = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);    
-  if(pbcext_element_G1_set(bbs04_dst->T2, bbs04_src->T2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);
-  if(!(bbs04_dst->T3 = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);
-  if(pbcext_element_G1_set(bbs04_dst->T3, bbs04_src->T3) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);  
-  if(!(bbs04_dst->c = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);    
-  if(pbcext_element_Fr_set(bbs04_dst->c, bbs04_src->c) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);  
-  if(!(bbs04_dst->salpha = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);
-  if(pbcext_element_Fr_set(bbs04_dst->salpha, bbs04_src->salpha) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);  
-  if(!(bbs04_dst->sbeta = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);    
-  if(pbcext_element_Fr_set(bbs04_dst->sbeta, bbs04_src->sbeta) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);  
-  if(!(bbs04_dst->sx = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);    
-  if(pbcext_element_Fr_set(bbs04_dst->sx, bbs04_src->sx) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);  
-  if(!(bbs04_dst->sdelta1 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);    
-  if(pbcext_element_Fr_set(bbs04_dst->sdelta1, bbs04_src->sdelta1) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);  
-  if(!(bbs04_dst->sdelta2 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_copy);    
-  if(pbcext_element_Fr_set(bbs04_dst->sdelta2, bbs04_src->sdelta2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_copy);  
+  if(!(sltgs23_dst->T1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_G1_set(sltgs23_dst->T1, sltgs23_src->T1) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(!(sltgs23_dst->T2 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);    
+  if(pbcext_element_G1_set(sltgs23_dst->T2, sltgs23_src->T2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(!(sltgs23_dst->T3 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_G1_set(sltgs23_dst->T3, sltgs23_src->T3) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);  
+  if(!(sltgs23_dst->c = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);    
+  if(pbcext_element_Fr_set(sltgs23_dst->c, sltgs23_src->c) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);  
+  if(!(sltgs23_dst->salpha = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->salpha, sltgs23_src->salpha) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);  
+  if(!(sltgs23_dst->sbeta = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);    
+  if(pbcext_element_Fr_set(sltgs23_dst->sbeta, sltgs23_src->sbeta) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);  
+  if(!(sltgs23_dst->sx = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);    
+  if(pbcext_element_Fr_set(sltgs23_dst->sx, sltgs23_src->sx) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);  
+  if(!(sltgs23_dst->sdelta1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);    
+  if(pbcext_element_Fr_set(sltgs23_dst->sdelta1, sltgs23_src->sdelta1) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);  
+  if(!(sltgs23_dst->sdelta2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);    
+  if(pbcext_element_Fr_set(sltgs23_dst->sdelta2, sltgs23_src->sdelta2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);  
 
- bbs04_signature_copy_end:
+ sltgs23_signature_copy_end:
 
   if(rc == IERROR) {
-    if(bbs04_dst->T1) { pbcext_element_G1_free(bbs04_dst->T1); bbs04_dst->T1 = NULL; }
-    if(bbs04_dst->T2) { pbcext_element_G1_free(bbs04_dst->T2); bbs04_dst->T2 = NULL; }
-    if(bbs04_dst->T3) { pbcext_element_G1_free(bbs04_dst->T3); bbs04_dst->T3 = NULL; }
-    if(bbs04_dst->c) { pbcext_element_Fr_free(bbs04_dst->c); bbs04_dst->c = NULL; }
-    if(bbs04_dst->salpha) { pbcext_element_Fr_free(bbs04_dst->salpha); bbs04_dst->salpha = NULL; }
-    if(bbs04_dst->sbeta) { pbcext_element_Fr_free(bbs04_dst->sbeta); bbs04_dst->sbeta = NULL; }
-    if(bbs04_dst->sx) { pbcext_element_Fr_free(bbs04_dst->sx); bbs04_dst->sx = NULL; }
-    if(bbs04_dst->sdelta1) { pbcext_element_Fr_free(bbs04_dst->sdelta1); bbs04_dst->sdelta1 = NULL; }
-    if(bbs04_dst->sdelta2) { pbcext_element_Fr_free(bbs04_dst->sdelta2); bbs04_dst->sdelta2 = NULL; }
+    if(sltgs23_dst->T1) { pbcext_element_G1_free(sltgs23_dst->T1); sltgs23_dst->T1 = NULL; }
+    if(sltgs23_dst->T2) { pbcext_element_G1_free(sltgs23_dst->T2); sltgs23_dst->T2 = NULL; }
+    if(sltgs23_dst->T3) { pbcext_element_G1_free(sltgs23_dst->T3); sltgs23_dst->T3 = NULL; }
+    if(sltgs23_dst->c) { pbcext_element_Fr_free(sltgs23_dst->c); sltgs23_dst->c = NULL; }
+    if(sltgs23_dst->salpha) { pbcext_element_Fr_free(sltgs23_dst->salpha); sltgs23_dst->salpha = NULL; }
+    if(sltgs23_dst->sbeta) { pbcext_element_Fr_free(sltgs23_dst->sbeta); sltgs23_dst->sbeta = NULL; }
+    if(sltgs23_dst->sx) { pbcext_element_Fr_free(sltgs23_dst->sx); sltgs23_dst->sx = NULL; }
+    if(sltgs23_dst->sdelta1) { pbcext_element_Fr_free(sltgs23_dst->sdelta1); sltgs23_dst->sdelta1 = NULL; }
+    if(sltgs23_dst->sdelta2) { pbcext_element_Fr_free(sltgs23_dst->sdelta2); sltgs23_dst->sdelta2 = NULL; }
   }
   
   return rc;
 
 }
 
-int bbs04_signature_get_size(groupsig_signature_t *sig) {
+int sltgs23_signature_get_size(groupsig_signature_t *sig) {
 
-  bbs04_signature_t *bbs04_sig;
+  sltgs23_signature_t *sltgs23_sig;
   uint64_t size64, sT1, sT2, sT3, sc, ssalpha, ssbeta, ssx, ssdelta1, ssdelta2;
   
-  if(!sig || sig->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_signature_get_size",
+  if(!sig || sig->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_signature_get_size",
 	       __LINE__, LOGERROR);
     return -1;
   }
 
-  bbs04_sig = sig->sig;
+  sltgs23_sig = sig->sig;
 
   if(pbcext_element_G1_byte_size(&sT1) == IERROR) return -1;
   if(pbcext_element_G1_byte_size(&sT2) == IERROR) return -1;
@@ -194,27 +194,27 @@ int bbs04_signature_get_size(groupsig_signature_t *sig) {
 
 }
 
-int bbs04_signature_export(byte_t **bytes,
+int sltgs23_signature_export(byte_t **bytes,
 			   uint32_t *size,
 			   groupsig_signature_t *sig) {
 
-  bbs04_signature_t *bbs04_sig;
+  sltgs23_signature_t *sltgs23_sig;
   byte_t *_bytes, *__bytes;
   uint64_t len;
   int rc, ctr, _size;
   uint16_t i;
   uint8_t code;
   
-  if(!sig || sig->scheme != GROUPSIG_BBS04_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_signature_export", __LINE__, LOGERROR);
+  if(!sig || sig->scheme != GROUPSIG_SLTGS23_CODE) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_signature_export", __LINE__, LOGERROR);
     return IERROR;
   }
 
   rc = IOK;
   ctr = 0;
-  bbs04_sig = sig->sig;
+  sltgs23_sig = sig->sig;
 
-  if ((_size = bbs04_signature_get_size(sig)) == -1) {
+  if ((_size = sltgs23_signature_get_size(sig)) == -1) {
     return IERROR;
   }
 
@@ -222,62 +222,62 @@ int bbs04_signature_export(byte_t **bytes,
     return IERROR;
   }  
   
-  /* Dump GROUPSIG_BBS04_CODE */
-  code = GROUPSIG_BBS04_CODE;
+  /* Dump GROUPSIG_SLTGS23_CODE */
+  code = GROUPSIG_SLTGS23_CODE;
   _bytes[ctr++] = code;
 
   /* Dump T1 */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, bbs04_sig->T1) == IERROR) 
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->T1) == IERROR) 
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;  
 
   /* Dump T2 */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, bbs04_sig->T2) == IERROR) 
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->T2) == IERROR) 
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;  
 
   /* Dump T3 */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, bbs04_sig->T3) == IERROR) 
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->T3) == IERROR) 
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;  
 
   /* Dump c */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bbs04_sig->c) == IERROR) 
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->c) == IERROR) 
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;
 
   /* Dump salpha */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bbs04_sig->salpha) == IERROR) 
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->salpha) == IERROR) 
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;  
 
   /* Dump sbeta */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bbs04_sig->sbeta) == IERROR) 
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->sbeta) == IERROR) 
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;
 
   /* Dump sx */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bbs04_sig->sx) == IERROR) 
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->sx) == IERROR) 
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;
 
   /* Dump sdelta1 */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bbs04_sig->sdelta1) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->sdelta1) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;
 
   /* Dump sdelta2 */
   __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bbs04_sig->sdelta2) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_export);
+  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->sdelta2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   ctr += len;
 
   /* Prepare the return */
@@ -290,117 +290,117 @@ int bbs04_signature_export(byte_t **bytes,
 
   /* Sanity check */
   if (ctr != _size) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_signature_export", __LINE__, 
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_signature_export", __LINE__, 
 		      EDQUOT, "Unexpected size.", LOGERROR);
-    GOTOENDRC(IERROR, bbs04_signature_export);
+    GOTOENDRC(IERROR, sltgs23_signature_export);
   }
 
   *size = ctr;  
 
- bbs04_signature_export_end:
+ sltgs23_signature_export_end:
   
   if (rc == IERROR && _bytes) { mem_free(_bytes); _bytes = NULL; }
   return rc;  
 
 }
 
-groupsig_signature_t* bbs04_signature_import(byte_t *source, uint32_t size) {
+groupsig_signature_t* sltgs23_signature_import(byte_t *source, uint32_t size) {
 
   groupsig_signature_t *sig;
-  bbs04_signature_t *bbs04_sig;
+  sltgs23_signature_t *sltgs23_sig;
   uint64_t len;
   uint16_t i;
   int rc, ctr;
   uint8_t scheme;
   
   if(!source || !size) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_signature_import", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_signature_import", __LINE__, LOGERROR);
     return NULL;
   }
 
   rc = IOK;
   ctr = 0;
 
-  if(!(sig = bbs04_signature_init())) {
+  if(!(sig = sltgs23_signature_init())) {
     return NULL;
   }
   
-  bbs04_sig = sig->sig;
+  sltgs23_sig = sig->sig;
 
   /* First byte: scheme */
   scheme = source[ctr++];
   if(scheme != sig->scheme) {
-    LOG_ERRORCODE_MSG(&logger, __FILE__, "bbs04_signature_import", __LINE__, 
+    LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_signature_import", __LINE__, 
 		      EDQUOT, "Unexpected signature scheme.", LOGERROR);
-    GOTOENDRC(IERROR, bbs04_signature_import);
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   }
 
   /* Get T1 */
-  if(!(bbs04_sig->T1 = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_G1_bytes(bbs04_sig->T1, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->T1 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_G1_bytes(sltgs23_sig->T1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;
 
   /* Get T2 */
-  if(!(bbs04_sig->T2 = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_G1_bytes(bbs04_sig->T2, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->T2 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_G1_bytes(sltgs23_sig->T2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;  
 
   /* Get T3 */
-  if(!(bbs04_sig->T3 = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_G1_bytes(bbs04_sig->T3, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->T3 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_G1_bytes(sltgs23_sig->T3, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;
 
   /* Get c */
-  if(!(bbs04_sig->c = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_Fr_bytes(bbs04_sig->c, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->c = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->c, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;
 
   /* Get salpha */
-  if(!(bbs04_sig->salpha = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_Fr_bytes(bbs04_sig->salpha, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->salpha = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->salpha, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;
 
   /* Get sbeta */
-  if(!(bbs04_sig->sbeta = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_Fr_bytes(bbs04_sig->sbeta, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->sbeta = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->sbeta, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;
 
   /* Get sx */
-  if(!(bbs04_sig->sx = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_Fr_bytes(bbs04_sig->sx, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->sx = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->sx, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;
 
   /* Get sdelta1 */
-  if(!(bbs04_sig->sdelta1 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_Fr_bytes(bbs04_sig->sdelta1, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->sdelta1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->sdelta1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;
 
   /* Get sdelta2 */
-  if(!(bbs04_sig->sdelta2 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bbs04_signature_import);
-  if(pbcext_get_element_Fr_bytes(bbs04_sig->sdelta2, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bbs04_signature_import);
+  if(!(sltgs23_sig->sdelta2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->sdelta2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
   ctr += len;
 
- bbs04_signature_import_end:
+ sltgs23_signature_import_end:
 
-  if(rc == IERROR && sig) { bbs04_signature_free(sig); sig = NULL; }
+  if(rc == IERROR && sig) { sltgs23_signature_free(sig); sig = NULL; }
   if(rc == IOK) return sig;
   return NULL;  
 
@@ -409,19 +409,19 @@ groupsig_signature_t* bbs04_signature_import(byte_t *source, uint32_t size) {
 // @TODO this is not what I'd like from a to_string function.
 // this should return a human readable string with the contents
 // of the signature.
-char* bbs04_signature_to_string(groupsig_signature_t *sig) {
+char* sltgs23_signature_to_string(groupsig_signature_t *sig) {
 
   uint32_t size;
   byte_t *bytes;
   char *str;
   
-  if(!sig || sig->scheme != GROUPSIG_BBS04_CODE) {
+  if(!sig || sig->scheme != GROUPSIG_SLTGS23_CODE) {
     LOG_EINVAL(&logger, __FILE__, "signature_to_string", __LINE__, LOGERROR);
     return NULL;
   }
 
   bytes = NULL;
-  if(bbs04_signature_export(&bytes, &size, sig) == IERROR) return NULL;
+  if(sltgs23_signature_export(&bytes, &size, sig) == IERROR) return NULL;
   str = base64_encode(bytes, size, 1); // master had unsigned...
   mem_free(bytes); bytes = NULL;
 

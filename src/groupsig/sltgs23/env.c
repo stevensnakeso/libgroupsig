@@ -17,15 +17,15 @@
  * under the License.
  */
 
-#include "bbs04.h"
+#include "sltgs23.h"
 #include "sysenv.h"
 #include "sys/mem.h"
 #include "shim/pbc_ext.h"
 
-int bbs04_sysenv_update(void *data) {
+int sltgs23_sysenv_update(void *data) {
  
   /* if(!data) { */
-  /*   LOG_EINVAL(&logger, __FILE__, "bbs04_sysenv_update", __LINE__, LOGERROR); */
+  /*   LOG_EINVAL(&logger, __FILE__, "sltgs23_sysenv_update", __LINE__, LOGERROR); */
   /*   return IERROR; */
   /* } */
 
@@ -35,11 +35,11 @@ int bbs04_sysenv_update(void *data) {
 
 }
 
-int bbs04_sysenv_free() {
+int sltgs23_sysenv_free() {
 
   /* if(sysenv->data) { */
-  /*   pairing_clear(((bbs04_sysenv_t *) sysenv->data)->pairing); */
-  /*   pbc_param_clear(((bbs04_sysenv_t *) sysenv->data)->param); */
+  /*   pairing_clear(((sltgs23_sysenv_t *) sysenv->data)->pairing); */
+  /*   pbc_param_clear(((sltgs23_sysenv_t *) sysenv->data)->param); */
   /*   mem_free(sysenv->data); sysenv->data = NULL; */
   /* } */
 

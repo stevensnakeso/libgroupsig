@@ -17,10 +17,10 @@
  * under the License.
  */
 
-int bbs04_update_env(void *data) {
+int sltgs23_update_env(void *data) {
 
   if(!data) {
-    LOG_EINVAL(&logger, __FILE__, "bbs04_update_env", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_update_env", __LINE__, LOGERROR);
     return IERROR;
   }
 

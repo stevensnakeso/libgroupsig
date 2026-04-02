@@ -1,7 +1,7 @@
 include_directories ("${PROJECT_SOURCE_DIR}/src/include"
   "${PROJECT_SOURCE_DIR}/src")
 
-add_library (bbs04 
+add_library (sltgs23 
   grp_key.c grp_key.h 
   mgr_key.c mgr_key.h 
   mem_key.c mem_key.h 
@@ -13,5 +13,5 @@ add_library (bbs04
   open.c 
   gml.c gml.h)
 
-target_include_directories (bbs04 PRIVATE ${OPENSSL_INCLUDE_DIR})
-target_link_libraries (bbs04 PRIVATE ${OPENSSL_LIBRARIES})
+target_include_directories (sltgs23 PRIVATE ${OPENSSL_INCLUDE_DIR})
+target_link_libraries (sltgs23 PRIVATE ${OPENSSL_LIBRARIES})
