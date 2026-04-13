@@ -40,7 +40,7 @@ extern "C" {
  * @def GROUPSIG_MGR_KEY_HANDLES_N
  * @brief Number of supported bundles of manager key handles.
  */
-#define GROUPSIG_MGR_KEY_HANDLES_N 10
+#define GROUPSIG_MGR_KEY_HANDLES_N 11
 
 /**
  * @var GROUPSIG_MGR_KEY_HANDLES

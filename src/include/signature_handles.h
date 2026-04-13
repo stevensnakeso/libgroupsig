@@ -40,7 +40,7 @@ extern "C" {
  * @def GROUPSIG_SIGNATURE_HANDLES_N
  * @brief Number of supported set of handles for managing group signatures.
  */
-#define GROUPSIG_SIGNATURE_HANDLES_N 10
+#define GROUPSIG_SIGNATURE_HANDLES_N 11
 
 /**
  * @var GROUPSIG_SIGNATURE_HANDLES
@@ -57,6 +57,7 @@ static const groupsig_signature_handle_t *GROUPSIG_SIGNATURE_HANDLES[GROUPSIG_SI
   &dl21seq_signature_handle,
   &scsl25_signature_handle,
   &bap24_signature_handle,
+  &sltgs23_signature_handle,
 };
 
 #ifdef __cplusplus

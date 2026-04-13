@@ -38,7 +38,7 @@ extern "C" {
  * @def GROUPSIG_SLTGS23_CODE
  * @brief SLTGS23 scheme code.
  */
-#define GROUPSIG_SLTGS23_CODE 1
+#define GROUPSIG_SLTGS23_CODE 10
 
 /**
  * @def GROUPSIG_SLTGS23_NAME
