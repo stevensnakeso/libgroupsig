@@ -41,16 +41,13 @@
 
 /**
  * @struct sltgs23_mgr_key_t
- * @brief SLTGS23 manager key. 
+ * @brief SLTGS23 Manager key.
  * 
- * In the SLTGS23 paper, the private key issuer role (the owner of the gamma field
- * below) is differentiated from that of the group manager (who can revoke members).
- * However, we combine both roles into the group manager, for simplicity.
+ * The secret key for the issuing authority.
  */
 typedef struct {
-  pbcext_element_Fr_t *xi1; /**< Exponent for tracing signatures. */
-  pbcext_element_Fr_t *xi2; /**< Exponent for tracing signatures. */
-  pbcext_element_Fr_t *gamma; /**< Exponent for generating member keys. */
+  pbcext_element_Fr_t *isk; /**< Issuer secret key. */
+  pbcext_element_Fr_t *csk; /**< Converter secret key. */
 } sltgs23_mgr_key_t;
 
 /** 
@@ -84,9 +81,8 @@ int sltgs23_mgr_key_free(groupsig_key_t *key);
 int sltgs23_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 
 /** 
- * @fn int sltgs23_mgr_key_get_size(groupsig_key_t *key)
- * @brief Returns the size that the given key would require in order to be
- *  stored in an array of bytes.
+ * @fn int sltgs23_mgr_key_get_size_in_format(groupsig_key_t *key)
+ * @brief Returns the size that the given key would require as an array of bytes.
  *
  * @param[in] key The key.
  *
@@ -94,31 +90,30 @@ int sltgs23_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
  */
 int sltgs23_mgr_key_get_size(groupsig_key_t *key);
 
-/**
+/** 
  * @fn int sltgs23_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
- * @brief Writes a bytearray representation of the given key, with format:
+ * @brief Writes a bytearray representation of the given manager key to an array
+ *  with format:
  *
- *  | SLTGS23_CODE | KEYTYPE | size_xi1 | xi1 | size_xi2 | xi2 | size_gamma | gamma |
+ *  | SLTGS23_CODE | KEYTYPE | size_isk | isk |
  *
  * @param[in,out] bytes A pointer to the array that will contain the exported
  *  manager key. If <i>*bytes</i> is NULL, memory will be internally allocated.
  * @param[in,out] size Will be set to the number of bytes written in <i>*bytes</i>.
  * @param[in] key The manager key to export.
- *
- * @return IOK or IERROR
+ * 
+ * @return IOK or IERROR.
  */
 int sltgs23_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
 /** 
  * @fn groupsig_key_t* sltgs23_mgr_key_import(byte_t *source, uint32_t size)
- * @brief Imports a manager key.
+ * @brief Imports a SLTGS23 manager key from the specified source.
  *
- * Imports a SLTGS23 manager key from the specified array of bytes.
- * 
  * @param[in] source The array of bytes containing the key to import.
  * @param[in] source The number of bytes in the passed array.
  * 
- * @return A pointer to the imported key, or NULL if error.
+ * @return A pointer to the imported manager key, or NULL if error.
  */
 groupsig_key_t* sltgs23_mgr_key_import(byte_t *source, uint32_t size);
 
@@ -137,14 +132,14 @@ char* sltgs23_mgr_key_to_string(groupsig_key_t *key);
  * @brief Set of functions for SLTGS23 manager keys management.
  */
 static const mgr_key_handle_t sltgs23_mgr_key_handle = {
-  .code = GROUPSIG_SLTGS23_CODE, /**< The scheme code. */
-  .init = &sltgs23_mgr_key_init, /**< Initializes manager keys. */
-  .free = &sltgs23_mgr_key_free, /**< Frees manager keys. */
-  .copy = &sltgs23_mgr_key_copy, /**< Copies manager keys. */
-  .gexport = &sltgs23_mgr_key_export, /**< Exports manager keys. */
-  .gimport = &sltgs23_mgr_key_import, /**< Imports manager keys. */
-  .to_string = &sltgs23_mgr_key_to_string, /**< Converts manager keys to printable strings. */
-  .get_size = &sltgs23_mgr_key_get_size,
+ .code = GROUPSIG_SLTGS23_CODE, /**< The scheme code. */
+ .init = &sltgs23_mgr_key_init, /**< Initializes manager keys. */
+ .free = &sltgs23_mgr_key_free, /**< Frees manager keys. */
+ .copy =  &sltgs23_mgr_key_copy, /**< Copies manager keys. */
+ .gexport =  &sltgs23_mgr_key_export, /**< Exports manager keys. */
+ .gimport = &sltgs23_mgr_key_import, /**< Imports manager keys. */
+ .to_string = &sltgs23_mgr_key_to_string, /**< Converts manager keys to printable strings. */
+ .get_size = &sltgs23_mgr_key_get_size /**< Gets the size of the key as a byte array. */
 };
 
 #endif

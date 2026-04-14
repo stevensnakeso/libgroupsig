@@ -22,11 +22,23 @@
 
 #include "include/identity.h"
 #include "sltgs23.h"
+#include "shim/pbc_ext.h"
+
+/**
+ * BBS+ signatures used by SLTGS23
+ * They are membership credentials, which can be seen as a kind of identity.
+ * Hence, I define them here.
+ */
+typedef struct _sltgs23_cred_t {
+  pbcext_element_G1_t *A; /* A component of the credential */
+  pbcext_element_Fr_t *x; /* x component of the credential */
+  pbcext_element_Fr_t *s; /* s component of the credential */
+} sltgs23_cred_t;
 
 /**
  * SLTGS23 identities.
  */
-typedef uint64_t sltgs23_identity_t;
+typedef pbcext_element_G1_t sltgs23_identity_t;
 
 /** 
  * @fn void* sltgs23_identity_init()

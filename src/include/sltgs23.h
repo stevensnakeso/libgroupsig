@@ -22,23 +22,24 @@
 
 #include "key.h"
 #include "gml.h"
+#include "crl.h"
 #include "signature.h"
 #include "proof.h"
 #include "grp_key.h"
 #include "mgr_key.h"
 #include "mem_key.h"
 #include "groupsig.h"
-#include "bigz.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
 /**
  * @def GROUPSIG_SLTGS23_CODE
  * @brief SLTGS23 scheme code.
  */
-#define GROUPSIG_SLTGS23_CODE 10
+#define GROUPSIG_SLTGS23_CODE 6
 
 /**
  * @def GROUPSIG_SLTGS23_NAME
@@ -53,7 +54,7 @@ extern "C" {
 #define SLTGS23_JOIN_START 0
 
 /* Number of exchanged messages */
-#define SLTGS23_JOIN_SEQ 1
+#define SLTGS23_JOIN_SEQ 3
 
 /**
  * @var sltgs23_description
@@ -62,12 +63,12 @@ extern "C" {
 static const groupsig_description_t sltgs23_description = {
   GROUPSIG_SLTGS23_CODE, /**< SLTGS23's scheme code. */
   GROUPSIG_SLTGS23_NAME, /**< SLTGS23's scheme name. */
-  1, /**< SLTGS23 has a GML. */
+  0, /**< SLTGS23 does not have a GML. */
   0, /**< SLTGS23 does not have a CRL. */
   1, /**< SLTGS23 uses PBC. */
   0, /**< SLTGS23 does not have verifiable openings. */
   1, /**< SLTGS23's issuer key is the first manager key. */
-  1 /**< SLTGS23's inspector (opener) key is the first manager key. */
+  0 /**< SLTGS23's does not have inspector key. */
 };
 
 /**
@@ -88,8 +89,7 @@ int sltgs23_init();
 int sltgs23_clear();
 
 /**
- * @fn int sltgs23_setup(groupsig_key_t *grpkey,
- *                     groupsig_key_t *mgrkey,
+ * @fn int sltgs23_setup(groupsig_key_t *grpkey, groupsig_key_t *mgrkey,
  *                     gml_t *gml)
  * @brief The setup function for the SLTGS23 scheme.
  *
@@ -102,8 +102,8 @@ int sltgs23_clear();
  * @return IOK or IERROR.
  */
 int sltgs23_setup(groupsig_key_t *grpkey,
-                groupsig_key_t *mgrkey,
-                gml_t *gml);
+               groupsig_key_t *mgrkey,
+               gml_t *gml);
 
 /**
  * @fn int sltgs23_get_joinseq(uint8_t *seq)
@@ -127,10 +127,8 @@ int sltgs23_get_joinseq(uint8_t *seq);
 int sltgs23_get_joinstart(uint8_t *start);
 
 /**
- * @fn int sltgs23_join_mem(message_t **mout,
- *                        groupsig_key_t *memkey,
- *			  int seq, message_t *min,
- *                        groupsig_key_t *grpkey)
+ * @fn int sltgs23_join_mem(message_t **mout, groupsig_key_t *memkey,
+ *			      int seq, message_t *min, groupsig_key_t *grpkey)
  * @brief Executes the member-side join of the SLTGS23 scheme.
  *
  * @param[in,out] mout Message to be produced by the current step of the
@@ -146,47 +144,41 @@ int sltgs23_get_joinstart(uint8_t *start);
  * @return IOK or IERROR.
  */
 int sltgs23_join_mem(message_t **mout,
-                   groupsig_key_t *memkey,
-                   int seq,
-                   message_t *min,
-                   groupsig_key_t *grpkey);
+                  groupsig_key_t *memkey,
+                  int seq,
+                  message_t *min,
+                  groupsig_key_t *grpkey);
 
 /**
- * @fn int sltgs23_join_mgr(message_t **mout,
- *                        gml_t *gml,
- *                        groupsig_key_t *mgrkey,
- *                        int seq,
- *                        message_t *min,
- *			  groupsig_key_t *grpkey)
+ * @fn int sltgs23_join_mgr(message_t **mout, gml_t *gml,
+ *                       groupsig_key_t *mgrkey,
+ *                       int seq, message_t *min,
+ *			 groupsig_key_t *grpkey)
  * @brief Executes the manager-side join of the join procedure.
  *
  * @param[in,out] mout Message to be produced by the current step of the join/
  *  issue protocol.
  * @param[in,out] gml The group membership list that may be updated with
  *  information related to the new member.
-// * @param[in,out] memkey The partial member key to be completed by the group
-* @param[in] seq The step to run of the join/issue protocol.
+ * @param[in] mgrkey The group manager key.
+ * @param[in] seq The step to run of the join/issue protocol.
  *  manager.
  * @param[in] min Input message received from the member for the current step of
  *  the join/issue protocol.
- * @param[in] mgrkey The group manager key.
  * @param[in] grpkey The group key.
  *
  * @return IOK or IERROR.
  */
 int sltgs23_join_mgr(message_t **mout,
-                   gml_t *gml,
-                   groupsig_key_t *mgrkey,
-                   int seq,
-                   message_t *min,
-                   groupsig_key_t *grpkey);
+                  gml_t *gml,
+                  groupsig_key_t *mgrkey,
+                  int seq,
+                  message_t *min,
+                  groupsig_key_t *grpkey);
 
 /**
- * @fn int sltgs23_sign(groupsig_signature_t *sig,
- *                    message_t *msg,
- *                    groupsig_key_t *memkey,
- *	              groupsig_key_t *grpkey,
- *                    unsigned int seed)
+ * @fn int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
+ *	              groupsig_key_t *grpkey, unsigned int seed)
  * @brief Issues SLTGS23 group signatures.
  *
  * Using the specified member and group keys, issues a signature for the specified
@@ -203,16 +195,12 @@ int sltgs23_join_mgr(message_t **mout,
  *
  * @return IOK or IERROR.
  */
-int sltgs23_sign(groupsig_signature_t *sig,
-               message_t *msg,
-               groupsig_key_t *memkey,
-               groupsig_key_t *grpkey,
-               unsigned int seed);
+int sltgs23_sign(groupsig_signature_t *sig, message_t *msg,
+              groupsig_key_t *memkey,
+              groupsig_key_t *grpkey, unsigned int seed);
 
 /**
- * @fn int sltgs23_verify(uint8_t *ok,
- *                      groupsig_signature_t *sig,
- *                      message_t *msg,
+ * @fn int sltgs23_verify(uint8_t *ok, groupsig_signature_t *sig, message_t *msg,
  *		        groupsig_key_t *grpkey);
  * @brief Verifies a SLTGS23 group signature.
  *
@@ -224,42 +212,95 @@ int sltgs23_sign(groupsig_signature_t *sig,
  *
  * @return IOK or IERROR.
  */
-int sltgs23_verify(uint8_t *ok,
-                 groupsig_signature_t *sig,
-                 message_t *msg,
-                 groupsig_key_t *grpkey);
+int sltgs23_verify(uint8_t *ok, groupsig_signature_t *sig,
+                message_t *msg,
+                groupsig_key_t *grpkey);
 
 /**
- * @fn int sltgs23_open(uint64_t *index,
- *                    groupsig_proof_t *proof,
- *                    crl_t *crl,
- *                    groupsig_signature_t *sig,
- *                    groupsig_key_t *grpkey,
- *	              groupsig_key_t *mgrkey,
- *                    gml_t *gml)
- * @brief Opens a SLTGS23 group signature.
+ * @fn int sltgs23_identify(uint8_t *ok,
+ *                           groupsig_proof_t **proof,
+ *                           groupsig_key_t *grpkey,
+ *                           groupsig_key_t *memkey,
+ *                           groupsig_signature_t *sig,
+ *                           message_t *msg)
+ * @brief Enables a member to determine whether a specific SLTGS23 signature has
+ *  been issued by him/herself or not.
  *
- * Opens the specified group signature, obtaining the signer's identity.
- *
- * @param[in,out] id An initialized identity. Will be updated with the signer's
- *  real identity.
- * @param[in,out] proof SLTGS23 ignores this parameter.
- * @param[in,out] crl Unused. Ignore.
- * @param[in] sig The signature to open.
+ * @param[in,out] ok Will be set to 1 (signature issued by member) or 0 (not
+ *  issued by member.)
+ * @param[in,out] proof If not null, and the algorithm supports it, will be
+ * set to contain a proof of having issued the given signature.
  * @param[in] grpkey The group key.
- * @param[in] mgrkey The manager's key.
- * @param[in] gml The GML.
+ * @param[in] memkey The key used for issuing the signature.
+ * @param[in] sigs The signature.
+ * @param[in] msg The signed message.
  *
- * @return IOK if it was possible to open the signature. IFAIL if the open
- *  trapdoor was not found, IERROR otherwise.
+ * @return IOK or IERROR.
  */
-int sltgs23_open(uint64_t *index,
-               groupsig_proof_t *proof,
-               crl_t *crl,
-               groupsig_signature_t *sig,
-               groupsig_key_t *grpkey,
-               groupsig_key_t *mgrkey,
-               gml_t *gml);
+int sltgs23_identify(uint8_t *ok,
+                  groupsig_proof_t **proof,
+                  groupsig_key_t *grpkey,
+                  groupsig_key_t *memkey,
+                  groupsig_signature_t *sig,
+                  message_t *msg);
+
+/**
+ * @typedef int sltgs23_link(groupsig_proof_t **proof,
+ *                        groupsig_key_t *grpkey,
+ *                        groupsig_key_t *memkey,
+ *                        message_t *msg,
+ *                        groupsig_signature_t **sigs,
+ *                        message_t **msgs,
+ *                        uint32_t n)
+ * @brief Issues a proof of several SLTGS23 signatures being
+ *        linked (issued by the same member.)
+ *
+ * @param[in,out] proof The proof to be issued.
+ * @param[in] grpkey The group key.
+ * @param[in] memkey The key used for issuing the individual signatures.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures to link.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+ * @return IOK or IERROR.
+ */
+// int sltgs23_link(groupsig_proof_t **proof,
+//               groupsig_key_t *grpkey,
+//               groupsig_key_t *memkey,
+//               message_t *msg,
+//               groupsig_signature_t **sigs,
+//               message_t **msgs,
+//               uint32_t n);
+
+/**
+ * @fn int groupsig_verify_link(uint8_t *ok,
+ *                              groupsig_key_t *grpkey,
+ *                              groupsig_proof_t *proof,
+ *                              message_t *msg,
+ *                              groupsig_signature_t **sigs,
+ *                              message_t **msgs,
+ *                              uint32_t n)
+ * @brief Verifies proofs of several SLTGS23 signatures being linked.
+ *
+ * @param[in,out] ok Will be set to 1 (proof valid) or 0 (proof invalid).
+ * @param[in] proof The proof to be verified.
+ * @param[in] grpkey The group key.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+ * @return IOK or IERROR.
+ */
+// int sltgs23_verify_link(uint8_t *ok,
+//                      groupsig_key_t *grpkey,
+//                      groupsig_proof_t *proof,
+//                      message_t *msg,
+//                      groupsig_signature_t **sigs,
+//                      message_t **msgs,
+//                      uint32_t n);
+
 
 /**
  * @var sltgs23_groupsig_bundle
@@ -268,32 +309,32 @@ int sltgs23_open(uint64_t *index,
 static const groupsig_t sltgs23_groupsig_bundle = {
  desc: &sltgs23_description, /**< Contains the SLTGS23 scheme description. */
  init: &sltgs23_init, /**< Initializes the variables needed by SLTGS23. */
- clear: &sltgs23_clear, /**< Frees the varaibles needed by SLTGS23. */
+ clear:  &sltgs23_clear, /**< Frees the variables needed by SLTGS23. */
  setup: &sltgs23_setup, /**< Sets up SLTGS23 groups. */
- get_joinseq: &sltgs23_get_joinseq, /**< Returns the number of messages in the join
-				     protocol. */
+ get_joinseq:  &sltgs23_get_joinseq, /**< Returns the number of messages in the join
+			protocol. */
  get_joinstart: &sltgs23_get_joinstart, /**< Returns who begins the join protocol. */
  join_mem: &sltgs23_join_mem, /**< Executes member-side joins. */
- join_mgr: &sltgs23_join_mgr, /**< Executes maanger-side joins. */
+ join_mgr: &sltgs23_join_mgr, /**< Executes manager-side joins. */
  sign: &sltgs23_sign, /**< Issues SLTGS23 signatures. */
- verify: &sltgs23_verify, /**< Verifies SLTGS23 signatures. */
+ verify:  &sltgs23_verify, /**< Verifies SLTGS23 signatures. */
  verify_batch: NULL,
- open: &sltgs23_open, /**< Opens SLTGS23 signatures. */
- open_verify: NULL,
- reveal: NULL,
- trace: NULL,
- claim: NULL,
- claim_verify: NULL,
- prove_equality: NULL,
- prove_equality_verify: NULL,
- blind: NULL,
- convert: NULL,
- unblind: NULL,
- identify: NULL,
- link: NULL,
- verify_link: NULL,
- seqlink: NULL,
- verify_seqlink: NULL
+ open: NULL, // &sltgs23_open, /**< Opens SLTGS23 signatures. */
+ open_verify: NULL, // &sltgs23_open_verify_f, /**< SLTGS23 does not create proofs of opening. */
+ reveal: NULL, // &sltgs23_reveal, /**< Reveals the tracing trapdoor from SLTGS23 signatures. */
+ trace: NULL, // &sltgs23_trace, /**< Traces the issuer of a signature. */
+ claim: NULL, // &sltgs23_claim, /**< Claims, in ZK, "ownership" of a signature. */
+ claim_verify: NULL, // &sltgs23_claim_verify, /**< Verifies claims. */
+ prove_equality: NULL, // &sltgs23_prove_equality, /**< Issues "same issuer" ZK proofs for several signatures. */
+ prove_equality_verify: NULL, // &sltgs23_prove_equality_verify, /**< Verifies "same issuer" ZK proofs. */
+ blind: NULL, // &sltgs23_blind, /**< Blinds group signatures. */
+ convert:  NULL, // &sltgs23_convert, /**< Converts blinded group signatures. */
+ unblind:  NULL, // &sltgs23_unblind, /**< Unblinds converted group signatures. */
+ identify:  &sltgs23_identify, /**< Determines whether a signature has been issued by a member. */
+ link: NULL, /**< Links a set of SLTGS23 signatures. */
+ verify_link: NULL, /**< Verifies a proof of link. */
+ seqlink: NULL, // &sltgs23_seqlink, /**< Sequentially links a st of SLTGS23 signatures. */
+ verify_seqlink: NULL, // &sltgs23_verify_seqlink, /**< Verifies a proof of sequential link. */
 };
 
 #ifdef __cplusplus

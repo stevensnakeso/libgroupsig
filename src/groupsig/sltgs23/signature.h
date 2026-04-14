@@ -22,25 +22,21 @@
 
 #include <stdint.h>
 #include "include/signature.h"
-#include "bigz.h"
 #include "sltgs23.h"
-#include "shim/pbc_ext.h"
+#include "crypto/spk.h"
 
 /**
  * @struct sltgs23_signature_t
  * @brief Defines the structure of a SLTGS23 signature.
+ * Defineme.
  */
 typedef struct {
   uint8_t scheme; /**< Metainformation: the gs scheme this key belongs to. */
-  pbcext_element_G1_t *T1;
-  pbcext_element_G1_t *T2;
-  pbcext_element_G1_t *T3;
-  pbcext_element_Fr_t *c;
-  pbcext_element_Fr_t *salpha;
-  pbcext_element_Fr_t *sbeta;
-  pbcext_element_Fr_t *sx;
-  pbcext_element_Fr_t *sdelta1;
-  pbcext_element_Fr_t *sdelta2;
+  pbcext_element_G1_t *AA;
+  pbcext_element_G1_t *A_;
+  pbcext_element_G1_t *d;
+  spk_rep_t *pi;
+  pbcext_element_G1_t *nym;
 } sltgs23_signature_t;
 
 /** 
@@ -84,47 +80,47 @@ int sltgs23_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src)
 char* sltgs23_signature_to_string(groupsig_signature_t *sig);
 
 /** 
- * @fn int sltgs23_signature_get_size(groupsig_signature_t *sig)
- * Returns the number of bytes needed to store the signature in an array
- * of bytes.
+ * @fn int sltgs23_signature_get_size_in_format(groupsig_signature_t *sig)
+ * Returns the size of the signature as an array of bytes.
  *
  * @param[in] sig The signature.
  * 
- * @return -1 if error. Else, the number of bytes to represent the signature.
+ * @return -1 if error, the size that this signature would as an array of bytes.
  */
 int sltgs23_signature_get_size(groupsig_signature_t *sig);
 
-/**
- * @fn int sltgs23_signature_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
- * @brief Writes a bytearray representation of the given signature, with format:
+/** 
+ * @fn int sltgs23_signature_export(byte_t **bytes,
+ *                               uint32_t *size,
+ *                               groupsig_signature_t *signature)
+ * @brief Exports the specified signature to as an array of bytes, as follows:
+ * 
+ *    | SLTGS23_CODE | sizeof(AA) | AA | sizeof(A_) | A_ | sizeof(d) | d | 
+ *      sizeof(spk) | spk | sizeof(nym) | nym |
  *
- * | SLTGS23_CODE | size_T1 | T1 | size_T2 | T2 | size_T3 | T3 | size_c | c |
- *                 size_salpha | salpha | size_sbeta | sbeta | size_sx | sx |
- *                 size_sdelta1 | sdelta1 | size_sdelta2 | sdelta2 |
- *
- * @param[in,out] bytes A pointer to the array that will contain the exported
- *  signature. If <i>*bytes</i> is NULL, memory will be internally allocated.
- * @param[in,out] size Will be set to the number of bytes written in <i>*bytes</i>.
- * @param[in] sig The signature to export.
- *
+ * @param[in,out] bytes A pointer to the array of bytes. If <i>*bytes</i> is NULL,
+ *  memory is internally allocated.
+ * @param[in,out] size Will be set to the number of bytes written into <i>*bytes</i>.
+ * @param[in] signature The group signature to export.
+ * 
  * @return IOK or IERROR
  */
 int sltgs23_signature_export(byte_t **bytes,
-			   uint32_t *size,
-			   groupsig_signature_t *signature);
+			  uint32_t *size,
+			  groupsig_signature_t *signature);
 
 /** 
- * @fn groupsig_signature_t* sltgs23_signature_import(byte_t *source, uint32_t size)
- * @brief Imports a signature.
+ * @fn groupsig_signature_t* sltgs23_signature_import(byte_t *source,
+ *                                                 uint32_t size)
+ * @brief Imports a signature according to the specified format.
  *
- * Imports a SLTGS23 signature from the specified array of bytes.
+ * @param[in] source The array of bytes to parse.
+ * @param[in] size The number of bytes in <i>source</i>.
  * 
- * @param[in] source The array of bytes containing the signature to import.
- * @param[in] source The number of bytes in the passed array.
- * 
- * @return A pointer to the imported key, or NULL if error.
+ * @return A pointer to the imported signature, or NULL if error.
  */
-groupsig_signature_t* sltgs23_signature_import(byte_t *source, uint32_t size);
+groupsig_signature_t* sltgs23_signature_import(byte_t *source,
+					    uint32_t size);
 
 /**
  * @var sltgs23_signature_handle
@@ -135,12 +131,10 @@ static const groupsig_signature_handle_t sltgs23_signature_handle = {
   .init = &sltgs23_signature_init,  /**< Initializes signatures. */
   .free = &sltgs23_signature_free, /**< Frees signatures. */
   .copy = &sltgs23_signature_copy, /**< Copies signatures. */
-  .get_size = &sltgs23_signature_get_size, /**< Gets the size in bytes of a 
-					    signature in a specific format. */
+  .get_size = &sltgs23_signature_get_size, /**< Gets the size in bytes of a signature. */
   .gexport = &sltgs23_signature_export, /**< Exports signatures. */
   .gimport = &sltgs23_signature_import, /**< Imports signatures. */
-  .to_string = &sltgs23_signature_to_string, /**< Converts signatures to 
-					      printable strings. */
+  .to_string = &sltgs23_signature_to_string, /**< Converts signatures to printable strings. */
 };
 
 #endif

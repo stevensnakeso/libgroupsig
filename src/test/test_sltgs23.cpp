@@ -1,4 +1,4 @@
-/*
+/* 
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,12 +23,11 @@
 #include "gtest/gtest.h"
 
 #include "groupsig.h"
-#include "gml.h"
 #include "sltgs23.h"
 #include "message.h"
 
 using namespace std;
-
+  
 namespace groupsig {
 
   // The fixture for testing SLTGS23 scheme.
@@ -36,9 +35,8 @@ namespace groupsig {
   protected:
     // You can remove any or all of the following functions if their bodies
     // would be empty.
-    groupsig_key_t *mgrkey;
+    groupsig_key_t *isskey;
     groupsig_key_t *grpkey;
-    gml_t *gml;
     groupsig_key_t **memkey;
     uint32_t n;
 
@@ -48,44 +46,40 @@ namespace groupsig {
 
       rc = groupsig_init(GROUPSIG_SLTGS23_CODE, time(NULL));
       EXPECT_EQ(rc, IOK);
-
-      mgrkey = groupsig_mgr_key_init(GROUPSIG_SLTGS23_CODE);
-      EXPECT_NE(mgrkey, nullptr);
+  
+      isskey = groupsig_mgr_key_init(GROUPSIG_SLTGS23_CODE);
+      EXPECT_NE(isskey, nullptr);
 
       grpkey = groupsig_grp_key_init(GROUPSIG_SLTGS23_CODE);
       EXPECT_NE(grpkey, nullptr);
-
-      gml = gml_init(GROUPSIG_SLTGS23_CODE);
-      EXPECT_NE(gml, nullptr);
 
       memkey = nullptr;
       n = 0;
 
     }
-
+    
     ~SLTGS23Test() override {
-      groupsig_mgr_key_free(mgrkey); mgrkey = NULL;
+      groupsig_mgr_key_free(isskey); isskey = NULL;
       groupsig_grp_key_free(grpkey); grpkey = NULL;
-      gml_free(gml); gml = NULL;
       if (memkey) {
 	for (int i=0; i<n; i++) {
 	  groupsig_mem_key_free(memkey[i]); memkey[i] = NULL;
 	}
 	free(memkey); memkey = NULL;
       }
-      groupsig_clear(GROUPSIG_SLTGS23_CODE);
+      groupsig_clear(GROUPSIG_SLTGS23_CODE);      
     }
 
     void addMembers(uint32_t n) {
 
-      message_t *m1, *m2;
+      message_t *m0, *m1, *m2, *m3, *m4;
       int rc;
       uint32_t i;
 
       memkey = (groupsig_key_t **) malloc(sizeof(groupsig_key_t *)*n);
       ASSERT_NE(memkey, nullptr);
 
-      m1 = m2 = nullptr;
+      m0 = m1 = m2 = m3 = m4 = nullptr;
       for (i=0; i<n; i++) {
 
 	memkey[i] = groupsig_mem_key_init(grpkey->scheme);
@@ -94,24 +88,36 @@ namespace groupsig {
 	m1 = message_init();
 	ASSERT_NE(m1, nullptr);
 
-	rc = groupsig_join_mgr(&m1, gml, mgrkey, 0, nullptr, grpkey);
+	rc = groupsig_join_mgr(&m1, NULL, isskey, 0, m0, grpkey);
 	ASSERT_EQ(rc, IOK);
 
 	m2 = message_init();
 	ASSERT_NE(m2, nullptr);
 
         rc = groupsig_join_mem(&m2, memkey[i], 1, m1, grpkey);
+	ASSERT_EQ(rc, IOK);	
+
+	m3 = message_init();
+	ASSERT_NE(m3, nullptr);
+
+	rc = groupsig_join_mgr(&m3, NULL, isskey, 2, m2, grpkey);
 	ASSERT_EQ(rc, IOK);
 
-      }
+	rc = groupsig_join_mem(&m4, memkey[i], 3, m3, grpkey);
+	ASSERT_EQ(rc, IOK);
 
+	if(m0) { message_free(m0); m0 = NULL; }
+	if(m1) { message_free(m1); m1 = NULL; }
+	if(m2) { message_free(m2); m2 = NULL; }
+	if(m3) { message_free(m3); m3 = NULL; }
+	if(m4) { message_free(m4); m4 = NULL; }	
+		
+      }
+      
       this->n = n;
 
-      if(m1) { message_free(m1); m1 = NULL; }
-      if(m2) { message_free(m2); m2 = NULL; }
-
     }
-
+    
     // If the constructor and destructor are not enough for setting up
     // and cleaning up each test, you can define the following methods:
 
@@ -147,8 +153,8 @@ namespace groupsig {
 
     /* Scheme is set to SLTGS23 */
     EXPECT_EQ(grpkey->scheme, GROUPSIG_SLTGS23_CODE);
-    EXPECT_EQ(mgrkey->scheme, GROUPSIG_SLTGS23_CODE);
-
+    EXPECT_EQ(isskey->scheme, GROUPSIG_SLTGS23_CODE);
+    
   }
 
   /* groupsig_get_joinstart must return 0 */
@@ -156,12 +162,12 @@ namespace groupsig {
 
     int rc;
     uint8_t start;
-
+    
     rc = groupsig_get_joinstart(GROUPSIG_SLTGS23_CODE, &start);
     EXPECT_EQ(rc, IOK);
-
+    
     EXPECT_EQ(start, 0);
-
+    
   }
 
   /* groupsig_get_joinseq must return 3 */
@@ -169,25 +175,25 @@ namespace groupsig {
 
     int rc;
     uint8_t seq;
-
+    
     rc = groupsig_get_joinseq(GROUPSIG_SLTGS23_CODE, &seq);
     EXPECT_EQ(rc, IOK);
+    
+    EXPECT_EQ(seq, 3);    
 
-    EXPECT_EQ(seq, 1);
-
-  }
+  }  
 
   /* Successfully adds a group member */
   TEST_F(SLTGS23Test, AddsNewMember) {
 
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     addMembers(1);
 
-    EXPECT_EQ(memkey[0]->scheme, GROUPSIG_SLTGS23_CODE);
+    EXPECT_EQ(memkey[0]->scheme, GROUPSIG_SLTGS23_CODE);    
 
   }
 
@@ -197,13 +203,13 @@ namespace groupsig {
     groupsig_signature_t *sig;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
     sig = groupsig_signature_init(grpkey->scheme);
     EXPECT_NE(sig, nullptr);
-
+    
     EXPECT_EQ(sig->scheme, GROUPSIG_SLTGS23_CODE);
 
     groupsig_signature_free(sig);
@@ -219,7 +225,7 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -229,8 +235,11 @@ namespace groupsig {
     /* Add one member */
     addMembers(1);
 
-    /* Initialize a message with a test string */
-    msg = message_from_string((char *) "Hello, World!");
+    /* 
+       Initialize a message with a test string 
+       (SLTGS23 messages are JSON objects with scope and message) 
+    */
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -261,7 +270,7 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -272,7 +281,8 @@ namespace groupsig {
     addMembers(1);
 
     /* Import the message from the external file into the initialized message object */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *)
+			      "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -280,7 +290,7 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     /* Use a wrong message for verification */
-    msg2 = message_from_string((char *) "Hello, Worlds!");
+    msg2 = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, Worlds!\" }");
     EXPECT_NE(msg2, nullptr);
 
     /* Verify the signature */
@@ -297,51 +307,159 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     rc = message_free(msg2);
-    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(rc, IOK);    
 
   }
 
-  /* Opens a signature */
-  TEST_F(SLTGS23Test, OpenSignature) {
+  /* Successfully links 2 signatures by the same user */
+  // TEST_F(SLTGS23Test, SuccessfullyLinkSigsSameUser) {
 
-    groupsig_signature_t *sig;
-    message_t *msg;
-    uint64_t index;
-    int rc;
+  //   groupsig_signature_t *sig1, *sig2, **sigs;
+  //   groupsig_proof_t *proof;
+  //   message_t *msg, **msgs;
+  //   int rc;
+  //   uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
-    EXPECT_EQ(rc, IOK);
+  //   rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+  //   EXPECT_EQ(rc, IOK);
 
-    /* Initialize the group signature object */
-    sig = groupsig_signature_init(grpkey->scheme);
-    EXPECT_NE(sig, nullptr);
+  //   /* Initialize the group signature objects */
+  //   sig1 = groupsig_signature_init(grpkey->scheme);
+  //   EXPECT_NE(sig1, nullptr);
 
-    /* Add one member */
-    addMembers(1);
+  //   sig2 = groupsig_signature_init(grpkey->scheme);
+  //   EXPECT_NE(sig2, nullptr);
 
-    /* Import the message from the external file into the initialized message object */
-    msg = message_from_string((char *) "Hello, World!");
-    EXPECT_NE(msg, nullptr);
+  //   /* Add one member */
+  //   addMembers(1);
 
-    /* Sign */
-    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
-    EXPECT_EQ(rc, IOK);
+  //   /* 
+  //      Initialize a message with a test string 
+  //      (SLTGS23 messages are JSON objects with scope and message) 
+  //   */
+  //   msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+  //   EXPECT_NE(msg, nullptr);
 
-    /* Open */
-    rc = groupsig_open(&index, nullptr, nullptr, sig, grpkey, mgrkey, gml);
-    EXPECT_EQ(rc, IOK);
+  //   /* Sign */
+  //   rc = groupsig_sign(sig1, msg, memkey[0], grpkey, UINT_MAX);
+  //   EXPECT_EQ(rc, IOK);
 
-    /* index must be 0 */
-    EXPECT_EQ(index, 0);
+  //   rc = groupsig_sign(sig2, msg, memkey[0], grpkey, UINT_MAX);
+  //   EXPECT_EQ(rc, IOK);    
 
-    /* Free stuff */
-    rc = message_free(msg);
-    EXPECT_EQ(rc, IOK);
+  //   /* Link the signatures */
+  //   proof = groupsig_proof_init(grpkey->scheme);
+  //   EXPECT_NE(proof, nullptr);
 
-    rc = groupsig_signature_free(sig);
-    EXPECT_EQ(rc, IOK);
+  //   msgs = (message_t **) malloc(sizeof(message_t *)*2);
+  //   EXPECT_NE(msgs, nullptr);
 
-  }
+  //   msgs[0] = msg;
+  //   msgs[1] = msg;
+
+  //   sigs = (groupsig_signature_t **) malloc(sizeof(groupsig_signature_t *)*2);
+  //   EXPECT_NE(sigs, nullptr);    
+    
+  //   sigs[0] = sig1;
+  //   sigs[1] = sig2;
+    
+  //   rc = groupsig_link(&proof, grpkey, memkey[0], msg, sigs, msgs, 2);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   rc = groupsig_verify_link(&b, grpkey, proof, msg, sigs, msgs, 2);
+  //   EXPECT_EQ(rc, IOK);
+  //   EXPECT_EQ(b, 1);
+    
+  //   /* Free stuff */
+  //   rc = groupsig_signature_free(sig1);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   rc = groupsig_signature_free(sig2);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   rc = groupsig_proof_free(proof);
+  //   EXPECT_EQ(rc, IOK);    
+
+  //   rc = message_free(msg);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   free(msgs);
+  //   free(sigs);
+
+  // }
+
+    /* Fails to link 2 signatures by different users */
+  // TEST_F(SLTGS23Test, FailsLinkSigsDifferentUsers) {
+
+  //   groupsig_signature_t *sig1, *sig2, **sigs;
+  //   groupsig_proof_t *proof;
+  //   message_t *msg, **msgs;
+  //   int rc;
+  //   uint8_t b;
+
+  //   rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   /* Initialize the group signature objects */
+  //   sig1 = groupsig_signature_init(grpkey->scheme);
+  //   EXPECT_NE(sig1, nullptr);
+
+  //   sig2 = groupsig_signature_init(grpkey->scheme);
+  //   EXPECT_NE(sig2, nullptr);
+
+  //   /* Add one member */
+  //   addMembers(2);
+
+  //   /* 
+  //      Initialize a message with a test string 
+  //      (SLTGS23 messages are JSON objects with scope and message) 
+  //   */
+  //   msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+  //   EXPECT_NE(msg, nullptr);
+
+  //   /* Sign */
+  //   rc = groupsig_sign(sig1, msg, memkey[0], grpkey, UINT_MAX);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   rc = groupsig_sign(sig2, msg, memkey[1], grpkey, UINT_MAX);
+  //   EXPECT_EQ(rc, IOK);    
+
+  //   /* Link the signatures */
+  //   proof = groupsig_proof_init(grpkey->scheme);
+  //   EXPECT_NE(proof, nullptr);
+
+  //   msgs = (message_t **) malloc(sizeof(message_t *)*2);
+  //   EXPECT_NE(msgs, nullptr);
+
+  //   msgs[0] = msg;
+  //   msgs[1] = msg;
+
+  //   sigs = (groupsig_signature_t **) malloc(sizeof(groupsig_signature_t *)*2);
+  //   EXPECT_NE(sigs, nullptr);    
+    
+  //   sigs[0] = sig1;
+  //   sigs[1] = sig2;
+    
+  //   rc = groupsig_link(&proof, grpkey, memkey[0], msg, sigs, msgs, 2);
+  //   EXPECT_EQ(rc, IFAIL);
+    
+  //   /* Free stuff */
+  //   rc = groupsig_signature_free(sig1);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   rc = groupsig_signature_free(sig2);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   rc = groupsig_proof_free(proof);
+  //   EXPECT_EQ(rc, IOK);    
+
+  //   rc = message_free(msg);
+  //   EXPECT_EQ(rc, IOK);
+
+  //   free(msgs);
+  //   free(sigs);
+
+  // }  
 
   /** Group key tests **/
 
@@ -353,13 +471,13 @@ namespace groupsig {
     uint32_t size;
     int rc, len;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Get the size of the string to store the exported key */
     len = groupsig_grp_key_get_size(grpkey);
     EXPECT_NE(len, -1);
-
+    
     /* Export the group key to a string in b64 */
     bytes = nullptr;
     rc = groupsig_grp_key_export(&bytes, &size, grpkey);
@@ -375,7 +493,7 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     free(bytes); bytes = nullptr;
-
+    
   }
 
   /* Successfully copies a group key */
@@ -384,7 +502,7 @@ namespace groupsig {
     groupsig_key_t *dst;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     dst = groupsig_grp_key_init(GROUPSIG_SLTGS23_CODE);
@@ -394,33 +512,33 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     rc = groupsig_grp_key_free(dst);
-    EXPECT_EQ(rc, IOK);
-
+    EXPECT_EQ(rc, IOK);    
+    
   }
 
   /** Manager key tests **/
 
   /* Successfully exports and imports an issuer key to a string */
-  TEST_F(SLTGS23Test, MgrKeyExportImport) {
+  TEST_F(SLTGS23Test, IssKeyExportImport) {
 
     groupsig_key_t *dst;
     byte_t *bytes;
     uint32_t size;
     int rc, len;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
-
+    
     /* Get the size of the string to store the exported key */
-    len = groupsig_mgr_key_get_size(mgrkey);
+    len = groupsig_mgr_key_get_size(isskey);
     EXPECT_NE(len, -1);
-
+    
     /* Export the group key to a string in b64 */
     bytes = nullptr;
-    rc = groupsig_mgr_key_export(&bytes, &size, mgrkey);
+    rc = groupsig_mgr_key_export(&bytes, &size, isskey);
     EXPECT_EQ(rc, IOK);
     EXPECT_EQ(len, size);
-    EXPECT_NE(bytes, nullptr);
+    EXPECT_NE(bytes, nullptr);    
 
     /* Import the group key */
     dst = groupsig_mgr_key_import(GROUPSIG_SLTGS23_CODE, bytes, size);
@@ -430,27 +548,27 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     free(bytes); bytes = nullptr;
-
+    
   }
 
   /* Successfully copies an issuer key */
-  TEST_F(SLTGS23Test, MgrKeyCopy) {
+  TEST_F(SLTGS23Test, IssKeyCopy) {
 
     groupsig_key_t *dst;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     dst = groupsig_mgr_key_init(GROUPSIG_SLTGS23_CODE);
     EXPECT_NE(dst, nullptr);
 
-    rc = groupsig_mgr_key_copy(dst, mgrkey);
+    rc = groupsig_mgr_key_copy(dst, isskey);
     EXPECT_EQ(rc, IOK);
 
     rc = groupsig_mgr_key_free(dst);
     EXPECT_EQ(rc, IOK);
-
+    
   }
 
   /** Member key tests **/
@@ -463,7 +581,7 @@ namespace groupsig {
     uint32_t size;
     int rc, len;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Add one member */
@@ -472,7 +590,7 @@ namespace groupsig {
     /* Get the size of the string to store the exported key */
     len = groupsig_mem_key_get_size(memkey[0]);
     EXPECT_NE(len, -1);
-
+    
     /* Export the group key to a string in b64 */
     bytes = nullptr;
     rc = groupsig_mem_key_export(&bytes, &size, memkey[0]);
@@ -488,7 +606,7 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     free(bytes); bytes = nullptr;
-
+    
   }
 
   /* Successfully copies a member key */
@@ -497,11 +615,11 @@ namespace groupsig {
     groupsig_key_t *dst;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
    /* Add one member */
-    addMembers(1);
+    addMembers(1);    
 
     dst = groupsig_mem_key_init(GROUPSIG_SLTGS23_CODE);
     EXPECT_NE(dst, nullptr);
@@ -510,8 +628,8 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     rc = groupsig_mem_key_free(dst);
-    EXPECT_EQ(rc, IOK);
-
+    EXPECT_EQ(rc, IOK);    
+    
   }
 
   /** Signature object tests **/
@@ -525,31 +643,31 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
     sig = groupsig_signature_init(grpkey->scheme);
-    EXPECT_NE(sig, nullptr);
+    EXPECT_NE(sig, nullptr);  
 
     /* Add one member */
     addMembers(1);
 
     /* Initialize a message with a test string */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
     rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
     EXPECT_EQ(rc, IOK);
-
+    
     /* Verify the src signature */
     rc = groupsig_verify(&b, sig, msg, grpkey);
     EXPECT_EQ(rc, IOK);
 
     /* b must be 1 */
-    EXPECT_EQ(b, 1);
-
+    EXPECT_EQ(b, 1);    
+    
     str = groupsig_signature_to_string(sig);
     EXPECT_NE(str, nullptr);
 
@@ -558,9 +676,9 @@ namespace groupsig {
 
     rc = message_free(msg);
     EXPECT_EQ(rc, IOK);
-
+    
     free(str); str = nullptr;
-
+    
   }
 
   /* Successfully copies a signature */
@@ -571,7 +689,7 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the src group signature object */
@@ -580,26 +698,26 @@ namespace groupsig {
 
     /* Initialize the dst group signature object */
     dst = groupsig_signature_init(grpkey->scheme);
-    EXPECT_NE(dst, nullptr);
+    EXPECT_NE(dst, nullptr);    
 
     /* Add one member */
     addMembers(1);
 
     /* Initialize a message with a test string */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
     rc = groupsig_sign(src, msg, memkey[0], grpkey, UINT_MAX);
     EXPECT_EQ(rc, IOK);
-
+    
     /* Verify the src signature */
     rc = groupsig_verify(&b, src, msg, grpkey);
     EXPECT_EQ(rc, IOK);
 
     /* b must be 1 */
-    EXPECT_EQ(b, 1);
-
+    EXPECT_EQ(b, 1);    
+    
     rc = groupsig_signature_copy(dst, src);
     EXPECT_EQ(rc, IOK);
 
@@ -618,10 +736,10 @@ namespace groupsig {
 
     rc = message_free(msg);
     EXPECT_EQ(rc, IOK);
-
+    
   }
 
-  /* Successfully exports and imports a signature */
+    /* Successfully creates a valid signature */
   TEST_F(SLTGS23Test, SignatureExportImport) {
 
     groupsig_signature_t *sig, *imported;
@@ -631,7 +749,7 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -642,7 +760,8 @@ namespace groupsig {
     addMembers(1);
 
     /* Initialize a message with a test string */
-    msg = message_from_string((char *) "Hello, World!");
+    msg = message_from_string((char *)
+			      "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
 
     /* Sign */
@@ -657,8 +776,8 @@ namespace groupsig {
 
     /* Import */
     imported = groupsig_signature_import(sig->scheme, bytes, size);
-    EXPECT_NE(imported, nullptr);
-
+    EXPECT_NE(imported, nullptr);    
+    
     /* Verify the signature */
     rc = groupsig_verify(&b, imported, msg, grpkey);
     EXPECT_EQ(rc, IOK);
@@ -676,40 +795,8 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     free(bytes); bytes = nullptr;
-
+    
   }
-
-  /** GML tests **/
-
-  /* Successfully exports and imports a GML */
-  TEST_F(SLTGS23Test, GmlExportImport) {
-
-    byte_t *bytes;
-    gml_t *imported;
-    int rc;
-    uint32_t size;
-
-    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, mgrkey, gml);
-    EXPECT_EQ(rc, IOK);
-
-    /* Add three member */
-    addMembers(3);
-
-    /* Export */
-    bytes = NULL;
-    rc = gml_export(&bytes, &size, gml);
-    EXPECT_EQ(rc, IOK);
-
-    /* Import */
-    imported = gml_import(GROUPSIG_SLTGS23_CODE, bytes, size);
-    EXPECT_NE(imported, nullptr);
-
-    rc = gml_free(imported);
-    EXPECT_NE(rc, IERROR);
-
-    free(bytes); bytes = NULL;
-
-  }
-
 
 }  // namespace groupsig
+

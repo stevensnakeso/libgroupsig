@@ -27,22 +27,23 @@
 #include "include/grp_key.h"
 #include "shim/pbc_ext.h"
 
+
 /**
  * @struct sltgs23_grp_key_t
  * @brief Structure for SLTGS23 group keys.
  *
- * SLTGS23 group keys. 
+ * For convenience, we set a public key of SLTGS23 to contain the instance parameters 
+ * as well as the public keys of Issuer and Converter. @TODO We may want to 
+ * redesign this at some point...
  */
 typedef struct {
-  pbcext_element_G1_t *g1; /**< Tr(g2) */
-  pbcext_element_G2_t *g2; /**< Random generator of G2 */
-  pbcext_element_G1_t *h; /**< Random element in G1 \ 1 */
-  pbcext_element_G1_t *u; /**< h^(xi1^-1) @see sltgs23_mgr_key_t */
-  pbcext_element_G1_t *v; /**< h^(xi2^-1) @see sltgs23_mgr_key_t */
-  pbcext_element_G2_t *w; /**< g2^gamma @see sltgs23_mgr_key_t */
-  pbcext_element_GT_t *hw; /**< Precompute e(h,w) **/
-  pbcext_element_GT_t *hg2; /**<Precompute e(h,g2) **/
-  pbcext_element_GT_t *g1g2; /**< Precompute e(g1,g2) **/
+   pbcext_element_G1_t *g; /**< Params. Random generator of G1. */ // g
+  pbcext_element_G1_t *g1; /**< Params. Random generator of G1. */ // g0
+  pbcext_element_G2_t *g2; /**< Params. Random generator of G2. */ // h0
+  pbcext_element_G1_t *h1; /**< Params. Random generator of G1. */ // g1
+  pbcext_element_G1_t *h2; /**< Params. Random generator of G1. */ // g2
+  pbcext_element_G2_t *ipk; /**< Issuer public key. */
+  pbcext_element_G1_t *cpk; /**< Converter public key. */ //cpk
 } sltgs23_grp_key_t;
 
 /**
@@ -89,8 +90,8 @@ int sltgs23_grp_key_free(groupsig_key_t *key);
  */
 int sltgs23_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
 
-/** 
- * @fn int sltgs23_grp_key_get_size(groupsig_key_t *key)
+/**
+ * @fn int sltgs23_grp_key_get_size_in_format(groupsig_key_t *key)
  * @brief Returns the number of bytes required to export the key.
  *
  * @param[in] key The key.
@@ -99,19 +100,19 @@ int sltgs23_grp_key_copy(groupsig_key_t *dst, groupsig_key_t *src);
  */
 int sltgs23_grp_key_get_size(groupsig_key_t *key);
 
-/**
+/** 
  * @fn int sltgs23_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key)
- * @brief Writes a bytearray representation of the given key, with format:
+ * @brief Exports the given group key to a bytearray with the following format:
  *
- *  | SLTGS23_CODE | KEYTYPE | size_g1 | g1 | size_g2 | g2 | size_h | h |
- *    size_u | u | size_v | v |
+ *  | SLTGS23_CODE | KEYTYPE | size_g1 | g1 | size_g2 | g2 |
+ *    size_h1 | h1 | size_h2 | h2 | size_ipk | ipk |
  *
  * @param[in,out] bytes A pointer to the array that will contain the exported
  *  group key. If <i>*bytes</i> is NULL, memory will be internally allocated.
  * @param[in,out] size Will be set to the number of bytes written in <i>*bytes</i>.
  * @param[in] key The group key to export.
- *
- * @return IOK or IERROR
+ * 
+ * @return IOK or IERROR.
  */
 int sltgs23_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
 
@@ -119,7 +120,7 @@ int sltgs23_grp_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key);
  * @fn groupsig_key_t* sltgs23_grp_key_import(byte_t *source, uint32_t size)
  * @brief Imports a group key.
  *
- * Imports a SLTGS23 group key from the specified array of bytes.
+ * Imports a SLTGS23 group key from the specified source, of the specified format.
  * 
  * @param[in] source The array of bytes containing the key to import.
  * @param[in] source The number of bytes in the passed array.
@@ -145,14 +146,14 @@ char* sltgs23_grp_key_to_string(groupsig_key_t *key);
  * @brief The set of functions to manage SLTGS23 group keys.
  */
 static const grp_key_handle_t sltgs23_grp_key_handle = {
-  .code = GROUPSIG_SLTGS23_CODE, /**< Scheme. */
-  .init = &sltgs23_grp_key_init, /**< Initialize group keys. */
-  .free = &sltgs23_grp_key_free, /**< Free group keys. */
-  .copy = &sltgs23_grp_key_copy, /**< Copy group keys. */
-  .gexport = &sltgs23_grp_key_export, /**< Export group keys. */
-  .gimport = &sltgs23_grp_key_import, /**< Import group keys. */
-  .to_string = &sltgs23_grp_key_to_string, /**< Convert to printable strings. */
-  .get_size = &sltgs23_grp_key_get_size,
+ .code = GROUPSIG_SLTGS23_CODE, /**< Scheme. */
+ .init = &sltgs23_grp_key_init, /**< Initialize group keys. */
+ .free = &sltgs23_grp_key_free, /**< Free group keys. */
+ .copy = &sltgs23_grp_key_copy, /**< Copy group keys. */
+ .gexport = &sltgs23_grp_key_export, /**< Export group keys. */
+ .gimport = &sltgs23_grp_key_import, /**< Import group keys. */
+ .to_string = &sltgs23_grp_key_to_string, /**< Convert to printable strings. */
+ .get_size = &sltgs23_grp_key_get_size, /**< Get size of key as bytes. */
 };
 
 #endif

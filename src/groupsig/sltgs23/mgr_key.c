@@ -30,12 +30,11 @@
 #include "groupsig/sltgs23/mgr_key.h"
 #include "misc/misc.h"
 #include "shim/base64.h"
-#include "shim/pbc_ext.h"
 #include "sys/mem.h"
 
 groupsig_key_t* sltgs23_mgr_key_init() {
 
-  groupsig_key_t *key;
+    groupsig_key_t *key;
 
   if(!(key = (groupsig_key_t *) mem_malloc(sizeof(groupsig_key_t)))) {
     return NULL;
@@ -55,28 +54,21 @@ groupsig_key_t* sltgs23_mgr_key_init() {
 int sltgs23_mgr_key_free(groupsig_key_t *key) {
 
   sltgs23_mgr_key_t *sltgs23_key;
-
-  if(!key) {
-    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_mgr_key_free", __LINE__, 
-		   "Nothing to free.", LOGWARN);
-    return IOK;  
-  }
-
-  if(key->scheme != GROUPSIG_SLTGS23_CODE) {
+  
+ if(key->scheme != GROUPSIG_SLTGS23_CODE) {
     LOG_EINVAL(&logger, __FILE__, "sltgs23_mgr_key_free", __LINE__, LOGERROR);
     return IERROR;	       
   }
 
   if(key->key) {
     sltgs23_key = key->key;
-    if(sltgs23_key->xi1) { pbcext_element_Fr_free(sltgs23_key->xi1); sltgs23_key->xi1 = NULL; }
-    if(sltgs23_key->xi2) { pbcext_element_Fr_free(sltgs23_key->xi2); sltgs23_key->xi2 = NULL; }
-    if(sltgs23_key->gamma) { pbcext_element_Fr_free(sltgs23_key->gamma); sltgs23_key->gamma = NULL; }
-    mem_free(key->key); key->key = NULL;
+    pbcext_element_Fr_free(sltgs23_key->isk); sltgs23_key->isk = NULL;
+    mem_free(key->key);
+    key->key = NULL;
   }
   
-  mem_free(key); key = NULL;
-
+  mem_free(key);
+  
   return IOK;
 
 }
@@ -84,9 +76,8 @@ int sltgs23_mgr_key_free(groupsig_key_t *key) {
 int sltgs23_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   sltgs23_mgr_key_t *sltgs23_dst, *sltgs23_src;
-  int rc;
-  
-  if(!dst || dst->scheme != GROUPSIG_SLTGS23_CODE ||
+
+  if (!dst || dst->scheme != GROUPSIG_SLTGS23_CODE ||
      !src || src->scheme != GROUPSIG_SLTGS23_CODE) {
     LOG_EINVAL(&logger, __FILE__, "sltgs23_mgr_key_copy", __LINE__, LOGERROR);
     return IERROR;
@@ -94,65 +85,52 @@ int sltgs23_mgr_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 
   sltgs23_dst = dst->key;
   sltgs23_src = src->key;
-  rc = IOK;
-  
+
   /* Copy the elements */
-  if(!(sltgs23_dst->xi1 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, sltgs23_mgr_key_copy);
-  if(pbcext_element_Fr_set(sltgs23_dst->xi1, sltgs23_src->xi1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_mgr_key_copy);
-  if(!(sltgs23_dst->xi2 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, sltgs23_mgr_key_copy);
-  if(pbcext_element_Fr_set(sltgs23_dst->xi2, sltgs23_src->xi2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_mgr_key_copy);
-  if(!(sltgs23_dst->gamma = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, sltgs23_mgr_key_copy);
-  if(pbcext_element_Fr_set(sltgs23_dst->gamma, sltgs23_src->gamma) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_mgr_key_copy);
-
- sltgs23_mgr_key_copy_end:
-
-  if(rc == IERROR) {
-    if (sltgs23_dst->xi1) { pbcext_element_Fr_free(sltgs23_dst->xi1); sltgs23_dst->xi1 = NULL; }
-    if (sltgs23_dst->xi2) { pbcext_element_Fr_free(sltgs23_dst->xi2); sltgs23_dst->xi2 = NULL; }
-    if (sltgs23_dst->gamma) { pbcext_element_Fr_free(sltgs23_dst->gamma); sltgs23_dst->gamma = NULL; }
+  if (sltgs23_src->isk) {
+    if (!(sltgs23_dst->isk = pbcext_element_Fr_init())) return IERROR;
+    if (pbcext_element_Fr_set(sltgs23_dst->isk, sltgs23_src->isk) == IERROR) {
+      pbcext_element_Fr_free(sltgs23_dst->isk); sltgs23_dst->isk = NULL;
+      return IERROR;
+    }
   }
 
-  return rc;
+  return IOK;
 
 }
 
 int sltgs23_mgr_key_get_size(groupsig_key_t *key) {
 
   sltgs23_mgr_key_t *sltgs23_key;
-  uint64_t size64, sxi1, sxi2, sgamma;
-  
+  uint64_t sisk;
+  int size;
+
   if(!key || key->scheme != GROUPSIG_SLTGS23_CODE) {
-    LOG_EINVAL(&logger, __FILE__, "sltgs23_mgr_key_get_size", __LINE__, LOGERROR);
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_mgr_key_get_size",
+	       __LINE__, LOGERROR);
     return -1;
   }
 
-  if(pbcext_element_Fr_byte_size(&sxi1) == IERROR) return -1;
-  if(pbcext_element_Fr_byte_size(&sxi2) == IERROR) return -1;
-  if(pbcext_element_Fr_byte_size(&sgamma) == IERROR) return -1;
+  sltgs23_key = key->key;
+  sisk = 0;
 
-  size64 = sizeof(uint8_t)*2 + sizeof(int)*3 + sxi1 + sxi2 + sgamma;
+  if (sltgs23_key->isk) { if(pbcext_element_Fr_byte_size(&sisk) == IERROR) return -1; }
 
-  if(size64 > INT_MAX) return -1;
-  return (int) size64;
+  if ((int) sisk + sizeof(int)*1+2 > INT_MAX) return -1;
+  size = (int) sisk + sizeof(int)*1+2;
+
+  return size;
 
 }
 
-int sltgs23_mgr_key_export(byte_t **bytes,
-			 uint32_t *size,
-			 groupsig_key_t *key) {
+int sltgs23_mgr_key_export(byte_t **bytes, uint32_t *size, groupsig_key_t *key) {
 
   sltgs23_mgr_key_t *sltgs23_key;
   byte_t *_bytes, *__bytes;
   uint64_t len;
-  int _size, ctr, rc;
-  uint8_t code, type;  
-
+  uint32_t _size;
+  int ctr, rc;
+  
   if(!bytes ||
      !size ||
      !key || key->scheme != GROUPSIG_SLTGS23_CODE) {
@@ -163,41 +141,30 @@ int sltgs23_mgr_key_export(byte_t **bytes,
   rc = IOK;
   ctr = 0;
   sltgs23_key = key->key;
-  
-  /* Get the number of bytes to represent the key */
+
   if ((_size = sltgs23_mgr_key_get_size(key)) == -1) {
     return IERROR;
   }
 
-  if(!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
+  if (!(_bytes = mem_malloc(sizeof(byte_t)*_size))) {
     return IERROR;
   }
-  
+
   /* Dump GROUPSIG_SLTGS23_CODE */
-  code = GROUPSIG_SLTGS23_CODE;
-  _bytes[ctr++] = code;
+  _bytes[ctr++] = GROUPSIG_SLTGS23_CODE;
 
   /* Dump key type */
-  type = GROUPSIG_KEY_MGRKEY;
   _bytes[ctr++] = GROUPSIG_KEY_MGRKEY;
 
-  /* Dump xi1 */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_key->xi1) == IERROR) 
-    GOTOENDRC(IERROR, sltgs23_mgr_key_export);
-  ctr += len;
-
-  /* Dump xi2 */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_key->xi2) == IERROR) 
-    GOTOENDRC(IERROR, sltgs23_mgr_key_export);
-  ctr += len;
-
-  /* Dump gamma */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_key->gamma) == IERROR) 
-    GOTOENDRC(IERROR, sltgs23_mgr_key_export);
-  ctr += len;
+  /* Dump isk */
+  if(sltgs23_key->isk) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_key->isk) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_mgr_key_export);
+    ctr += len;
+  } else {
+    ctr += sizeof(int);
+  }
 
   /* Prepare the return */
   if(!*bytes) {
@@ -210,18 +177,16 @@ int sltgs23_mgr_key_export(byte_t **bytes,
   /* Sanity check */
   if (ctr != _size) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_mgr_key_export", __LINE__, 
-		      EDQUOT, "Unexpected size.", LOGERROR);
+		      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, sltgs23_mgr_key_export);
   }
 
-  *size = ctr;  
+  *size = ctr;
 
  sltgs23_mgr_key_export_end:
-  
-  if (rc == IERROR) {
-    if(_bytes) { mem_free(_bytes); _bytes = NULL; }
-  }  
 
+  if (rc == IERROR && _bytes) { mem_free(_bytes); _bytes = NULL; }
+  
   return rc;
   
 }
@@ -231,8 +196,8 @@ groupsig_key_t* sltgs23_mgr_key_import(byte_t *source, uint32_t size) {
   groupsig_key_t *key;
   sltgs23_mgr_key_t *sltgs23_key;
   uint64_t len;
-  byte_t scheme, type;
   int rc, ctr;
+  uint8_t type, scheme;  
   
   if(!source || !size) {
     LOG_EINVAL(&logger, __FILE__, "sltgs23_mgr_key_import", __LINE__, LOGERROR);
@@ -241,12 +206,11 @@ groupsig_key_t* sltgs23_mgr_key_import(byte_t *source, uint32_t size) {
 
   rc = IOK;
   ctr = 0;
-  
+
   if(!(key = sltgs23_mgr_key_init())) {
     return NULL;
   }
-
-  sltgs23_key = key->key;
+  sltgs23_key = key->key;    
 
   /* First byte: scheme */
   scheme = source[ctr++];
@@ -254,44 +218,35 @@ groupsig_key_t* sltgs23_mgr_key_import(byte_t *source, uint32_t size) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_mgr_key_import", __LINE__, 
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, sltgs23_mgr_key_import);
-  }
+  }  
 
-  /* Next  byte: key type */
+  /* Next byte: key type */
   type = source[ctr++];
   if(type != GROUPSIG_KEY_MGRKEY) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "sltgs23_mgr_key_import", __LINE__,
 		      EDQUOT, "Unexpected key scheme.", LOGERROR);
     GOTOENDRC(IERROR, sltgs23_mgr_key_import);
+  }    
+
+  /* Get isk */
+  if(!(sltgs23_key->isk = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_mgr_key_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_key->isk, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_mgr_key_import);
+
+  if(!len) {
+    ctr += sizeof(int); // @TODO: this is an artifact of pbcext_get_element_XX_bytes
+    pbcext_element_Fr_free(sltgs23_key->isk); sltgs23_key->isk = NULL;
+  } else {
+    ctr += len;
   }
-
-  /* Get xi1 */
-  if(!(sltgs23_key->xi1 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, sltgs23_mgr_key_import);
-  if(pbcext_get_element_Fr_bytes(sltgs23_key->xi1, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_mgr_key_import);
-  ctr += len;
-
-  /* Get xi2 */
-  if(!(sltgs23_key->xi2 = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, sltgs23_mgr_key_import);
-  if(pbcext_get_element_Fr_bytes(sltgs23_key->xi2, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_mgr_key_import);
-  ctr += len;
-
-  /* Get gamma */
-  if(!(sltgs23_key->gamma = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, sltgs23_mgr_key_import);
-  if(pbcext_get_element_Fr_bytes(sltgs23_key->gamma, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_mgr_key_import);
-  ctr += len;  
 
  sltgs23_mgr_key_import_end:
   
   if(rc == IERROR && key) { sltgs23_mgr_key_free(key); key = NULL; }
   if(rc == IOK) return key;
-  
-  return NULL; 
-  
+  return NULL;  
+
 }
 
 char* sltgs23_mgr_key_to_string(groupsig_key_t *key) {

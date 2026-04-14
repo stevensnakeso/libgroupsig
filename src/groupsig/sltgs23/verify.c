@@ -22,251 +22,144 @@
 #include "sltgs23.h"
 #include "groupsig/sltgs23/grp_key.h"
 #include "groupsig/sltgs23/signature.h"
-#include "bigz.h"
-#include "shim/pbc_ext.h"
 #include "shim/hash.h"
+#include "shim/pbc_ext.h"
 #include "sys/mem.h"
 
 /* Private functions */
+static int _sltgs23_verify_spk(uint8_t *ok, sltgs23_signature_t *sltgs23_sig,
+			    pbcext_element_G1_t *hscp,
+			    char *msg, sltgs23_grp_key_t *sltgs23_grpkey) {
+
+  pbcext_element_G1_t *A_d, *y[3], *g[5];  
+  uint16_t i[6][2], prods[3];
+  
+  /* No input checks, as the parameters have been checked by the caller. */
+  
+  /* Auxiliar variables for the spk */
+  if(!(A_d = pbcext_element_G1_init())) return IERROR;
+  if(pbcext_element_G1_sub(A_d, sltgs23_sig->A_, sltgs23_sig->d) == IERROR)
+    return IERROR;
+
+  /* Isn't there a more concise way to do the following? */
+  y[0] = sltgs23_sig->nym;
+  y[1] = A_d;
+  y[2] = sltgs23_grpkey->g1;
+
+  g[0] = hscp;
+  g[1] = sltgs23_sig->AA;
+  g[2] = sltgs23_grpkey->h2;
+  g[3] = sltgs23_sig->d;
+  g[4] = sltgs23_grpkey->h1;
+
+  i[0][0] = 1; i[0][1] = 0; // hscp^y = (g[0],x[1])
+  i[1][0] = 0; i[1][1] = 1; // AA^-x = (g[1],x[0])
+  i[2][0] = 2; i[2][1] = 2; // h2^r2 = (g[2],x[2])
+  i[3][0] = 3; i[3][1] = 3; // d^r3 = (g[3],x[3])
+  i[4][0] = 4; i[4][1] = 2; // h2^-ss = (g[2],x[4])
+  i[5][0] = 5; i[5][1] = 4; // h1^-y = (g[4],x[5])
+
+  prods[0] = 1;
+  prods[1] = 2;
+  prods[2] = 3;
+
+  /* Verify the SPK */
+  if(spk_rep_verify(ok,
+		    y, 3,
+		    g, 5,
+		    i, 6,
+		    prods,
+		    sltgs23_sig->pi,
+		    (byte_t *) msg, strlen(msg)) == IERROR) {
+    pbcext_element_G1_free(A_d); A_d = NULL;
+    return IERROR;
+  }
+  
+  pbcext_element_G1_free(A_d); A_d = NULL;
+  
+  return IOK;
+
+}
 
 /* Public functions */
 int sltgs23_verify(uint8_t *ok,
-		 groupsig_signature_t *sig,
-		 message_t *msg,
-		 groupsig_key_t *grpkey) {
+		groupsig_signature_t *sig,
+		message_t *msg,
+		groupsig_key_t *grpkey) {
 
-  pbcext_element_G1_t *R1, *R2, *R4, *R5, *aux_G1;
-  pbcext_element_G2_t *aux_e5, *aux_G2;
-  pbcext_element_GT_t *R3, *aux_e1, *aux_e2, *aux_e3, *aux_e4;
-  pbcext_element_Fr_t *c, *aux_neg;
+  pbcext_element_GT_t *e1, *e2;
+  pbcext_element_G1_t *hscp;
   sltgs23_signature_t *sltgs23_sig;
   sltgs23_grp_key_t *sltgs23_grpkey;
-  hash_t *aux_c;
-  byte_t *aux_bytes;
-  uint64_t aux_n;
+  /* sltgs23_sysenv_t *sltgs23_sysenv; */
+  hash_t *hc;
+  char *msg_msg, *msg_scp;
   int rc;
-
-  if(!ok || !msg || !sig || sig->scheme != GROUPSIG_SLTGS23_CODE ||
+  
+  if(!ok || !sig || !msg || 
      !grpkey || grpkey->scheme != GROUPSIG_SLTGS23_CODE) {
     LOG_EINVAL(&logger, __FILE__, "sltgs23_verify", __LINE__, LOGERROR);
     return IERROR;
   }
 
+  rc = IOK;
+  e1 = NULL; e2 = NULL;
+  msg_msg = NULL; msg_scp = NULL;
+  hc = NULL;
+  hscp = NULL;
+  
   sltgs23_sig = sig->sig;
   sltgs23_grpkey = grpkey->key;
-  rc = IOK;
+  /* sltgs23_sysenv = sysenv->data; */
 
-  R1 = R2 = R4 = R5 = aux_G1 = NULL;
-  aux_e5 = aux_G2 = NULL;
-  R3 = aux_e1 = aux_e2 = aux_e3 = aux_e4 = NULL;
-  c = NULL;
-
-  /* Re-derive R1, R2, R3, R4 and R5 from the signature */
-  
-  /* R1 = u^salpha * T1^(-c) */
-  if(!(R1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(!(aux_G1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(!(aux_neg = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_Fr_neg(aux_neg, sltgs23_sig->c) == IERROR)
+  /* Parse message and scope values from msg */
+  if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR)
     GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_mul(R1, sltgs23_grpkey->u, sltgs23_sig->salpha) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_mul(aux_G1, sltgs23_sig->T1, aux_neg) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_add(R1, R1, aux_G1) == IERROR)
+  if(message_json_get_key(&msg_scp, msg, "$.scope") == IERROR)
     GOTOENDRC(IERROR, sltgs23_verify);
 
-  /* R2 = v^sbeta * T2^(-c) */
-  if(!(R2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_mul(R2, sltgs23_grpkey->v, sltgs23_sig->sbeta) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_mul(aux_G1, sltgs23_sig->T2, aux_neg) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_add(R2, R2, aux_G1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* R3 = e(T3,g2)^sx * e(h,w)^(-salpha-sbeta) * e(h,g2)^(-sdelta1-sdelta2) * (e(T3,w)/e(g1,g2))^c */
-  /* Optimized R3 =  e(h,w)^(-salpha-sbeta) * e(h,g2)^(-sdelta1-sdelta2) * e(T3, w^c * g2 ^ sx) * e(g1, g2)^-c
-
-  /* Optimized e1 = e(T3, w^c * g2 ^ sx) */
-  if(!(aux_e1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(!(aux_e5 = pbcext_element_G2_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(!(aux_G2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G2_mul(aux_e5, sltgs23_grpkey->w, sltgs23_sig->c) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G2_mul(aux_G2, sltgs23_grpkey->g2, sltgs23_sig->sx) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G2_add(aux_e5, aux_G2, aux_e5) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_pairing(aux_e1, sltgs23_sig->T3, aux_e5) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* e2 = e(h,w)^(-salpha-sbeta) */
-  if(!(aux_e2 = pbcext_element_GT_init()))
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_Fr_neg(aux_neg, sltgs23_sig->salpha) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_Fr_sub(aux_neg, aux_neg, sltgs23_sig->sbeta) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_GT_pow(aux_e2, sltgs23_grpkey->hw, aux_neg) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  /* e3 = e(h,g2)^(-sdelta1-sdelta2) */
-  if(!(aux_e3 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_Fr_neg(aux_neg, sltgs23_sig->sdelta1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_Fr_sub(aux_neg, aux_neg, sltgs23_sig->sdelta2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_GT_pow(aux_e3, sltgs23_grpkey->hg2, aux_neg) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* e4 = e(g1,g2)^-c */
-  if(!(aux_e4 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_GT_pow(aux_e4, sltgs23_grpkey->g1g2, sltgs23_sig->c) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_GT_inv(aux_e4, aux_e4) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* R3 = e1 * e2 * e3 * e4 */
-  if(!(R3 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_GT_mul(R3, aux_e1, aux_e2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_GT_mul(R3, R3, aux_e3) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_GT_mul(R3, R3, aux_e4) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* R4 = T1^sx * u^(-sdelta1) */
-  if(!(R4 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_Fr_neg(aux_neg, sltgs23_sig->sdelta1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_mul(aux_G1, sltgs23_sig->T1, sltgs23_sig->sx) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_mul(R4, sltgs23_grpkey->u, aux_neg) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_add(R4, R4, aux_G1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* R5 = T2^sx * v^(-sdelta2) */
-  if(!(R5 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_Fr_neg(aux_neg, sltgs23_sig->sdelta2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_mul(aux_G1, sltgs23_sig->T2, sltgs23_sig->sx) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_mul(R5, sltgs23_grpkey->v, aux_neg) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_G1_add(R5, aux_G1, R5) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* Recompute the hash-challenge c */
-
-  /* c = hash(M,T1,T2,T3,R1,R2,R3,R4,R5) \in Zp */
-  if(!(aux_c = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* Push the message */
-  if(hash_update(aux_c, msg->bytes, msg->length) == IERROR) 
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* Push T1 */
-  aux_bytes = NULL;
-  if(pbcext_element_G1_to_bytes(&aux_bytes, &aux_n, sltgs23_sig->T1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  if(hash_update(aux_c, aux_bytes, aux_n) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  mem_free(aux_bytes); aux_bytes = NULL;
-
-  /* Push T2 */
-  if(pbcext_element_G1_to_bytes(&aux_bytes, &aux_n, sltgs23_sig->T2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  if(hash_update(aux_c, aux_bytes, aux_n) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  mem_free(aux_bytes); aux_bytes = NULL;
-  
-  /* Push T3 */
-  if(pbcext_element_G1_to_bytes(&aux_bytes, &aux_n, sltgs23_sig->T3) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  if(hash_update(aux_c, aux_bytes, aux_n) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  mem_free(aux_bytes); aux_bytes = NULL;
-  
-  /* Push R1 */
-  if(pbcext_element_G1_to_bytes(&aux_bytes, &aux_n, R1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  if(hash_update(aux_c, aux_bytes, aux_n) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  mem_free(aux_bytes); aux_bytes = NULL;
-  
-  /* Push R2 */
-  if(pbcext_element_G1_to_bytes(&aux_bytes, &aux_n, R2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  if(hash_update(aux_c, aux_bytes, aux_n) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  mem_free(aux_bytes); aux_bytes = NULL;
-  
-  /* Push R3 */
-  if(pbcext_element_GT_to_bytes(&aux_bytes, &aux_n, R3) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  if(hash_update(aux_c, aux_bytes, aux_n) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  mem_free(aux_bytes); aux_bytes = NULL;
-  
-  /* Push R4 */
-  if(pbcext_element_G1_to_bytes(&aux_bytes, &aux_n, R4) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  if(hash_update(aux_c, aux_bytes, aux_n) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  mem_free(aux_bytes); aux_bytes = NULL;
-  
-  /* Push R5 */
-  if(pbcext_element_G1_to_bytes(&aux_bytes, &aux_n, R5) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  
-  if(hash_update(aux_c, aux_bytes, aux_n) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-  mem_free(aux_bytes); aux_bytes = NULL;  
-
-  /* Finish the hash */
-  if(hash_finalize(aux_c) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* Get c as the element associated to the obtained hash value */
-  if(!(c = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_verify);
-  if(pbcext_element_Fr_from_hash(c, aux_c->hash, aux_c->length) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_verify);
-
-  /* Compare the result with the received challenge */
-  if(pbcext_element_Fr_cmp(sltgs23_sig->c, c)) { /* Different: sig fail */
+  /* AA must not be 1 (since we use additive notation for G1, 
+     it must not be 0) */
+  if(pbcext_element_G1_is0(sltgs23_sig->AA)) {
     *ok = 0;
-  } else { /* Same: sig OK */
-    *ok = 1;
+    GOTOENDRC(IOK, sltgs23_verify);
   }
 
+  /* e(AA,ipk) must equal e(A_,g2) */
+  if(!(e1 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_verify);
+  if(pbcext_pairing(e1, sltgs23_sig->AA, sltgs23_grpkey->ipk) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_verify);
+  if(!(e2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_verify);
+  if(pbcext_pairing(e2, sltgs23_sig->A_, sltgs23_grpkey->g2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_verify);
+
+  if(pbcext_element_GT_cmp(e1, e2)) {
+    *ok = 0;
+    GOTOENDRC(IOK, sltgs23_verify);
+  }
+
+  /* Verify the SPK */
+
+  /* Recompute hscp */
+  hscp = pbcext_element_G1_init();
+  if(!(hc = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, sltgs23_verify);
+  if(hash_update(hc, (byte_t *) msg_scp, strlen(msg_scp)) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_verify);
+  if(hash_finalize(hc) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);
+  pbcext_element_G1_from_hash(hscp, hc->hash, hc->length);
+
+  if(_sltgs23_verify_spk(ok, sltgs23_sig, hscp, msg_msg, sltgs23_grpkey) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_verify);
+  
  sltgs23_verify_end:
 
-  if(aux_bytes) { mem_free(aux_bytes); aux_bytes = NULL; }
-  if(aux_c) { hash_free(aux_c); aux_c = NULL; }
-
-  if(R1) { pbcext_element_G1_free(R1); R1 = NULL; }
-  if(R2) { pbcext_element_G1_free(R2); R2 = NULL; }
-  if(R4) { pbcext_element_G1_free(R4); R4 = NULL; }
-  if(R5) { pbcext_element_G1_free(R5); R5 = NULL; }
-  if(aux_G1) { pbcext_element_G1_free(aux_G1); aux_G1 = NULL; }
-  if(aux_e5) { pbcext_element_G2_free(aux_e5); aux_e5 = NULL; }
-  if(aux_G2) { pbcext_element_G2_free(aux_G2); aux_G2 = NULL; }
-  if(R3) { pbcext_element_GT_free(R3); R3 = NULL; }
-  if(aux_e1) { pbcext_element_GT_free(aux_e1); aux_e1 = NULL; }
-  if(aux_e2) { pbcext_element_GT_free(aux_e2); aux_e2 = NULL; }
-  if(aux_e3) { pbcext_element_GT_free(aux_e3); aux_e3 = NULL; }
-  if(aux_e4) { pbcext_element_GT_free(aux_e4); aux_e4 = NULL; }
-  if(c) { pbcext_element_Fr_free(c); c = NULL; }
-  if(aux_neg) { pbcext_element_Fr_free(aux_neg); aux_neg = NULL; }
-
+  if(e1) { pbcext_element_GT_free(e1); e1 = NULL; }
+  if(e2) { pbcext_element_GT_free(e2); e2 = NULL; }
+  if(hc) { hash_free(hc); hc = NULL; }
+  if(hscp) { pbcext_element_G1_free(hscp); hscp = NULL; }
+  if(msg_scp) { mem_free(msg_scp); msg_scp = NULL; }
+  if(msg_msg) { mem_free(msg_msg); msg_msg = NULL; }
+    
   return rc;
 
 }

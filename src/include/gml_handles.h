@@ -27,7 +27,7 @@
 #include "groupsig/ps16/gml.h"
 #include "groupsig/klap20/gml.h"
 #include "groupsig/bap24/gml.h"
-#include "groupsig/sltgs23/gml.h"
+// #include "groupsig/sltgs23/gml.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,7 +49,7 @@ const gml_handle_t *GML_HANDLES[GML_HANDLES_N] = {
   &ps16_gml_handle,
   &klap20_gml_handle,
   &bap24_gml_handle,
-  &sltgs23_gml_handle,
+  // &sltgs23_gml_handle,
 };
 
 #ifdef __cplusplus

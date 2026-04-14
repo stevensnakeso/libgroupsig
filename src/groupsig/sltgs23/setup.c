@@ -23,39 +23,35 @@
 #include <math.h>
 
 #include "sltgs23.h"
-#include "logger.h"
 #include "groupsig/sltgs23/grp_key.h"
 #include "groupsig/sltgs23/mgr_key.h"
-#include "groupsig/sltgs23/gml.h"
 #include "sys/mem.h"
-#include "shim/pbc_ext.h"
 
 int sltgs23_init() {
-  
+
   if(pbcext_init(BLS12_381) == IERROR) {
     return IERROR;
-  }  
-
+  }
+  
   return IOK;
 
 }
 
-int sltgs23_clear() {  
-  return IOK;
+int sltgs23_clear() {
+  return IOK;  
 }
 
 int sltgs23_setup(groupsig_key_t *grpkey,
-		groupsig_key_t *mgrkey,
-		gml_t *gml) {
+	       groupsig_key_t *mgrkey,
+	       gml_t *gml) {
 
   sltgs23_grp_key_t *gkey;
   sltgs23_mgr_key_t *mkey;
-  pbcext_element_Fr_t *inv;
-  int rc;
+  int rc, status;
+  uint8_t call;
 
   if(!grpkey || grpkey->scheme != GROUPSIG_SLTGS23_CODE ||
-     !mgrkey || mgrkey->scheme != GROUPSIG_SLTGS23_CODE ||
-     !gml) {
+     !mgrkey || grpkey->scheme != GROUPSIG_SLTGS23_CODE) {
     LOG_EINVAL(&logger, __FILE__, "sltgs23_setup", __LINE__, LOGERROR);
     return IERROR;
   }
@@ -63,80 +59,95 @@ int sltgs23_setup(groupsig_key_t *grpkey,
   gkey = grpkey->key;
   mkey = mgrkey->key;
   rc = IOK;
-  inv = NULL;
+  call = 0;
 
-  /* Select random generator g2 in G2. Since G2 is a cyclic multiplicative group 
-     of prime order, any element is a generator, so choose some random element. */
-  if(!(gkey->g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_G2_random(gkey->g2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+  if(!gkey->g1){
 
-  /* @TODO g1 is supposed to be the trace of g2... */
-  if(!(gkey->g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_G1_random(gkey->g1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+    call = 1;
 
-  /* h random in G1 \ 1 */
-  if(!(gkey->h = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  do {
-    if(pbcext_element_G1_random(gkey->h) == IERROR)
+    /* Initialize the manager key */
+    if(!(mkey->isk = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_Fr_random(mkey->isk) == IERROR)
       GOTOENDRC(IERROR, sltgs23_setup);
-  } while(pbcext_element_G1_is0(gkey->h));
 
-  /* xi1 and xi2 random in Z^*_p */
-  if(!(mkey->xi1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_Fr_random(mkey->xi1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
-  if(!(mkey->xi2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_Fr_random(mkey->xi2))
-    GOTOENDRC(IERROR, sltgs23_setup);
+    /* Initialize the group key */
+    
+    /* Compute random generators g1, h1 and h2 in G1. Since G1 is a cyclic 
+      group of prime order, just pick random elements.  */
+    if(!(gkey->g = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_G1_random(gkey->g) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_setup);
 
-  /* u = h^(1/xi1) */
-  if(!(inv = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(!(gkey->u = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_Fr_inv(inv, mkey->xi1) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_G1_mul(gkey->u, gkey->h, inv) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+    if(!(gkey->g1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_G1_random(gkey->g1) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_setup);
 
-  /* v = h^(1/xi2) */
-  if(!(gkey->v = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_Fr_inv(inv, mkey->xi2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_G1_mul(gkey->v, gkey->h, inv) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+    if(!(gkey->h1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_G1_random(gkey->h1) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_setup);
 
-  /* gamma random in Z^*_p */
-  if(!(mkey->gamma = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_Fr_random(mkey->gamma) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+    if(!(gkey->h2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_G1_random(gkey->h2) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_setup);
 
-  /* w = g_2^gamma */
-  if(!(gkey->w = pbcext_element_G2_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_element_G2_mul(gkey->w, gkey->g2, mkey->gamma) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+    /* Compute random generator g2 in G2. Since G2 is a cyclic group of prime 
+      order, just pick a random element. */
+    if(!(gkey->g2 = pbcext_element_G2_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_G2_random(gkey->g2) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_setup);
 
-  /* Optimizations */
+    /* Set the Issuer public key */
+    if(!(gkey->ipk = pbcext_element_G2_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_G2_mul(gkey->ipk, gkey->g2, mkey->isk) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_setup);
 
-  /* hw = e(h,w) */
-  if(!(gkey->hw = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_setup);
+  }
+    /*
+   * If the group key is not "empty" (gkey->g1 != null), we interpret this as 
+   * the second call. In this case, we set the manager's key to an initialized
+   * Converter key (using the value of g computed in the first call), and fill
+   * the received public key with the public part of the Converter's keypair.
+   */
 
-  if(pbcext_pairing(gkey->hw, gkey->h, gkey->w) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+  else {
+    call = 2;
 
-  /* hg2 = e(h, g2) */
-  if(!(gkey->hg2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_pairing(gkey->hg2, gkey->h, gkey->g2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+    /* Generate the Converter's private key */
+    if(!(mkey->csk = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_Fr_random(mkey->csk) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_setup);
 
-  /* g1g2 = e(g2, g2) */
-  if(!(gkey->g1g2 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_setup);
-  if(pbcext_pairing(gkey->g1g2, gkey->g1, gkey->g2) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_setup);
+    /* Add the Converter's public key to the group key */
+    if(!(gkey->cpk = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_setup);
+    if(pbcext_element_G1_mul(gkey->cpk, gkey->g, mkey->csk) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_setup);
 
+
+  }
+
+  
  sltgs23_setup_end:
 
-  if(inv) { pbcext_element_Fr_free(inv); inv = NULL; }
+  if (rc == IERROR) {
+    if(call==1)
+    {
+      if (mkey->isk) { pbcext_element_Fr_free(mkey->isk); mkey->isk = NULL; }
+      if (gkey->g1) { pbcext_element_G1_free(gkey->g1); gkey->g1 = NULL; }
+      if (gkey->h1) { pbcext_element_G1_free(gkey->h1); gkey->h1 = NULL; }
+      if (gkey->h2) { pbcext_element_G1_free(gkey->h2); gkey->h2 = NULL; }
+      if (gkey->g2) { pbcext_element_G2_free(gkey->g2); gkey->g2 = NULL; }
+      if (gkey->ipk) { pbcext_element_G2_free(gkey->ipk); gkey->ipk = NULL; }
+    }
+     if(call==2)
+     {
+      if (mkey->csk) { pbcext_element_Fr_free(mkey->csk); mkey->csk = NULL; }    
+      if (gkey->cpk) { pbcext_element_G1_free(gkey->cpk); gkey->cpk = NULL; }
+     }
+
+    }
+
+    
+  
 
   return rc;
 
