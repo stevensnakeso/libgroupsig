@@ -32,11 +32,12 @@
  */
 typedef struct {
   uint8_t scheme; /**< Metainformation: the gs scheme this key belongs to. */
-  pbcext_element_G1_t *AA;
-  pbcext_element_G1_t *A_;
-  pbcext_element_G1_t *d;
-  spk_rep_t *pi;
-  pbcext_element_G1_t *nym;
+  pbcext_element_G1_t *A1;
+  pbcext_element_G1_t *A2;
+  pbcext_element_G1_t *nym1;
+  pbcext_element_G1_t *nym2;
+  pbcext_element_Fr_t *c;
+  pbcext_element_Fr_t *sr1, *sr2,  *szeta1, *szeta2, *sy, *srho, *ss, *s_x; //*sx
 } sltgs23_signature_t;
 
 /** 

@@ -34,7 +34,7 @@ typedef struct {
   pbcext_element_G1_t *sigma1;
   pbcext_element_G1_t *sigma2;
   pbcext_element_Fr_t *c;
-  pbcext_element_Fr_t *s;
+  // pbcext_element_Fr_t *s;
   pbcext_element_Fr_t *z_zeta1, *z_zeta2, *z_theta1, *z_theta2, *z_sk, *z_uid, *z_w, *z_alpha;
   pbcext_element_G1_t *B1, *B2;
   pbcext_element_G2_t *hscp; /**< h^scp, where h is a generator of G2 and scp is the scope of the signature. */

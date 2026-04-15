@@ -72,12 +72,29 @@ int sltgs23_signature_free(groupsig_signature_t *sig) {
 
   if(sig->sig) {
     sltgs23_sig = sig->sig;
-    pbcext_element_G1_free(sltgs23_sig->AA); sltgs23_sig->AA = NULL;
-    pbcext_element_G1_free(sltgs23_sig->A_); sltgs23_sig->A_ = NULL;
-    pbcext_element_G1_free(sltgs23_sig->d); sltgs23_sig->d = NULL;
-    spk_rep_free(sltgs23_sig->pi); sltgs23_sig->pi = NULL;
-    pbcext_element_G1_free(sltgs23_sig->nym); sltgs23_sig->nym = NULL;
-    mem_free(sltgs23_sig);
+    pbcext_element_G1_free(sltgs23_sig->A1); sltgs23_sig->A1 = NULL;
+    pbcext_element_G1_free(sltgs23_sig->A2); sltgs23_sig->A2 = NULL;
+    pbcext_element_G1_free(sltgs23_sig->nym1); sltgs23_sig->nym1 = NULL;
+    pbcext_element_G1_free(sltgs23_sig->nym2); sltgs23_sig->nym2 = NULL;
+    pbcext_element_Fr_free(sltgs23_sig->c); sltgs23_sig->c = NULL;
+    pbcext_element_Fr_free(sltgs23_sig->sr1); sltgs23_sig->sr1 = NULL;
+    pbcext_element_Fr_free(sltgs23_sig->sr2); sltgs23_sig->sr2 = NULL;
+    pbcext_element_Fr_free(sltgs23_sig->szeta1); sltgs23_sig->szeta1 = NULL;
+    pbcext_element_Fr_free(sltgs23_sig->szeta2); sltgs23_sig->szeta2 = NULL;
+    pbcext_element_Fr_free(sltgs23_sig->sy); sltgs23_sig->sy = NULL;
+    if(sltgs23_sig->srho) {
+      pbcext_element_Fr_free(sltgs23_sig->srho);
+      sltgs23_sig->srho = NULL;
+    }
+    if(sltgs23_sig->ss) {
+      pbcext_element_Fr_free(sltgs23_sig->ss);
+      sltgs23_sig->ss = NULL;
+    }
+    if(sltgs23_sig->s_x) {
+      pbcext_element_Fr_free(sltgs23_sig->s_x);
+      sltgs23_sig->s_x = NULL;
+    }
+
     sltgs23_sig = NULL;
   }
 
@@ -103,54 +120,130 @@ int sltgs23_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src)
   rc = IOK;
 
   /* Copy the elements */
-  if(!(sltgs23_dst->AA = pbcext_element_G1_init()))
+  if(!(sltgs23_dst->A1 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, sltgs23_signature_copy);
-  if(pbcext_element_G1_set(sltgs23_dst->AA, sltgs23_src->AA) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_signature_copy);
-
-  if(!(sltgs23_dst->A_ = pbcext_element_G1_init()))
-    GOTOENDRC(IERROR, sltgs23_signature_copy);
-  if(pbcext_element_G1_set(sltgs23_dst->A_, sltgs23_src->A_) == IERROR)
+  if(pbcext_element_G1_set(sltgs23_dst->A1, sltgs23_src->A1) == IERROR)
     GOTOENDRC(IERROR, sltgs23_signature_copy);
 
-  if(!(sltgs23_dst->d = pbcext_element_G1_init()))
+  if(!(sltgs23_dst->A2 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, sltgs23_signature_copy);
-  if(pbcext_element_G1_set(sltgs23_dst->d, sltgs23_src->d) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_signature_copy);
-
-  if(!(sltgs23_dst->pi = spk_rep_init(sltgs23_src->pi->ns)))
-    GOTOENDRC(IERROR, sltgs23_signature_copy);
-  if(spk_rep_copy(sltgs23_dst->pi, sltgs23_src->pi) == IERROR)
+  if(pbcext_element_G1_set(sltgs23_dst->A2, sltgs23_src->A2) == IERROR)
     GOTOENDRC(IERROR, sltgs23_signature_copy);
 
-  if(!(sltgs23_dst->nym = pbcext_element_G1_init()))
+  if(!(sltgs23_dst->nym1 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, sltgs23_signature_copy);
-  if(pbcext_element_G1_set(sltgs23_dst->nym, sltgs23_src->nym) == IERROR)
+  if(pbcext_element_G1_set(sltgs23_dst->nym1, sltgs23_src->nym1) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->nym2 = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_G1_set(sltgs23_dst->nym2, sltgs23_src->nym2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->c = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->c, sltgs23_src->c) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->sr1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->sr1, sltgs23_src->sr1) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->sr2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->sr2, sltgs23_src->sr2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->szeta1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->szeta1, sltgs23_src->szeta1) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->szeta2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->szeta2, sltgs23_src->szeta2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->sy = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->sy, sltgs23_src->sy) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->srho = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->srho, sltgs23_src->srho) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->ss = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->ss, sltgs23_src->ss) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+
+  if(!(sltgs23_dst->s_x = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_copy);
+  if(pbcext_element_Fr_set(sltgs23_dst->s_x, sltgs23_src->s_x) == IERROR)
     GOTOENDRC(IERROR, sltgs23_signature_copy);
 
  sltgs23_signature_copy_end:
 
   if (rc == IERROR) {
-    if(sltgs23_dst->AA) {
-      pbcext_element_G1_free(sltgs23_dst->AA);
-      sltgs23_dst->AA = NULL;
+    if(sltgs23_dst->A1) {
+      pbcext_element_G1_free(sltgs23_dst->A1);
+      sltgs23_dst->A1 = NULL;
     }
-    if(sltgs23_dst->A_) {
-      pbcext_element_G1_free(sltgs23_dst->A_);
-      sltgs23_dst->A_ = NULL;
+    if(sltgs23_dst->A2) {
+      pbcext_element_G1_free(sltgs23_dst->A2);
+      sltgs23_dst->A2 = NULL;
     }
-    if(sltgs23_dst->d) {
-      pbcext_element_G1_free(sltgs23_dst->d);
-      sltgs23_dst->d = NULL;
+    if(sltgs23_dst->nym1) {
+      pbcext_element_G1_free(sltgs23_dst->nym1);
+      sltgs23_dst->nym1 = NULL;
     }
-    if(sltgs23_dst->pi) {
-      spk_rep_free(sltgs23_dst->pi);
-      sltgs23_dst->pi = NULL;
+    if(sltgs23_dst->nym2) {
+      pbcext_element_G1_free(sltgs23_dst->nym2);
+      sltgs23_dst->nym2 = NULL;
     }
-    if(sltgs23_dst->nym) {
-      pbcext_element_G1_free(sltgs23_dst->nym);
-      sltgs23_dst->nym = NULL;
+
+    if(sltgs23_dst->c) {
+      pbcext_element_Fr_free(sltgs23_dst->c);
+      sltgs23_dst->c = NULL;
     }
+
+    if(sltgs23_dst->sr1) {
+      pbcext_element_Fr_free(sltgs23_dst->sr1);
+      sltgs23_dst->sr1 = NULL;
+    }
+    if(sltgs23_dst->sr2) {
+      pbcext_element_Fr_free(sltgs23_dst->sr2);
+      sltgs23_dst->sr2 = NULL;
+    }
+    if(sltgs23_dst->szeta1) {
+      pbcext_element_Fr_free(sltgs23_dst->szeta1);
+      sltgs23_dst->szeta1 = NULL;
+
+    }
+    if(sltgs23_dst->szeta2) {
+      pbcext_element_Fr_free(sltgs23_dst->szeta2);
+      sltgs23_dst->szeta2 = NULL;
+    }
+    if(sltgs23_dst->sy) {
+      pbcext_element_Fr_free(sltgs23_dst->sy);
+      sltgs23_dst->sy = NULL;
+    }
+    if(sltgs23_dst->srho) {
+      pbcext_element_Fr_free(sltgs23_dst->srho);
+      sltgs23_dst->srho = NULL;
+    }
+    if(sltgs23_dst->ss) {
+      pbcext_element_Fr_free(sltgs23_dst->ss);
+      sltgs23_dst->ss = NULL;
+    }
+    if(sltgs23_dst->s_x) {
+      pbcext_element_Fr_free(sltgs23_dst->s_x);
+      sltgs23_dst->s_x = NULL;
+    }
+
 
   }
 
@@ -160,7 +253,7 @@ int sltgs23_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src)
 
 int sltgs23_signature_get_size(groupsig_signature_t *sig) {
 
-  uint64_t sAA, sA_, sd, sc, ss, snym;
+  uint64_t sA1, sA2, snym1, snym2 ,sc, sr1, sr2, szeta1, szeta2, sy, srho, ss, s_x;
   sltgs23_signature_t *sltgs23_sig;
   int size, i;
 
@@ -172,21 +265,23 @@ int sltgs23_signature_get_size(groupsig_signature_t *sig) {
 
   sltgs23_sig = sig->sig;
 
-  if(pbcext_element_G1_byte_size(&sAA) == IERROR) return -1;
-  if(pbcext_element_G1_byte_size(&sA_) == IERROR) return -1;
-  if(pbcext_element_G1_byte_size(&sd) == IERROR) return -1;
+  if(pbcext_element_G1_byte_size(&sA1) == IERROR) return -1;
+  if(pbcext_element_G1_byte_size(&sA2) == IERROR) return -1;
+  if(pbcext_element_G1_byte_size(&snym1) == IERROR) return -1;
+  if(pbcext_element_G1_byte_size(&snym2) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&sc) == IERROR) return -1;
-  if(pbcext_element_G1_byte_size(&snym) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sr1) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sr2) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&szeta1) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&szeta2) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&sy) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&srho) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&ss) == IERROR) return -1;
+  if(pbcext_element_Fr_byte_size(&s_x) == IERROR) return -1;
 
-  if ((int) sAA + sA_ + sd + sc + snym + sizeof(int)*5+1 > INT_MAX) return -1;
-  size = (int) sAA + sA_ + sd + sc + snym + sizeof(int)*5+1;
 
-  for(i=0; i<sltgs23_sig->pi->ns; i++) {
-    if(pbcext_element_Fr_byte_size(&ss) == IERROR)
-      return -1;
-    if (size + (int) ss + sizeof(int) > INT_MAX) return -1;
-    size += (int) ss + sizeof(int);
-  }
+  if ((int) sA1 + sA2   + snym1 + snym2 + sc + sr1 + sr2 + szeta1 + szeta2 + sy + srho + ss + s_x + sizeof(int)*13+1 > INT_MAX) return -1;
+  size = (int) sA1 + sA2  + snym1 + snym2 + sc  + sr1 + sr2 + szeta1 + szeta2 + sy + srho + ss + s_x + sizeof(int)*13+1;
 
   return size;
 
@@ -223,42 +318,110 @@ int sltgs23_signature_export(byte_t **bytes,
    /* Dump GROUPSIG_SLTGS23_CODE */
   _bytes[ctr++] = GROUPSIG_SLTGS23_CODE;
 
-  /* Dump AA */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->AA) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_signature_export);
-  ctr += len;
-
-  /* Dump A_ */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->A_) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_signature_export);
-  ctr += len;
-
-  /* Dump d */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->d) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_signature_export);
-  ctr += len;
-
-  /* Dump spk */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->pi->c) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_signature_export);
-  ctr += len;
-
-  for(i=0; i<sltgs23_sig->pi->ns; i++) {
+  /* Dump A1 */
+  if(sltgs23_sig->A1) {
     __bytes = &_bytes[ctr];
-    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->pi->s[i]) == IERROR)
+    if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->A1) == IERROR)
       GOTOENDRC(IERROR, sltgs23_signature_export);
     ctr += len;
-  }
+  } else { ctr += sizeof(int); }
 
-  /* Dump nym */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->nym) == IERROR)
-    GOTOENDRC(IERROR, sltgs23_signature_export);
-  ctr += len;
+  /* Dump A2 */
+  if(sltgs23_sig->A2) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->A2) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+  /* Dump nym1 */
+  if(sltgs23_sig->nym1) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->nym1) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+  /* Dump nym2 */
+  if(sltgs23_sig->nym2) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_G1_bytes(&__bytes, &len, sltgs23_sig->nym2) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+  /* Dump c */
+  if(sltgs23_sig->c) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->c) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+  
+  /* Dump sr1 */
+  if(sltgs23_sig->sr1) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->sr1) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+  /* Dump sr2 */
+  if(sltgs23_sig->sr2) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->sr2) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+  /* Dump szeta1 */
+  if(sltgs23_sig->szeta1) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->szeta1) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+  /* Dump szeta2 */
+  if(sltgs23_sig->szeta2) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->szeta2) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+    /* Dump sy */
+  if(sltgs23_sig->sy) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->sy) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+    /* Dump srho */
+  if(sltgs23_sig->srho) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->srho) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+    /* Dump ss */
+  if(sltgs23_sig->ss) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->ss) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }
+
+    /* Dump s_x */
+  if(sltgs23_sig->s_x) {
+    __bytes = &_bytes[ctr];
+    if(pbcext_dump_element_Fr_bytes(&__bytes, &len, sltgs23_sig->s_x) == IERROR)
+      GOTOENDRC(IERROR, sltgs23_signature_export);
+    ctr += len;
+  } else { ctr += sizeof(int); }  
 
   /* Prepare the return */
   if(!*bytes) {
@@ -315,77 +478,98 @@ groupsig_signature_t* sltgs23_signature_import(byte_t *source, uint32_t size) {
     GOTOENDRC(IERROR, sltgs23_signature_import);
   }
 
-  /* Get AA */
-  if(!(sltgs23_sig->AA = pbcext_element_G1_init()))
+  /* Get A1 */
+  if(!(sltgs23_sig->A1 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if(pbcext_get_element_G1_bytes(sltgs23_sig->AA, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_G1_bytes(sltgs23_sig->A1, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if (!len) {
-    ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
-  } else {
-    ctr += len;
-  }
+  ctr += len;
 
-  /* Get A_ */
-  if(!(sltgs23_sig->A_ = pbcext_element_G1_init()))
+  /* Get A2 */
+  if(!(sltgs23_sig->A2 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if(pbcext_get_element_G1_bytes(sltgs23_sig->A_, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_G1_bytes(sltgs23_sig->A2, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if (!len) {
-    ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
-  } else {
-    ctr += len;
-  }
+  ctr += len;
 
-  /* Get d */
-  if(!(sltgs23_sig->d = pbcext_element_G1_init()))
+  /* Get nym1 */
+  if(!(sltgs23_sig->nym1 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if(pbcext_get_element_G1_bytes(sltgs23_sig->d, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_G1_bytes(sltgs23_sig->nym1, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if (!len) {
-    ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
-  } else {
-    ctr += len;
-  }
+  ctr += len;
 
-  /* Get spk */
-  if(!(sltgs23_sig->pi = spk_rep_init(6)))
+  /* Get nym2 */
+  if(!(sltgs23_sig->nym2 = pbcext_element_G1_init()))
     GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_G1_bytes(sltgs23_sig->nym2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  ctr += len;
 
-  if(!(sltgs23_sig->pi->c = pbcext_element_Fr_init()))
+  /* Get c */
+  if(!(sltgs23_sig->c = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if(pbcext_get_element_Fr_bytes(sltgs23_sig->pi->c, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->c, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if (!len) {
-    ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
-  } else {
-    ctr += len;
-  }
+  ctr += len;
 
-  for(i=0; i<sltgs23_sig->pi->ns; i++) {
-    if(!(sltgs23_sig->pi->s[i] = pbcext_element_Fr_init()))
-      GOTOENDRC(IERROR, sltgs23_signature_import);
-    if(pbcext_get_element_Fr_bytes(sltgs23_sig->pi->s[i], &len, &source[ctr]) == IERROR)
-      GOTOENDRC(IERROR, sltgs23_signature_import);
-    if (!len) {
-      ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
-    } else {
-      ctr += len;
-    }
-  }
-
-  /* Get nym */
-  if(!(sltgs23_sig->nym = pbcext_element_G1_init()))
+  /* Get sr1 */
+  if(!(sltgs23_sig->sr1 = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if(pbcext_get_element_G1_bytes(sltgs23_sig->nym, &len, &source[ctr]) == IERROR)
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->sr1, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, sltgs23_signature_import);
-  if (!len) {
-    ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
-  } else {
-    ctr += len;
-  }
+  ctr += len;
 
- sltgs23_signature_import_end:
+  /* Get sr2 */
+  if(!(sltgs23_sig->sr2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->sr2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  ctr += len;
+
+  /* Get szeta1 */
+  if(!(sltgs23_sig->szeta1 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->szeta1, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  ctr += len;
+
+  /* Get szeta2 */
+  if(!(sltgs23_sig->szeta2 = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->szeta2, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  ctr += len;
+
+  /* Get sy */
+  if(!(sltgs23_sig->sy = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->sy, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  ctr += len;
+
+  /* Get srho */
+  if(!(sltgs23_sig->srho = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->srho, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  ctr += len;
+
+  /* Get ss */
+  if(!(sltgs23_sig->ss = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->ss, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  ctr += len;
+
+  /* Get s_x */
+  if(!(sltgs23_sig->s_x = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  if(pbcext_get_element_Fr_bytes(sltgs23_sig->s_x, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_signature_import);
+  ctr += len;
+
+sltgs23_signature_import_end:
 
   if(rc == IERROR && sig) { sltgs23_signature_free(sig); sig = NULL; }
   if(rc == IOK) return sig;

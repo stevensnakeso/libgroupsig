@@ -85,10 +85,10 @@ int bap24_signature_free(groupsig_signature_t *sig) {
       pbcext_element_Fr_free(bap24_sig->c);
       bap24_sig->c = NULL;
     }
-    if(bap24_sig->s) {
-      pbcext_element_Fr_free(bap24_sig->s);
-      bap24_sig->s = NULL;
-    }
+    // if(bap24_sig->s) {
+    //   pbcext_element_Fr_free(bap24_sig->s);
+    //   bap24_sig->s = NULL;
+    // }
     if(bap24_sig->z_zeta1){
       pbcext_element_Fr_free(bap24_sig->z_zeta1);
       bap24_sig->z_zeta1 = NULL;
@@ -206,10 +206,10 @@ int bap24_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
     GOTOENDRC(IERROR, bap24_signature_copy);    
   if(pbcext_element_Fr_set(bap24_dst->c, bap24_src->c) == IERROR)
     GOTOENDRC(IERROR, bap24_signature_copy);  
-  if(!(bap24_dst->s = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bap24_signature_copy);
-  if(pbcext_element_Fr_set(bap24_dst->s, bap24_src->s) == IERROR)
-    GOTOENDRC(IERROR, bap24_signature_copy);
+  // if(!(bap24_dst->s = pbcext_element_Fr_init()))
+  //   GOTOENDRC(IERROR, bap24_signature_copy);
+  // if(pbcext_element_Fr_set(bap24_dst->s, bap24_src->s) == IERROR)
+  //   GOTOENDRC(IERROR, bap24_signature_copy);
   if(!(bap24_dst->z_zeta1 = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, bap24_signature_copy);
   if(pbcext_element_Fr_set(bap24_dst->z_zeta1, bap24_src->z_zeta1) == IERROR)
@@ -305,10 +305,10 @@ int bap24_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
       pbcext_element_Fr_free(bap24_dst->c);
       bap24_dst->c = NULL;
     }
-    if(bap24_dst->s) {
-      pbcext_element_Fr_free(bap24_dst->s);
-      bap24_dst->s = NULL;
-    }
+    // if(bap24_dst->s) {
+    //   pbcext_element_Fr_free(bap24_dst->s);
+    //   bap24_dst->s = NULL;
+    // }
     if(bap24_dst->z_zeta1){
       pbcext_element_Fr_free(bap24_dst->z_zeta1);
       bap24_dst->z_zeta1 = NULL;
@@ -399,7 +399,7 @@ int bap24_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src) {
 int bap24_signature_get_size(groupsig_signature_t *sig) {
 
   bap24_signature_t *bap24_sig;
-  uint64_t size64, ssigma1, ssigma2, sc, ss, sz_zeta1, sz_zeta2, sz_theta1, sz_theta2, sz_sk, sz_uid, sz_w, sz_alpha, sB1, sB2, shscp, scnym1, scnym2,scnym3, sD1, sD2, sD3, sD4, sD5, sD6;
+  uint64_t size64, ssigma1, ssigma2, sc,  sz_zeta1, sz_zeta2, sz_theta1, sz_theta2, sz_sk, sz_uid, sz_w, sz_alpha, sB1, sB2, shscp, scnym1, scnym2,scnym3, sD1, sD2, sD3, sD4, sD5, sD6;
   
   if(!sig || sig->scheme != GROUPSIG_BAP24_CODE) {
     LOG_EINVAL(&logger, __FILE__, "bap24_signature_get_size",
@@ -412,7 +412,7 @@ int bap24_signature_get_size(groupsig_signature_t *sig) {
   if(pbcext_element_G1_byte_size(&ssigma1) == IERROR) return -1;
   if(pbcext_element_G1_byte_size(&ssigma2) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&sc) == IERROR) return -1;
-  if(pbcext_element_Fr_byte_size(&ss) == IERROR) return -1;
+  // if(pbcext_element_Fr_byte_size(&ss) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&sz_zeta1) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&sz_zeta2) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&sz_theta1) == IERROR) return -1;
@@ -433,7 +433,7 @@ int bap24_signature_get_size(groupsig_signature_t *sig) {
   if (pbcext_element_GT_byte_size(&sD4) == IERROR) return -1;
   if (pbcext_element_G2_byte_size(&sD5) == IERROR) return -1;
   if (pbcext_element_GT_byte_size(&sD6) == IERROR) return -1;
-  size64 = sizeof(uint8_t) + sizeof(int)*24 + ssigma1 + ssigma2 +  sc + ss + sz_zeta1 + sz_zeta2 + sz_theta1 + sz_theta2 + sz_sk + sz_uid + sz_w + sz_alpha + sB1 + sB2 + shscp + scnym1 + scnym2 + scnym3 + sD1 + sD2 + sD3 + sD4 + sD5 + sD6;
+  size64 = sizeof(uint8_t) + sizeof(int)*23 + ssigma1 + ssigma2 +  sc  + sz_zeta1 + sz_zeta2 + sz_theta1 + sz_theta2 + sz_sk + sz_uid + sz_w + sz_alpha + sB1 + sB2 + shscp + scnym1 + scnym2 + scnym3 + sD1 + sD2 + sD3 + sD4 + sD5 + sD6;
 
   if(size64 > INT_MAX) return -1;
   return (int) size64;
@@ -490,11 +490,11 @@ int bap24_signature_export(byte_t **bytes,
     GOTOENDRC(IERROR, bap24_signature_export);
   ctr += len;
 
-  /* Dump s */
-  __bytes = &_bytes[ctr];
-  if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->s) == IERROR) 
-    GOTOENDRC(IERROR, bap24_signature_export);
-  ctr += len; 
+  // /* Dump s */
+  // __bytes = &_bytes[ctr];
+  // if(pbcext_dump_element_Fr_bytes(&__bytes, &len, bap24_sig->s) == IERROR) 
+  //   GOTOENDRC(IERROR, bap24_signature_export);
+  // ctr += len; 
   
   /* Dump zeta1 */
   __bytes = &_bytes[ctr];
@@ -693,12 +693,12 @@ groupsig_signature_t* bap24_signature_import(byte_t *source, uint32_t size) {
     GOTOENDRC(IERROR, bap24_signature_import);
   ctr += len;
 
-  /* Get s */
-  if(!(bap24_sig->s = pbcext_element_Fr_init()))
-    GOTOENDRC(IERROR, bap24_signature_import);
-  if(pbcext_get_element_Fr_bytes(bap24_sig->s, &len, &source[ctr]) == IERROR)
-    GOTOENDRC(IERROR, bap24_signature_import);
-  ctr += len;
+  // /* Get s */
+  // if(!(bap24_sig->s = pbcext_element_Fr_init()))
+  //   GOTOENDRC(IERROR, bap24_signature_import);
+  // if(pbcext_get_element_Fr_bytes(bap24_sig->s, &len, &source[ctr]) == IERROR)
+  //   GOTOENDRC(IERROR, bap24_signature_import);
+  // ctr += len;
 
   /* Get zeta1 */
   if(!(bap24_sig->z_zeta1 = pbcext_element_Fr_init()))

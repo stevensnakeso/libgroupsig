@@ -521,11 +521,11 @@ pbcext_element_Fr_t *aux_fr, *z_zeta1, *z_zeta2, *z_theta1, *z_theta2, *z_sk, *z
   if(!(bap24_sig->z_alpha = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign);
   if(pbcext_element_Fr_set(bap24_sig->z_alpha, z_alpha) == IERROR) GOTOENDRC(IERROR, bap24_sign);
 
-  if (!(bap24_sig->s = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign); //delete later
-  if (pbcext_element_Fr_mul(bap24_sig->s, bap24_sig->c, bap24_memkey->sk) == IERROR)
-    GOTOENDRC(IERROR, bap24_sign);
-  if (pbcext_element_Fr_add(bap24_sig->s, k, bap24_sig->s) == IERROR)
-    GOTOENDRC(IERROR, bap24_sign);
+  // if (!(bap24_sig->s = pbcext_element_Fr_init())) GOTOENDRC(IERROR, bap24_sign); //delete later
+  // if (pbcext_element_Fr_mul(bap24_sig->s, bap24_sig->c, bap24_memkey->sk) == IERROR)
+  //   GOTOENDRC(IERROR, bap24_sign);
+  // if (pbcext_element_Fr_add(bap24_sig->s, k, bap24_sig->s) == IERROR)
+  //   GOTOENDRC(IERROR, bap24_sign);
 //
   if (!(bap24_sig->D1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_sign);
   if (pbcext_element_G1_set(bap24_sig->D1, D1) == IERROR) GOTOENDRC(IERROR, bap24_sign);
