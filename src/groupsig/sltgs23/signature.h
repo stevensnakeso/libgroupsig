@@ -38,6 +38,8 @@ typedef struct {
   pbcext_element_G1_t *nym2;
   pbcext_element_Fr_t *c;
   pbcext_element_Fr_t *sr1, *sr2,  *szeta1, *szeta2, *sy, *srho, *ss, *s_x; //*sx
+  // pbcext_element_G1_t *t1, *t2, *t3, *t4;
+  // pbcext_element_GT_t *t5;
 } sltgs23_signature_t;
 
 /** 

@@ -82,8 +82,8 @@ int sltgs23_identify(uint8_t *ok,
     GOTOENDRC(IERROR, sltgs23_identify);
   
   /* Check if nym = h(scp)^y */
-  if(pbcext_element_G1_cmp(hscp, sltgs23_sig->nym)) {
-    *ok = 0;
+  if(pbcext_element_G1_cmp(hscp, sltgs23_sig->nym1)) { //not used
+    *ok = 0; //
     GOTOENDRC(IOK, sltgs23_identify);
   } else {
     *ok = 1;

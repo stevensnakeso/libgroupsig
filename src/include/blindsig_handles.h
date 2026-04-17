@@ -22,6 +22,7 @@
 
 #include "blindsig.h"
 #include "groupsig/gl19/blindsig.h"
+#include "groupsig/sltgs23/blindsig.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +32,7 @@ extern "C" {
  * @def GROUPSIG_BLINDSIG_HANDLES_N
  * @brief Number of supported set of handles for managing blinded group signatures.
  */
-#define GROUPSIG_BLINDSIG_HANDLES_N 1
+#define GROUPSIG_BLINDSIG_HANDLES_N 2
 
 /**
  * @var GROUPSIG_BLINDSIG_HANDLES
@@ -39,6 +40,7 @@ extern "C" {
  */
 static const groupsig_blindsig_handle_t *GROUPSIG_BLINDSIG_HANDLES[GROUPSIG_BLINDSIG_HANDLES_N] = {
   &gl19_blindsig_handle,
+  &sltgs23_blindsig_handle,
 };
 
 #ifdef __cplusplus

@@ -165,7 +165,7 @@ if (pbcext_element_G1_set(bap24_memkey->sigma2, tmp_bap24_memkey->sigma2) == IER
 if (!(bap24_memkey->w = pbcext_element_G1_init())) GOTOENDRC(IERROR, bap24_join_mem); 
 if (pbcext_element_G1_set(bap24_memkey->w, tmp_bap24_memkey->w) == IERROR)
   GOTOENDRC(IERROR, bap24_join_mem);
-
+  
 
 
     pbcext_element_GT_t *left_op, *right_op, *tem_op;

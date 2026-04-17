@@ -5,7 +5,9 @@ add_library (sltgs23
 		grp_key.c grp_key.h 
 		mgr_key.c mgr_key.h 
 		mem_key.c mem_key.h
+		bld_key.c bld_key.h
 		signature.c signature.h
+		blindsig.c blindsig.h
 		setup.c
 		join_mem.c 
 		join_mgr.c 
@@ -13,6 +15,9 @@ add_library (sltgs23
 		verify.c
 		identify.c
 		proof.c proof.h
+		blind.c
+  		convert.c
+  		unblind.c
 		identity.c identity.h)
 
 target_include_directories (sltgs23 PRIVATE ${OPENSSL_INCLUDE_DIR})

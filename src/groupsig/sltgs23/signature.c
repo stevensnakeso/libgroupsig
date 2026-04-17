@@ -82,24 +82,24 @@ int sltgs23_signature_free(groupsig_signature_t *sig) {
     pbcext_element_Fr_free(sltgs23_sig->szeta1); sltgs23_sig->szeta1 = NULL;
     pbcext_element_Fr_free(sltgs23_sig->szeta2); sltgs23_sig->szeta2 = NULL;
     pbcext_element_Fr_free(sltgs23_sig->sy); sltgs23_sig->sy = NULL;
-    if(sltgs23_sig->srho) {
+    if(sltgs23_sig->srho!=NULL) {
       pbcext_element_Fr_free(sltgs23_sig->srho);
       sltgs23_sig->srho = NULL;
     }
-    if(sltgs23_sig->ss) {
+    if(sltgs23_sig->ss!=NULL) {
       pbcext_element_Fr_free(sltgs23_sig->ss);
       sltgs23_sig->ss = NULL;
     }
-    if(sltgs23_sig->s_x) {
+    if(sltgs23_sig->s_x!=NULL) {
       pbcext_element_Fr_free(sltgs23_sig->s_x);
       sltgs23_sig->s_x = NULL;
     }
-
+    mem_free(sltgs23_sig);
     sltgs23_sig = NULL;
   }
 
   mem_free(sig);
-
+  sig = NULL;
   return IOK;
 
 }

@@ -36,6 +36,7 @@ namespace groupsig {
     // You can remove any or all of the following functions if their bodies
     // would be empty.
     groupsig_key_t *isskey;
+    groupsig_key_t *cnvkey;
     groupsig_key_t *grpkey;
     groupsig_key_t **memkey;
     uint32_t n;
@@ -50,6 +51,9 @@ namespace groupsig {
       isskey = groupsig_mgr_key_init(GROUPSIG_SLTGS23_CODE);
       EXPECT_NE(isskey, nullptr);
 
+      cnvkey = groupsig_mgr_key_init(GROUPSIG_SLTGS23_CODE);
+      EXPECT_NE(cnvkey, nullptr);
+
       grpkey = groupsig_grp_key_init(GROUPSIG_SLTGS23_CODE);
       EXPECT_NE(grpkey, nullptr);
 
@@ -60,6 +64,7 @@ namespace groupsig {
     
     ~SLTGS23Test() override {
       groupsig_mgr_key_free(isskey); isskey = NULL;
+      groupsig_mgr_key_free(cnvkey); cnvkey = NULL;
       groupsig_grp_key_free(grpkey); grpkey = NULL;
       if (memkey) {
 	for (int i=0; i<n; i++) {
@@ -117,7 +122,32 @@ namespace groupsig {
       this->n = n;
 
     }
-    
+    groupsig_key_t * getPublicBlindingKey(groupsig_key_t *bldkey) {
+
+      byte_t *bytes;
+      groupsig_key_t *dst;
+      uint32_t size;
+      int len, rc;
+      
+      /* Get the size of the string to store the exported key */
+      len = groupsig_bld_key_get_size(bldkey);
+      EXPECT_NE(len, -1);
+
+      /* Export the public part of the key to a string in b64 */
+      bytes = nullptr;
+      rc = groupsig_bld_key_export_pub(&bytes, &size, bldkey);
+      EXPECT_EQ(rc, IOK);
+      EXPECT_NE(bytes, nullptr);
+
+      /* Import the group key */
+      dst = groupsig_bld_key_import(GROUPSIG_SLTGS23_CODE, bytes, size);
+      EXPECT_NE(dst, nullptr);
+
+      free(bytes); bytes = nullptr;
+
+      return dst;
+
+    }
     // If the constructor and destructor are not enough for setting up
     // and cleaning up each test, you can define the following methods:
 
@@ -154,6 +184,7 @@ namespace groupsig {
     /* Scheme is set to SLTGS23 */
     EXPECT_EQ(grpkey->scheme, GROUPSIG_SLTGS23_CODE);
     EXPECT_EQ(isskey->scheme, GROUPSIG_SLTGS23_CODE);
+    EXPECT_EQ(cnvkey->scheme, GROUPSIG_SLTGS23_CODE);
     
   }
 
@@ -191,6 +222,10 @@ namespace groupsig {
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+
     addMembers(1);
 
     EXPECT_EQ(memkey[0]->scheme, GROUPSIG_SLTGS23_CODE);    
@@ -204,6 +239,9 @@ namespace groupsig {
     int rc;
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -227,6 +265,9 @@ namespace groupsig {
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);    
 
     /* Initialize the group signature object */
     sig = groupsig_signature_init(grpkey->scheme);
@@ -271,6 +312,9 @@ namespace groupsig {
     uint8_t b;
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -460,8 +504,245 @@ namespace groupsig {
   //   free(sigs);
 
   // }  
+/* Successfull blind-convert-unblind of 1 signature */
+  TEST_F(SLTGS23Test, BlindConvertUnblind1) {
+
+    groupsig_signature_t *sig;
+    groupsig_blindsig_t *bsig, *csig;
+    groupsig_key_t *bldkey, *pubkey;
+    identity_t *id;
+    message_t *msg;
+    int rc;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* Initialize a message with a test string */
+    msg =  message_from_string((char *)
+			      "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+    EXPECT_NE(msg, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+    
+    /* Generate random blind key */
+    bldkey = groupsig_bld_key_random(grpkey->scheme, grpkey);
+    EXPECT_NE(bldkey, nullptr);
+    
+    /* Blind the signature */
+    bsig = groupsig_blindsig_init(grpkey->scheme);
+    EXPECT_NE(bsig, nullptr);
+    
+    rc = groupsig_blind(bsig, &bldkey, grpkey, sig, msg);
+    EXPECT_EQ(rc, IOK);
+
+    /* Convert the signature */
+
+    /* For conversion we only need the public key */
+    pubkey = getPublicBlindingKey(bldkey);
+    EXPECT_NE(pubkey, nullptr);
+    
+    csig = groupsig_blindsig_init(grpkey->scheme);
+    EXPECT_NE(csig, nullptr);
+    
+    rc = groupsig_convert(&csig, &bsig, 1, grpkey, cnvkey, pubkey, msg);
+    EXPECT_EQ(rc, IOK);
+
+    /* Unblind */
+    id = identity_init(grpkey->scheme);
+    EXPECT_NE(id, nullptr);
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    msg = message_init();
+    EXPECT_NE(msg, nullptr);
+
+    rc = groupsig_unblind(id, sig, csig, grpkey, bldkey, msg);
+    EXPECT_EQ(rc, IOK);
+
+    /* Free stuff */
+    rc = groupsig_bld_key_free(bldkey);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_bld_key_free(pubkey);
+    EXPECT_EQ(rc, IOK);    
+    
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_blindsig_free(bsig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_blindsig_free(csig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = identity_free(id);
+    EXPECT_EQ(rc, IOK);
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);    
+    
+  }
 
   /** Group key tests **/
+  /** Group key tests **/
+
+
+  /* Successfully exports and imports a converter key to a string */
+  TEST_F(SLTGS23Test, CnvKeyExportImport) {
+
+    groupsig_key_t *dst;
+    byte_t *bytes;
+    uint32_t size;
+    int rc, len;
+
+    groupsig_signature_t *sig;
+    groupsig_blindsig_t *bsig, *csig;
+    groupsig_key_t *bldkey, *pubkey;
+    identity_t *id;
+    message_t *msg;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+    
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    /* Get the size of the string to store the exported key */
+    len = groupsig_mgr_key_get_size(cnvkey);
+    EXPECT_NE(len, -1);
+
+    
+    /* Export the group key to a string in b64 */
+    bytes = nullptr;
+    rc = groupsig_mgr_key_export(&bytes, &size, cnvkey);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(len, size);
+    EXPECT_NE(bytes, nullptr);  
+
+    /* Import the group key */
+    dst = groupsig_mgr_key_import(GROUPSIG_SLTGS23_CODE, bytes, size);
+    EXPECT_NE(dst, nullptr);
+
+    free(bytes); bytes = nullptr;
+
+    /* Do a test conversion */
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* Initialize a message with a test string */
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+    EXPECT_NE(msg, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+    
+    /* Generate random blind key */
+    bldkey = groupsig_bld_key_random(grpkey->scheme, grpkey);
+    EXPECT_NE(bldkey, nullptr);
+    
+    /* Blind the signature */
+    bsig = groupsig_blindsig_init(grpkey->scheme);
+    EXPECT_NE(bsig, nullptr);
+    
+    rc = groupsig_blind(bsig, &bldkey, grpkey, sig, msg);
+    EXPECT_EQ(rc, IOK);
+
+    /* Convert the signature */
+
+    /* For conversion we only need the public key */
+    pubkey = getPublicBlindingKey(bldkey);
+    EXPECT_NE(pubkey, nullptr);
+    
+    csig = groupsig_blindsig_init(grpkey->scheme);
+    EXPECT_NE(csig, nullptr);
+    
+    rc = groupsig_convert(&csig, &bsig, 1, grpkey, dst, pubkey, msg);
+    EXPECT_EQ(rc, IOK);
+
+    /* Unblind */
+    id = identity_init(grpkey->scheme);
+    EXPECT_NE(id, nullptr);
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    msg = message_init();
+    EXPECT_NE(msg, nullptr);
+
+    rc = groupsig_unblind(id, sig, csig, grpkey, bldkey, msg);
+    EXPECT_EQ(rc, IOK);
+
+    /* Free stuff */
+    rc = groupsig_bld_key_free(bldkey);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_bld_key_free(pubkey);
+    EXPECT_EQ(rc, IOK);    
+    
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_blindsig_free(bsig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_blindsig_free(csig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = identity_free(id);
+    EXPECT_EQ(rc, IOK);
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_mgr_key_free(dst);
+    EXPECT_EQ(rc, IOK);    
+    
+  }
+
+  /* Successfully copies a converter key */
+  TEST_F(SLTGS23Test, CnvKeyCopy) {
+
+    groupsig_key_t *dst;
+    int rc;
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);    
+
+    dst = groupsig_mgr_key_init(GROUPSIG_SLTGS23_CODE);
+    EXPECT_NE(dst, nullptr);
+
+    rc = groupsig_mgr_key_copy(dst, cnvkey);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_mgr_key_free(dst);
+    EXPECT_EQ(rc, IOK);
+    
+  }  
+
 
   /* Successfully exports and imports a group key to a string */
   TEST_F(SLTGS23Test, GrpKeyExportImport) {
@@ -472,6 +753,9 @@ namespace groupsig {
     int rc, len;
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
     EXPECT_EQ(rc, IOK);
 
     /* Get the size of the string to store the exported key */
@@ -528,6 +812,9 @@ namespace groupsig {
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);
     
     /* Get the size of the string to store the exported key */
     len = groupsig_mgr_key_get_size(isskey);
@@ -560,6 +847,9 @@ namespace groupsig {
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL); 
+    EXPECT_EQ(rc, IOK);
+
     dst = groupsig_mgr_key_init(GROUPSIG_SLTGS23_CODE);
     EXPECT_NE(dst, nullptr);
 
@@ -582,6 +872,9 @@ namespace groupsig {
     int rc, len;
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL); 
     EXPECT_EQ(rc, IOK);
 
     /* Add one member */
@@ -618,6 +911,9 @@ namespace groupsig {
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
     EXPECT_EQ(rc, IOK);
 
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL); 
+    EXPECT_EQ(rc, IOK);
+
    /* Add one member */
     addMembers(1);    
 
@@ -632,6 +928,164 @@ namespace groupsig {
     
   }
 
+/** Blind key tests **/
+
+  /* Successfully exports and imports a blinding key to a string */
+  TEST_F(SLTGS23Test, BldKeyExportImport) {
+
+    groupsig_key_t *bldkey, *dst;
+    byte_t *bytes;
+    uint32_t size;
+    int rc, len;
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);    
+
+    bldkey = groupsig_bld_key_random(grpkey->scheme, grpkey);
+    EXPECT_NE(bldkey, nullptr);
+
+    /* Get the size of the string to store the exported key */
+    len = groupsig_bld_key_get_size(bldkey);
+    EXPECT_NE(len, -1);
+    
+    /* Export the blinding key to a string in b64 */
+    bytes = nullptr;
+    rc = groupsig_bld_key_export(&bytes, &size, bldkey);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(len, size);
+    EXPECT_NE(bytes, nullptr);    
+
+    /* Import the group key */
+    dst = groupsig_bld_key_import(GROUPSIG_SLTGS23_CODE, bytes, size);
+    EXPECT_NE(dst, nullptr);
+
+    rc = groupsig_bld_key_free(bldkey);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_bld_key_free(dst);
+    EXPECT_EQ(rc, IOK);
+
+    free(bytes); bytes = nullptr;
+    
+  }
+
+  /* Successfully exports and imports the public part of a blinding key to a 
+     string */
+  TEST_F(SLTGS23Test, BldKeyPubExportImport) {
+
+    groupsig_key_t *bldkey, *dst;
+    byte_t *bytes;
+    uint32_t size;
+    int rc, len;
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    bldkey = groupsig_bld_key_random(grpkey->scheme, grpkey);
+    EXPECT_NE(bldkey, nullptr);
+
+    /* Get the size of the string to store the exported key */
+    len = groupsig_bld_key_get_size(bldkey);
+    EXPECT_NE(len, -1);
+
+    /* Export the public part of the key to a string in b64 */
+    bytes = nullptr;
+    rc = groupsig_bld_key_export_pub(&bytes, &size, bldkey);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_NE(bytes, nullptr);    
+
+    /* Import the group key */
+    dst = groupsig_bld_key_import(GROUPSIG_SLTGS23_CODE, bytes, size);
+    EXPECT_NE(dst, nullptr);
+
+    rc = groupsig_bld_key_free(bldkey);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_bld_key_free(dst);
+    EXPECT_EQ(rc, IOK);
+
+    free(bytes); bytes = nullptr;
+    
+  }
+
+  /* Successfully exports and imports the private part of a blinding key to a 
+     string */
+  TEST_F(SLTGS23Test, BldKeyPrvExportImport) {
+
+    groupsig_key_t *bldkey, *dst;
+    byte_t *bytes;
+    uint32_t size;
+    int rc, len;
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);    
+
+    bldkey = groupsig_bld_key_random(grpkey->scheme, grpkey);
+    EXPECT_NE(bldkey, nullptr);
+
+    /* Get the size of the string to store the exported key */
+    len = groupsig_bld_key_get_size(bldkey);
+    EXPECT_NE(len, -1);
+
+    /* Export the private part of the key to a string in b64 */
+    bytes = nullptr;
+    rc = groupsig_bld_key_export_prv(&bytes, &size, bldkey);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_NE(bytes, nullptr);    
+
+    /* Import the group key */
+    dst = groupsig_bld_key_import(GROUPSIG_SLTGS23_CODE, bytes, size);
+    EXPECT_NE(dst, nullptr);
+
+    rc = groupsig_bld_key_free(bldkey);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_bld_key_free(dst);
+    EXPECT_EQ(rc, IOK);    
+
+    free(bytes); bytes = nullptr;
+    
+  }  
+
+  /* Successfully copies a blinding key */
+  TEST_F(SLTGS23Test, BldKeyCopy) {
+
+    groupsig_key_t *src, *dst;
+    int rc;
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);    
+
+    src = groupsig_bld_key_random(grpkey->scheme, grpkey);
+    EXPECT_NE(src, nullptr);
+
+    dst = groupsig_bld_key_init(GROUPSIG_SLTGS23_CODE);
+    EXPECT_NE(dst, nullptr);
+
+    rc = groupsig_bld_key_copy(dst, src);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_bld_key_free(src);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_bld_key_free(dst);
+    EXPECT_EQ(rc, IOK);
+    
+  }  
+
+
   /** Signature object tests **/
 
   /* Successfully converts a signature as a string */
@@ -644,6 +1098,9 @@ namespace groupsig {
     uint8_t b;
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL); 
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -690,6 +1147,9 @@ namespace groupsig {
     uint8_t b;
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL); 
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the src group signature object */
@@ -750,6 +1210,9 @@ namespace groupsig {
     uint8_t b;
 
     rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL); 
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */

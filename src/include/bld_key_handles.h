@@ -22,6 +22,7 @@
 
 #include "bld_key.h"
 #include "groupsig/gl19/bld_key.h"
+#include "groupsig/sltgs23/bld_key.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +32,7 @@ extern "C" {
  * @def GROUPSIG_BLD_KEY_HANDLES_N
  * @brief Number of known handles of blinding key schemes.
  */
-#define GROUPSIG_BLD_KEY_HANDLES_N 1
+#define GROUPSIG_BLD_KEY_HANDLES_N 2
 
 /**
  * @var GROUPSIG_BLD_KEY_HANDLES
@@ -39,6 +40,7 @@ extern "C" {
  */
 static const bld_key_handle_t *GROUPSIG_BLD_KEY_HANDLES[GROUPSIG_BLD_KEY_HANDLES_N] = {
     &gl19_bld_key_handle,
+    &sltgs23_bld_key_handle,
 };
 
 #ifdef __cplusplus

@@ -37,7 +37,7 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
      that are not specified in the paper but helpful or required for its 
      implementation will be named aux[_<name>]. */
 
-  pbcext_element_Fr_t *r1, *r2, *rho;
+  pbcext_element_Fr_t *r1, *r2, *rho, *_x;
   pbcext_element_Fr_t *zeta1, *zeta2;
   pbcext_element_G1_t *aux;
   sltgs23_signature_t *sltgs23_sig;
@@ -60,8 +60,8 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
   /* sltgs23_sysenv = sysenv->data; */
   rc = IOK;
 
-  r1 = r2  = NULL;
-
+  r1 = r2 =_x = zeta1 = zeta2 = NULL;
+  aux = NULL;
   msg_msg = NULL; msg_scp = NULL;
   
   /* Parse message and scope values from msg */
@@ -83,11 +83,11 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
   
   /* zeta1 */
   if(!(zeta1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_Fp_mul(zeta1, r1, sltgs23_memkey->x) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_mul(zeta1, r1, sltgs23_memkey->x) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
   /* zeta2 */
   if(!(zeta2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_Fp_mul(zeta2, r2, sltgs23_memkey->x) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_mul(zeta2, r2, sltgs23_memkey->x) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
   /* nym1 = g^rho*/
   if(!(sltgs23_sig->nym1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
@@ -112,6 +112,10 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
   if(pbcext_element_G1_mul(aux, sltgs23_grpkey->h2, r1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_add(sltgs23_sig->A2, sltgs23_memkey->A, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
+  if(_x = pbcext_element_Fr_init()) {
+    if(pbcext_element_Fr_neg(_x, sltgs23_memkey->x) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  }
+
   /* Compute the SOK */
   pbcext_element_Fr_t *pr1, *pr2, *px, *pzeta1, *pzeta2, *py, *prho, *ps, *_px;
   if(!(pr1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
@@ -120,6 +124,10 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
   if(pbcext_element_Fr_random(pr2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(!(px = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_Fr_random(px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(!(pzeta1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_random(pzeta1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(!(pzeta2 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_random(pzeta2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(!(py = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_Fr_random(py) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(!(prho = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
@@ -127,14 +135,15 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
   if(!(ps = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_Fr_random(ps) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(!(_px = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_Fr_neg(_px,px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_neg(_px, px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+
 
  
   pbcext_element_G1_t *t1, *t2, *t3, *t4;
   pbcext_element_GT_t *t5, *aux_GT;
   
   if(!(t1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_G1_mul(t1, sltgs23_grpkey->g, pr1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_G1_mul(t1, sltgs23_grpkey->g, prho) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   
   if(!(t2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_mul(t2, sltgs23_grpkey->cpk, prho) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
@@ -146,18 +155,29 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
   if(pbcext_element_G1_mul(aux, sltgs23_grpkey->h2, pr2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_add(t3, t3, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
+
+  // int64_t zero = 0;
+  // pbcext_element_Fr_t *ftmp1;
+  // if(!(ftmp1 = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
+
+
   if(!(t4 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_mul(t4, sltgs23_grpkey->h1, pzeta1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_mul(aux, sltgs23_grpkey->h2, pzeta2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_add(t4, t4, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_mul(aux, sltgs23_sig->A1, _px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_G1_mul(t4, t4, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_G1_add(t4, t4, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // pbcext_element_Fr_set2(ftmp1,zero);
+  // pbcext_element_G1_random(t4);
+  // //pbcext_element_G1_set(ftmp2,scsl25_grpkey->g);
+  // pbcext_element_G1_mul(t4,t4,ftmp1);
+
 
   // $t5 = (E_{A2\_h0})^{-k_e} \cdot (E_{g2\_ipk})^{k_{r1}} \cdot (E_{g2\_h0})^{k_{\delta1}} \cdot (E_{g1\_h0})^{k_y} \cdot (E_{g2\_h0})^{k_s}$
   if(!(t5 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(!(aux_GT = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_pairing(t5, sltgs23_sig->A2, sltgs23_grpkey->g2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_GT_pow(t5, sltgs23_sig->A2, _px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_GT_pow(t5, t5, _px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
   if(pbcext_pairing(aux_GT, sltgs23_grpkey->h2, sltgs23_grpkey->ipk) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_GT_pow(aux_GT, aux_GT, pr1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
@@ -177,7 +197,6 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
 
   /* Compute c = H(m, sc, zeta1, zeta2, t1, t2, t3, t4, t5) */
   
-  byte_t *b = NULL;
   uint64_t len = 0;
   hash_t *hc = NULL;
   byte_t *aux_bytes = NULL;
@@ -187,20 +206,31 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
     GOTOENDRC(IERROR, sltgs23_sign);
 
   if (hash_update(hc, aux_bytes, len) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  mem_free(aux_bytes); aux_bytes = NULL;
+
   if (pbcext_element_G1_to_bytes(&aux_bytes, &len, t2) == IERROR)
     GOTOENDRC(IERROR, sltgs23_sign);
   if (hash_update(hc, aux_bytes, len) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  mem_free(aux_bytes); aux_bytes = NULL;
+
   if (pbcext_element_G1_to_bytes(&aux_bytes, &len, t3) == IERROR)
     GOTOENDRC(IERROR, sltgs23_sign);
   if (hash_update(hc, aux_bytes, len) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  mem_free(aux_bytes); aux_bytes = NULL;
+
   if (pbcext_element_G1_to_bytes(&aux_bytes, &len, t4) == IERROR)
     GOTOENDRC(IERROR, sltgs23_sign);
   if (hash_update(hc, aux_bytes, len) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  mem_free(aux_bytes); aux_bytes = NULL;
+  
   if (pbcext_element_GT_to_bytes(&aux_bytes, &len, t5) == IERROR)
     GOTOENDRC(IERROR, sltgs23_sign);
   if (hash_update(hc, aux_bytes, len) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
-   if (hash_update(hc, msg->bytes, msg->length) == IERROR)
+  mem_free(aux_bytes); aux_bytes = NULL;
+
+  if (hash_update(hc, msg->bytes, msg->length) == IERROR)
     GOTOENDRC(IERROR, sltgs23_sign);
+  mem_free(aux_bytes); aux_bytes = NULL;
 
   if (hash_finalize(hc) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if (!(sltgs23_sig->c = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
@@ -218,41 +248,92 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
   if(!(sltgs23_sig->ss = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(!(sltgs23_sig->s_x = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
 
-  if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, r1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, r1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_Fr_sub(sltgs23_sig->sr1, pr1, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
-  if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, r2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, r2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_Fr_sub(sltgs23_sig->sr2, pr2, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
-  // if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   // if(pbcext_element_Fr_sub(sltgs23_sig->s_x, pr1, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
-  if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, pzeta1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_Fr_sub(sltgs23_sig->szeta1, pr1, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, zeta1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_sub(sltgs23_sig->szeta1, pzeta1, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
-  if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, pzeta2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_Fr_sub(sltgs23_sig->szeta2, pr2, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_G1_mul(t4, sltgs23_grpkey->h1, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);//
 
-  if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, py) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
-  if(pbcext_element_Fr_sub(sltgs23_sig->sy, pr2, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, zeta2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_sub(sltgs23_sig->szeta2, pzeta2, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
-  if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, prho) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_G1_mul(aux, sltgs23_grpkey->h2, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);//
+  // if(pbcext_element_G1_add(t4, t4, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);//
+
+  if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, sltgs23_memkey->y) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_sub(sltgs23_sig->sy, py, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+
+  if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, rho) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_Fr_sub(sltgs23_sig->srho, prho, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
-  if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, ps) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, sltgs23_memkey->s) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_Fr_sub(sltgs23_sig->ss, ps, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
-  if(pbcext_element_Fp_mul(aux_fr, sltgs23_sig->c, _px) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  if(pbcext_element_Fr_mul(aux_fr, sltgs23_sig->c, _x) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_Fr_sub(sltgs23_sig->s_x, _px, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
+  // if(pbcext_element_G1_mul(aux, sltgs23_sig->A1, aux_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);//
+  // if(pbcext_element_G1_add(t4, t4, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);//
+
+
+  // if(!(sltgs23_sig->t1 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(!(sltgs23_sig->t2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(!(sltgs23_sig->t3 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(!(sltgs23_sig->t4 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(!(sltgs23_sig->t5 = pbcext_element_GT_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_G1_set(sltgs23_sig->t1, t1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign); 
+  // if(pbcext_element_G1_set(sltgs23_sig->t2, t2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign); 
+  // if(pbcext_element_G1_set(sltgs23_sig->t3, t3) == IERROR) GOTOENDRC(IERROR, sltgs23_sign); 
+  // if(pbcext_element_G1_set(sltgs23_sig->t4, t4) == IERROR) GOTOENDRC(IERROR, sltgs23_sign); 
+  // if(pbcext_element_GT_set(sltgs23_sig->t5, t5) == IERROR) GOTOENDRC(IERROR, sltgs23_sign); 
+
+  // if(pbcext_element_G1_mul(t4, sltgs23_grpkey->h1, sltgs23_sig->szeta1) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_G1_mul(aux, sltgs23_grpkey->h2, sltgs23_sig->szeta2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_G1_add(t4, t4, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);  
+  // if(pbcext_element_G1_mul(aux, sltgs23_sig->A1, sltgs23_sig->s_x) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_G1_add(t4, t4, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);  
+  // if(pbcext_element_G1_cmp(t4, sltgs23_sig->t4) != 0) GOTOENDRC(IERROR, sltgs23_sign);
  sltgs23_sign_end:
 
   if(r1) { pbcext_element_Fr_free(r1); r1 = NULL; }
   if(r2) { pbcext_element_Fr_free(r2); r2 = NULL; }
+  if(rho) { pbcext_element_Fr_free(rho); rho = NULL; }
+  if(_x) { pbcext_element_Fr_free(_x); _x = NULL; }
+  if(zeta1) { pbcext_element_Fr_free(zeta1); zeta1 = NULL; }
+  if(zeta2) { pbcext_element_Fr_free(zeta2); zeta2 = NULL; }
+  if(aux) { pbcext_element_G1_free(aux); aux = NULL; }
+  if(aux_fr) { pbcext_element_Fr_free(aux_fr); aux_fr = NULL; }
+  if(hc) { hash_free(hc); hc = NULL; }
+
+  if(pr1) { pbcext_element_Fr_free(pr1); pr1 = NULL; }
+  if(pr2) { pbcext_element_Fr_free(pr2); pr2 = NULL; }
+  if(px) { pbcext_element_Fr_free(px); px = NULL; }
+  if(pzeta1) { pbcext_element_Fr_free(pzeta1); pzeta1 = NULL; }
+  if(pzeta2) { pbcext_element_Fr_free(pzeta2); pzeta2 = NULL; }
+  if(py) { pbcext_element_Fr_free(py); py = NULL; }
+  if(prho) { pbcext_element_Fr_free(prho); prho = NULL; }
+  if(ps) { pbcext_element_Fr_free(ps); ps = NULL; }
+  if(_px) { pbcext_element_Fr_free(_px); _px = NULL; }
+  if(t1) { pbcext_element_G1_free(t1); t1 = NULL; }
+  if(t2) { pbcext_element_G1_free(t2); t2 = NULL; }
+  if(t3) { pbcext_element_G1_free(t3); t3 = NULL; }
+  if(t4) { pbcext_element_G1_free(t4); t4 = NULL; }
+  if(t5) { pbcext_element_GT_free(t5); t5 = NULL; }
+  if(aux_GT) { pbcext_element_GT_free(aux_GT); aux_GT = NULL; }
+  
 
   if(msg_scp) { mem_free(msg_scp); msg_scp = NULL; }
   if(msg_msg) { mem_free(msg_msg); msg_msg = NULL; }
-  
+  if(aux_bytes) { mem_free(aux_bytes); aux_bytes = NULL; }
+
   if (rc == IERROR) {
     
     if(sltgs23_sig->A1) {
@@ -274,6 +355,42 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
     if(sltgs23_sig->c) {
       pbcext_element_Fr_free(sltgs23_sig->c);
       sltgs23_sig->c = NULL;
+    }
+    if(sltgs23_sig->sr1) {
+      pbcext_element_Fr_free(sltgs23_sig->sr1);
+      sltgs23_sig->sr1 = NULL;
+    }
+    if(sltgs23_sig->sr2) {
+      pbcext_element_Fr_free(sltgs23_sig->sr2);
+      sltgs23_sig->sr2 = NULL;
+    }
+    if(sltgs23_sig->s_x) {
+      pbcext_element_Fr_free(sltgs23_sig->s_x);
+      sltgs23_sig->s_x = NULL;
+    }
+    if(sltgs23_sig->szeta1) {
+      pbcext_element_Fr_free(sltgs23_sig->szeta1);
+      sltgs23_sig->szeta1 = NULL;
+    }
+    if(sltgs23_sig->szeta2) {
+      pbcext_element_Fr_free(sltgs23_sig->szeta2);
+      sltgs23_sig->szeta2 = NULL;
+    }
+    if(sltgs23_sig->sy) {
+      pbcext_element_Fr_free(sltgs23_sig->sy);
+      sltgs23_sig->sy = NULL;
+    }
+    if(sltgs23_sig->srho) {
+      pbcext_element_Fr_free(sltgs23_sig->srho);
+      sltgs23_sig->srho = NULL;
+    }
+    if(sltgs23_sig->ss) {
+      pbcext_element_Fr_free(sltgs23_sig->ss);
+      sltgs23_sig->ss = NULL;
+    }
+    if(sltgs23_sig->s_x) {
+      pbcext_element_Fr_free(sltgs23_sig->s_x);
+      sltgs23_sig->s_x = NULL;
     }
     
   }

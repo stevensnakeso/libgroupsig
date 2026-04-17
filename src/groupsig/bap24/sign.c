@@ -557,10 +557,10 @@ pbcext_element_Fr_t *aux_fr, *z_zeta1, *z_zeta2, *z_theta1, *z_theta2, *z_sk, *z
       pbcext_element_Fr_free(bap24_sig->c);
       bap24_sig->c = NULL;
     }
-    if (bap24_sig->s) {
-      pbcext_element_Fr_free(bap24_sig->s);
-      bap24_sig->s = NULL;
-    }
+    // if (bap24_sig->s) {
+    //   pbcext_element_Fr_free(bap24_sig->s);
+    //   bap24_sig->s = NULL;
+    // }
     if (bap24_sig->sigma1) {
       pbcext_element_G1_free(bap24_sig->sigma1);
       bap24_sig->sigma1 = NULL;
