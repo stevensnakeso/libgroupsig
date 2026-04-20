@@ -556,7 +556,7 @@ namespace groupsig {
     
     csig = groupsig_blindsig_init(grpkey->scheme);
     EXPECT_NE(csig, nullptr);
-    
+    // msg =  message_from_string((char *)"test");
     rc = groupsig_convert(&csig, &bsig, 1, grpkey, cnvkey, pubkey, msg);
     EXPECT_EQ(rc, IOK);
 
@@ -596,6 +596,112 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);    
     
   }
+
+/* Successfull Trace blind-convert-unblind of 1 signature */
+  TEST_F(SLTGS23Test, TraceBlindConvertUnblind1) {
+
+    groupsig_signature_t *sig;
+    groupsig_blindsig_t *bsig, *csig;
+    groupsig_key_t *bldkey, *pubkey;
+    identity_t *id;
+    message_t *msg;
+    int rc;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, isskey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_SLTGS23_CODE, grpkey, cnvkey, NULL);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* Initialize a message with a test string */
+    msg =  message_from_string((char *)
+			      "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+    EXPECT_NE(msg, nullptr);
+
+    /* Sign */
+    rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
+    EXPECT_EQ(rc, IOK);
+    
+    /* Generate random blind key */
+    bldkey = groupsig_bld_key_random(grpkey->scheme, grpkey);
+    EXPECT_NE(bldkey, nullptr);
+    
+    /* Blind the signature */
+    bsig = groupsig_blindsig_init(grpkey->scheme);
+    EXPECT_NE(bsig, nullptr);
+    
+    rc = groupsig_blind(bsig, &bldkey, grpkey, sig, msg);
+    EXPECT_EQ(rc, IOK);
+
+    /* Convert the signature */
+
+    /* For conversion we only need the public key */
+    pubkey = getPublicBlindingKey(bldkey);
+    EXPECT_NE(pubkey, nullptr);
+    
+    csig = groupsig_blindsig_init(grpkey->scheme);
+    EXPECT_NE(csig, nullptr);
+    
+    rc = groupsig_convert(&csig, &bsig, 1, grpkey, cnvkey, pubkey, msg);
+    EXPECT_EQ(rc, IOK);
+
+    /* Unblind */
+    id = identity_init(grpkey->scheme);
+    EXPECT_NE(id, nullptr);
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    msg = message_init();
+    EXPECT_NE(msg, nullptr);
+
+    rc = groupsig_unblind(id, sig, csig, grpkey, bldkey, msg);
+    EXPECT_EQ(rc, IOK);
+
+    
+    rc = groupsig_trace_blind(id, bsig, &bldkey, grpkey, csig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_trace_convert(&csig, &bsig, 1, grpkey, cnvkey, pubkey, msg);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_trace_unblind(id, sig, csig, grpkey, bldkey, msg);
+    EXPECT_EQ(rc, IOK);
+
+
+    /* Free stuff */
+    rc = groupsig_bld_key_free(bldkey);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_bld_key_free(pubkey);
+    EXPECT_EQ(rc, IOK);    
+    
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_blindsig_free(bsig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_blindsig_free(csig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = identity_free(id);
+    EXPECT_EQ(rc, IOK);
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);    
+    
+  }
+
+
 
   /** Group key tests **/
   /** Group key tests **/

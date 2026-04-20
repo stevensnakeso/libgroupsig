@@ -90,6 +90,13 @@ int sltgs23_join_mem(message_t **mout,
     if(pbcext_element_G1_mul(sltgs23_memkey->H,
 			     sltgs23_grpkey->h1, sltgs23_memkey->y) == IERROR)
       GOTOENDRC(IERROR, sltgs23_join_mem);
+    
+    // pbcext_element_Fr_t *bn_fr;
+    // if(!(bn_fr = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_join_mem);
+    // if(pbcext_element_Fr_set2(bn_fr, 2) == IERROR) GOTOENDRC(IERROR, sltgs23_join_mem);
+    // pbcext_element_G1_t *n_bn;
+    // if(!(n_bn = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_join_mem);
+    // if(pbcext_element_G1_mul(n_bn, sltgs23_memkey->H, bn_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_join_mem);
 
     /* Compute the SPK */
     if(!(pi = spk_dlog_init())) GOTOENDRC(IERROR, sltgs23_join_mem);

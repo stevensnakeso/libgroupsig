@@ -36,7 +36,7 @@
 #include "trapdoor.h"
 #include "message.h"
 #include "sysenv.h"
-
+#include "shim/pbc_ext.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -473,7 +473,36 @@ extern "C" {
 			   groupsig_key_t *grpkey,
 			   groupsig_key_t *mgrkey,
 			   groupsig_key_t *bldkey,
-			   message_t *msg);
+			   message_t *msg
+        );
+
+  /**
+   * @typedef int (*trace_convert_f)(groupsig_blindsig_t **csig,
+   *                           groupsig_blindsig_t **bsig, uint32_t n_bsigs,
+   *			     groupsig_key_t *grpkey, groupsig_key_t *mgrkey,
+   *                           groupsig_key_t *bldkey, message_t *msg)
+   * @brief Type of functions for converting blinded group signatures.
+   *
+   * @param[in,out] csig Array of blinded signatures to store the result of the
+   *  conversion.
+   * @param[in] bsig The blinded signatures to be converted.
+   * @param[in] n_bsigs The size of the previous array.
+   * @param[in] grpkey The group public key.
+   * @param[in] mgrkey The 'manager' key (containing at least
+   *  the converting key).
+   * @param[in] bldkey The public blinding key.
+   * @param[in] msg The signed messages. Optional.
+   *
+   * @return IOK or IERROR.
+   */
+  typedef int (*trace_convert_f)(groupsig_blindsig_t **csig,
+			   groupsig_blindsig_t **bsig,
+			   uint32_t n_bsigs,
+			   groupsig_key_t *grpkey,
+			   groupsig_key_t *mgrkey,
+			   groupsig_key_t *bldkey,
+			   message_t *msg
+        );
 
   /**
    * @typedef int (*unblind_f)(identity_t *nym, groupsig_signature_t *sig,
@@ -493,6 +522,30 @@ extern "C" {
    * @return IOK or IERROR.
    */
   typedef int (*unblind_f)(identity_t *nym,
+			   groupsig_signature_t *sig,
+			   groupsig_blindsig_t *bsig,
+			   groupsig_key_t *grpkey,
+			   groupsig_key_t *bldkey,
+			   message_t *msg);
+
+    /**
+   * @typedef int (*trace_unblind_f)(identity_t *nym, groupsig_signature_t *sig,
+   *                               groupsig_blindsig_t *bsig,
+   *                               groupsig_key_t *grpkey, groupsig_key_t *bldkey,
+   *                               message_t *msg)
+   * @brief Type of functions for unblinding nyms in encrypt-then-sign group signatures.
+   *
+   * @param[in,out] nym The unblinded nym (might be ignored).
+   * @param[in,out] sig The unblinded signature (might be ignored).
+   * @param[in] bsig The blinded signature.
+   * @param[in] grpkey The group key.
+   * @param[in] bldkey The key used for blinding. If NULL, a fresh one
+   *  is created.
+   * @param[in,out] msg The signed message. Optional.
+   *
+   * @return IOK or IERROR.
+   */
+  typedef int (*trace_unblind_f)(identity_t *nym,
 			   groupsig_signature_t *sig,
 			   groupsig_blindsig_t *bsig,
 			   groupsig_key_t *grpkey,
@@ -649,6 +702,27 @@ extern "C" {
 				  uint32_t n);
 
   /**
+   * @typedef int (*trace_blind_f)(groupsig_blindsig_t *bsig, groupsig_key_t **bldkey,
+   *			   groupsig_signature_t *sig, message_t *msg,
+   *                         groupsig_key_t *grpkey)
+   * @brief Type of functions for blinding group signatures.
+   *
+   * @param[in,out] bsig The produced blinded group signature.
+   *  Must be allocated by the caller.
+   * @param[in,out] bldkey The key used for blinding. If NULL, a fresh one
+   *  is created. 
+   * @param[in] grpkey The group key.
+   * @param[in] sig The group signature to blind.
+   *
+   * @return IOK or IERROR.
+   */
+  typedef int (*trace_blind_f)(identity_t *nym, 
+       groupsig_blindsig_t *bsig,
+			 groupsig_key_t **bldkey,
+			 groupsig_key_t *grpkey,
+			 groupsig_blindsig_t *sig);
+
+  /**
    * @struct groupsig_t
    * @brief Defines the structure for group signature scheme handles.
    */
@@ -686,6 +760,9 @@ extern "C" {
     seqlink_f seqlink; /**< Creates a proof of a set of signatures being
 			  sequentially linked. */
     verify_seqlink_f verify_seqlink; /* Verifies a proof of sequential link. */
+    trace_blind_f trace_blind; /**< Blinds a signature for tracing. */
+    trace_convert_f trace_convert; /**< Converts a blinded signature for tracing. */
+    trace_unblind_f trace_unblind; /**< Unblinds a signature for tracing. */
   } groupsig_t;
 
   /* Function implementations */
@@ -1140,6 +1217,26 @@ extern "C" {
 		     groupsig_signature_t *sig,
 		     message_t *msg);
 
+    /**
+   * @fn int groupsig_trace_blind(groupsig_blindsig_t *bsig, groupsig_key_t **bldkey,
+   *                        groupsig_key_t *grpkey, groupsig_signature_t *sig,
+   *                        message_t *msg)
+   * @brief Blinding of group signatures.
+   *
+   * @param[in,out] bsig The produced blinded group signature.
+   *  Must be allocated by the caller.
+   * @param[in,out] bldkey The key used for blinding. If NULL, a fresh one
+   *  is created.
+   * @param[in] grpkey The group key.
+   * @param[in] sig The group signature to blind.
+   *
+   * @return IOK or IERROR. 
+   */
+  int groupsig_trace_blind(identity_t *nym, groupsig_blindsig_t *bsig, groupsig_key_t **bldkey,
+	       groupsig_key_t *grpkey, groupsig_blindsig_t *sig
+	      );
+
+  
   /**
    * @fn int groupsig_convert(groupsig_blindsig_t **csig,
    *                          groupsig_blindsig_t **bsig, uint32_t n_bsigs,
@@ -1167,6 +1264,32 @@ extern "C" {
 		       message_t *msg);
 
   /**
+   * @fn int groupsig_trace_convert(groupsig_blindsig_t **csig,
+   *                          groupsig_blindsig_t **bsig, uint32_t n_bsigs,
+   *			      groupsig_key_t *grpkey, groupsig_key_t *mgrkey,
+   *                          groupsig_key_t *bldkey, message_t *msg)
+   * @brief Converts blinded group signatures.
+   *
+   * @param[in,out] csig Array to store the converted signatures.
+   * @param[in] bsig The blinded signatures to be converted.
+   * @param[in] n_bsigs The size of the previous array.
+   * @param[in] grpkey The group public key.
+   * @param[in] mgrkey The 'manager' key (containing at least
+   *  the converting key).
+   * @param[in] bldkey The public blinding key.
+   * @param[in] msg The signed messages. Optional.
+   *
+   * @return IOK or IERROR.
+   */
+  int groupsig_trace_convert(groupsig_blindsig_t **csig,
+		       groupsig_blindsig_t **bsig,
+		       uint32_t n_bsigs,
+		       groupsig_key_t *grpkey,
+		       groupsig_key_t *mgrkey,
+		       groupsig_key_t *bldkey,
+		       message_t *msg);
+
+  /**
    * @fn int groupsig_unblind(identity_t *nym, groupsig_signature_t *sig,
    *                          groupsig_blindsig_t *bsig,
    *                          groupsig_key_t *grpkey, groupsig_key_t *bldkey,
@@ -1184,6 +1307,30 @@ extern "C" {
    * @return IOK or IERROR.
    */
   int groupsig_unblind(identity_t *nym,
+		       groupsig_signature_t *sig,
+		       groupsig_blindsig_t *bsig,
+		       groupsig_key_t *grpkey,
+		       groupsig_key_t *bldkey,
+		       message_t *msg);
+
+/**
+   * @fn int groupsig_trace_unblind(identity_t *nym, groupsig_signature_t *sig,
+   *                          groupsig_blindsig_t *bsig,
+   *                          groupsig_key_t *grpkey, groupsig_key_t *bldkey,
+   *                          message_t *msg)
+   * @brief Unblinds group signatures.
+   *
+   * @param[in,out] nym The unblinded nym (might be ignored).
+   * @param[in,out] sig The unblinded signature (might be ignored).
+   * @param[in] bsig The blinded signature.
+   * @param[in] grpkey The group key.
+   * @param[in] bldkey The key used for blinding. If NULL, a fresh one
+   *  is created.
+   * @param[in,out] msg The signed message. Optional.
+   *
+   * @return IOK or IERROR.
+   */
+  int groupsig_trace_unblind(identity_t *nym,
 		       groupsig_signature_t *sig,
 		       groupsig_blindsig_t *bsig,
 		       groupsig_key_t *grpkey,

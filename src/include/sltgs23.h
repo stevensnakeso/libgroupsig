@@ -29,7 +29,7 @@
 #include "mgr_key.h"
 #include "mem_key.h"
 #include "groupsig.h"
-
+#include "shim/pbc_ext.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -326,6 +326,45 @@ int sltgs23_blind(groupsig_blindsig_t *bsig,
 
 
 /**
+ * @fn int sltgs23_trace_blind(groupsig_blindsig_t *bsig,
+ *                    groupsig_key_t *bldkey,
+ *                    groupsig_key_t *grpkey,
+ *                    message_t *msg,
+ *                    groupsig_signature_t *sig)
+ * @brief Blinding of group signatures.
+ *
+ * @param[in,out] bsig The produced blinded group signature.
+ * @param[in,out] bldkey The key used for blinding. If NULL, a fresh one
+ *  is created.
+ * @param[in] grpkey The group key.
+ * @param[in] sig The group signature to blind.
+ *
+ * @return IOK or IERROR.
+ */
+int sltgs23_trace_blind(identity_t *nym, groupsig_blindsig_t *bsig, groupsig_key_t **bldkey,
+	       groupsig_key_t *grpkey, groupsig_blindsig_t *sig
+	      );
+/**
+ * @fn int sltgs23_blind(groupsig_blindsig_t *bsig,
+ *                    groupsig_key_t *bldkey,
+ *                    groupsig_key_t *grpkey,
+ *                    message_t *msg,
+ *                    groupsig_signature_t *sig)
+ * @brief Blinding of group signatures.
+ *
+ * @param[in,out] bsig The produced blinded group signature.
+ * @param[in,out] bldkey The key used for blinding. If NULL, a fresh one
+ *  is created.
+ * @param[in] grpkey The group key.
+ * @param[in] sig The group signature to blind.
+ *
+ * @return IOK or IERROR.
+ */
+int sltgs23_trace_blind(identity_t *nym, groupsig_blindsig_t *bsig, groupsig_key_t **bldkey,
+	       groupsig_key_t *grpkey, groupsig_blindsig_t *sig);
+
+
+/**
  * @fn int sltgs23_convert(groupsig_blindsig_t **csig,
  *                      groupsig_blindsig_t **bsig,
  *                      uint32_t n_bsigs,
@@ -343,7 +382,6 @@ int sltgs23_blind(groupsig_blindsig_t *bsig,
  *  the converting key).
  * @param[in] bldkey The public blinding key.
  * @param[in] msg The signed messages. Optional.
- *
  * @return IOK or IERROR.
  */
 int sltgs23_convert(groupsig_blindsig_t **csig,
@@ -352,7 +390,37 @@ int sltgs23_convert(groupsig_blindsig_t **csig,
                  groupsig_key_t *grpkey,
                  groupsig_key_t *mgrkey,
                  groupsig_key_t *bldkey,
-                 message_t *msg);
+                 message_t *msg
+                );
+
+/**
+ * @fn int sltgs23_convert(groupsig_blindsig_t **csig,
+ *                      groupsig_blindsig_t **bsig,
+ *                      uint32_t n_bsigs,
+ *	                groupsig_key_t *grpkey,
+ *                      groupsig_key_t *mgrkey,
+ *                      groupsig_key_t *bldkey,
+ *                      message_t *msg)
+ * @brief Converts blinded group signatures.
+ *
+ * @param[in,out] csig Array to store the converted signatures.
+ * @param[in] bsig The blinded signatures to be converted.
+ * @param[in] n_bsigs The size of the previous array.
+ * @param[in] grpkey The group public key.
+ * @param[in] mgrkey The 'manager' key (containing at least
+ *  the converting key).
+ * @param[in] bldkey The public blinding key.
+ * @param[in] msg The signed messages. Optional.
+ * @return IOK or IERROR.
+ */
+int sltgs23_trace_convert(groupsig_blindsig_t **csig,
+                 groupsig_blindsig_t **bsig,
+                 uint32_t n_bsigs,
+                 groupsig_key_t *grpkey,
+                 groupsig_key_t *mgrkey,
+                 groupsig_key_t *bldkey,
+                 message_t *msg
+                );
 
 /**
  * @fn int sltgs23_unblind(identity_t *nym,
@@ -374,6 +442,31 @@ int sltgs23_convert(groupsig_blindsig_t **csig,
  * @return IOK or IERROR.
  */
 int sltgs23_unblind(identity_t *nym,
+                 groupsig_signature_t *sig,
+                 groupsig_blindsig_t *bsig,
+                 groupsig_key_t *grpkey,
+                 groupsig_key_t *bldkey,
+                 message_t *msg);
+/**
+ * @fn int sltgs23_trace_unblind(identity_t *nym,
+ *                      groupsig_signature_t *sig,
+ *                      groupsig_blindsig_t *bsig,
+ *                      groupsig_key_t *grpkey,
+ *                      groupsig_key_t *bldkey,
+ *                      message_t *msg)
+ * @brief Unblinds the nym in a SLTGS23 group signature.
+ *
+ * @param[in,out] nym The unblinded nym.
+ * @param[in,out] sig The unblinded signature. Ignored.
+ * @param[in] bsig The blinded signature.
+ * @param[in] grpkey The group key.
+ * @param[in] bldkey The key used for blinding. If NULL, a fresh one
+ *  is created.
+ * @param[in] msg The signed message. Optional.
+ *
+ * @return IOK or IERROR.
+ */
+int sltgs23_trace_unblind(identity_t *nym,
                  groupsig_signature_t *sig,
                  groupsig_blindsig_t *bsig,
                  groupsig_key_t *grpkey,
@@ -413,6 +506,9 @@ static const groupsig_t sltgs23_groupsig_bundle = {
  verify_link: NULL, /**< Verifies a proof of link. */
  seqlink: NULL, // &sltgs23_seqlink, /**< Sequentially links a st of SLTGS23 signatures. */
  verify_seqlink: NULL, // &sltgs23_verify_seqlink, /**< Verifies a proof of sequential link. */
+ trace_blind: &sltgs23_trace_blind, // &sltgs23_trace_blind, /**< Traces the issuer of a blinded signature. */
+trace_convert: &sltgs23_trace_convert, // &sltgs23_trace_convert, /**< Converts a blinded signature for tracing. */
+trace_unblind: &sltgs23_trace_unblind, // &sltgs23_trace_unblind, /**< Unblinds a converted signature for tracing. */
 };
 
 #ifdef __cplusplus

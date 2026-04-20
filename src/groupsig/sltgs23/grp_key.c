@@ -33,7 +33,7 @@
 
 #include "sltgs23.h"
 #include "groupsig/sltgs23/grp_key.h"
-
+#include "shim/pbc_ext.h"
 groupsig_key_t* sltgs23_grp_key_init() {
 
   groupsig_key_t *key;

@@ -108,4 +108,79 @@ int sltgs23_unblind(identity_t *nym, groupsig_signature_t *sig,
 
 }
 
+
+int sltgs23_trace_unblind(identity_t *nym, groupsig_signature_t *sig,
+		 groupsig_blindsig_t *bsig,
+		 groupsig_key_t *grpkey, groupsig_key_t *bldkey,
+		 message_t *msg) {
+
+  pbcext_element_Fr_t *aux_zn;
+  pbcext_element_G1_t *aux_G1;
+  char *s_G1;
+  sltgs23_identity_t *sltgs23_id;
+  sltgs23_blindsig_t *sltgs23_bsig;
+  sltgs23_bld_key_t *sltgs23_bldkey;
+  int rc;
+
+  if(!nym || nym->scheme != GROUPSIG_SLTGS23_CODE ||
+     !bsig || bsig->scheme != GROUPSIG_SLTGS23_CODE ||
+     !bldkey || bldkey->scheme != GROUPSIG_SLTGS23_CODE ||
+     !msg) {
+    LOG_EINVAL(&logger, __FILE__, "sltgs23_unblind", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  rc = IOK;
+  s_G1 = NULL;
+  aux_G1 = NULL; aux_zn = NULL;
+
+  sltgs23_id = nym->id;
+  sltgs23_bsig = bsig->sig;
+  sltgs23_bldkey = bldkey->key;
+
+  if (!sltgs23_bldkey->sk) {
+    LOG_EINVAL_MSG(&logger, __FILE__, "sltgs23_unblind", __LINE__,
+		   "Private key needed to unblind.", LOGERROR);
+    return IERROR;
+  }
+
+  /* Decrypt the pseudonym with the blinding private key */
+  if(!(aux_zn = pbcext_element_Fr_init()))
+    GOTOENDRC(IERROR, sltgs23_unblind);
+  if(pbcext_element_Fr_neg(aux_zn, sltgs23_bldkey->sk) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_unblind);
+  if(pbcext_element_G1_mul(sltgs23_id, sltgs23_bsig->nym1, aux_zn) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_unblind);
+  if(pbcext_element_G1_add(sltgs23_id, sltgs23_id, sltgs23_bsig->nym2) == IERROR)
+    GOTOENDRC(IERROR, sltgs23_unblind);
+
+  /* Decrypt the (hashed) message with the blinding private key */
+  // if(!(aux_G1 = pbcext_element_G1_init()))
+  //   GOTOENDRC(IERROR, sltgs23_unblind);
+  // if(pbcext_element_G1_mul(aux_G1, sltgs23_bsig->c1, aux_zn) == IERROR)
+  //   GOTOENDRC(IERROR, sltgs23_unblind);
+  // if(pbcext_element_G1_add(aux_G1, sltgs23_bsig->c2, aux_G1) == IERROR)
+  //   GOTOENDRC(IERROR, sltgs23_unblind);
+
+  /* Update the received message with the string representation of aux_G1 */
+  // if(!(s_G1 = pbcext_element_G1_to_b64(aux_G1)))
+  //   GOTOENDRC(IERROR, sltgs23_unblind);
+
+  // if(message_set_bytes_from_string(msg, s_G1) == IERROR)
+  //   GOTOENDRC(IERROR, sltgs23_unblind);
+
+ sltgs23_unblind_end:
+
+  if (rc == IERROR) {
+    if (sltgs23_id) { pbcext_element_G1_free(sltgs23_id); sltgs23_id = NULL; }
+  }
+
+  if (s_G1) { mem_free(s_G1); s_G1 = NULL; }
+  if (aux_G1) { pbcext_element_G1_free(aux_G1); aux_G1 = NULL; }
+  if (aux_zn) { pbcext_element_Fr_free(aux_zn); aux_zn = NULL; }
+
+  return IOK;
+
+}
+
 /* unblind.c ends here */

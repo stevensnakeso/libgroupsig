@@ -552,6 +552,29 @@ int groupsig_blind(groupsig_blindsig_t *bsig,
 
 }
 
+
+int groupsig_trace_blind(identity_t *nym, groupsig_blindsig_t *bsig, groupsig_key_t **bldkey,
+	       groupsig_key_t *grpkey, groupsig_blindsig_t *sig
+	      ) {
+
+  const groupsig_t *gs;
+
+  /* All parameters are mandatory except msg */
+  if(! nym || !bsig || !bldkey || !grpkey || !sig) {
+    LOG_EINVAL(&logger, __FILE__, "groupsig_blind", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  /* Get the group signature scheme from its code */
+  if(!(gs = groupsig_get_groupsig_from_code(grpkey->scheme))) {
+    return IERROR;
+  }
+
+  /* Run the BLIND action */
+  return gs->trace_blind(nym, bsig, bldkey, grpkey, sig);
+
+}
+
 int groupsig_convert(groupsig_blindsig_t **csigs,
                      groupsig_blindsig_t **bsigs,
                      uint32_t n_bsigs,
@@ -578,6 +601,32 @@ int groupsig_convert(groupsig_blindsig_t **csigs,
 
 }
 
+int groupsig_trace_convert(groupsig_blindsig_t **csigs,
+                     groupsig_blindsig_t **bsigs,
+                     uint32_t n_bsigs,
+                     groupsig_key_t *grpkey,
+                     groupsig_key_t *mgrkey,
+                     groupsig_key_t *bldkey,
+                     message_t *msg) {
+
+  const groupsig_t *gs;
+
+  /* All parameters are mandatory except msg */
+  if(!csigs || !bsigs || n_bsigs <= 0 || !grpkey || !mgrkey || !bldkey) {
+    LOG_EINVAL(&logger, __FILE__, "groupsig_convert", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  /* Get the group signature scheme from its code */
+  if(!(gs = groupsig_get_groupsig_from_code(grpkey->scheme))) {
+    return IERROR;
+  }
+
+  /* Run the CONVERT action */
+  return gs->trace_convert(csigs, bsigs, n_bsigs, grpkey, mgrkey, bldkey, msg);
+
+}
+
 int groupsig_unblind(identity_t *nym,
                      groupsig_signature_t *sig,
                      groupsig_blindsig_t *bsig,
@@ -600,6 +649,31 @@ int groupsig_unblind(identity_t *nym,
 
   /* Run the UNBLIND action */
   return gs->unblind(nym, sig, bsig, grpkey, bldkey, msg);
+
+}
+
+int groupsig_trace_unblind(identity_t *nym,
+                     groupsig_signature_t *sig,
+                     groupsig_blindsig_t *bsig,
+                     groupsig_key_t *grpkey,
+                     groupsig_key_t *bldkey,
+                     message_t *msg) {
+
+  const groupsig_t *gs;
+
+  /* Check for mandatory parameters */
+  if((!nym && !sig) || !bsig || !bldkey) {
+    LOG_EINVAL(&logger, __FILE__, "groupsig_unblind", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  /* Get the group signature scheme from its code */
+  if(!(gs = groupsig_get_groupsig_from_code(bldkey->scheme))) {
+    return IERROR;
+  }
+
+  /* Run the UNBLIND action */
+  return gs->trace_unblind(nym, sig, bsig, grpkey, bldkey, msg);
 
 }
 
