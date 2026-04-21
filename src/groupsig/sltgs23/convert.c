@@ -77,7 +77,9 @@ int sltgs23_convert(groupsig_blindsig_t **csigs,
   if(pbcext_element_Fr_random(r)) GOTOENDRC(IERROR, sltgs23_convert);
   if(pbcext_element_Fr_neg(neg_csk, sltgs23_mgrkey->csk) == IERROR)
     GOTOENDRC(IERROR, sltgs23_convert);
-  //if(pbcext_element_Fr_copy(r_id, r) == IERROR) GOTOENDRC(IERROR, sltgs23_convert);
+    ///////////////
+  // if(pbcext_element_Fr_set2(r, 2) == IERROR) GOTOENDRC(IERROR, sltgs23_convert);
+  
 
 
   for(i=0; i<n_bsigs; i++) {
@@ -90,7 +92,7 @@ int sltgs23_convert(groupsig_blindsig_t **csigs,
 
     if(pbcext_element_Fr_random(r1) == IERROR) GOTOENDRC(IERROR, sltgs23_convert);
     if(pbcext_element_Fr_random(r2) == IERROR) GOTOENDRC(IERROR, sltgs23_convert);
-      
+
     /* Decrypt nym and raise to r */
     if(pbcext_element_G1_mul(cnym1p, sltgs23_bsig->nym2, r) == IERROR)
       GOTOENDRC(IERROR, sltgs23_convert);
@@ -100,7 +102,8 @@ int sltgs23_convert(groupsig_blindsig_t **csigs,
       GOTOENDRC(IERROR, sltgs23_convert);
     if(pbcext_element_G1_mul(cnym2p, aux, r) == IERROR)
       GOTOENDRC(IERROR, sltgs23_convert);
-    
+
+  
     /* Re-randomize nym */
     if(!(sltgs23_csig->nym1 = pbcext_element_G1_init()))
       GOTOENDRC(IERROR, sltgs23_convert);
@@ -146,13 +149,27 @@ int sltgs23_convert(groupsig_blindsig_t **csigs,
   //   msg = message_init();
   // }
 
-  if(pbcext_element_Fr_byte_size(&msg->length) == IERROR) GOTOENDRC(IERROR, sltgs23_convert);
-  free(msg->bytes); msg->bytes = NULL;
+  unsigned char *dst; 
+  dst=NULL;
+
+
+  if(pbcext_element_Fr_byte_size(&msg->length) == IERROR) GOTOENDRC(IERROR, sltgs23_convert); // $10 = {d = {34359738360, 7066956952823996424, 7363736958300930005, 6958841419122611646}}
+  if(msg->bytes!=NULL) {free(msg->bytes); msg->bytes = NULL;}
+
   msg->bytes = (byte_t *) mem_malloc(msg->length);
   
 
-  if(pbcext_element_Fr_to_bytes((byte_t *) msg->bytes, &msg->length, r) == IERROR)
+  if(pbcext_element_Fr_to_bytes(&dst, &msg->length, r) == IERROR)
     GOTOENDRC(IERROR, sltgs23_convert);
+  
+  msg->bytes = memcpy(msg->bytes, dst, msg->length);
+  free(dst); dst = NULL;
+   ///////////////
+   
+  
+  
+  
+
   
 
   /* Choose random permutation */
@@ -210,6 +227,7 @@ int sltgs23_trace_convert(groupsig_blindsig_t **csigs,
   // msg convert to id 
   if(pbcext_element_Fr_from_bytes(r, msg->bytes, msg->length) == IERROR)
     GOTOENDRC(IERROR, sltgs23_convert);
+  
   if(pbcext_element_Fr_inv(r_id_inv,r) == IERROR) GOTOENDRC(IERROR, sltgs23_convert);
 
   
@@ -220,10 +238,10 @@ int sltgs23_trace_convert(groupsig_blindsig_t **csigs,
   if(!(cnym2p = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_convert);
   if(!(aux = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_convert);
 
-  // if(pbcext_element_Fr_random(r)) GOTOENDRC(IERROR, sltgs23_convert);
+  
   if(pbcext_element_Fr_neg(neg_csk, sltgs23_mgrkey->csk) == IERROR)
     GOTOENDRC(IERROR, sltgs23_convert);
-  //if(pbcext_element_Fr_copy(r_id, r) == IERROR) GOTOENDRC(IERROR, sltgs23_convert);
+
 
 
   for(i=0; i<n_bsigs; i++) {

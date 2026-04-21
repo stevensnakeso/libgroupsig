@@ -272,11 +272,14 @@ int sltgs23_trace_blind(identity_t *nym, groupsig_blindsig_t *bsig, groupsig_key
 
   /* Pick alpha, beta, gamma at random from Z^*_p */
   if(!(alpha = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_blind);
-  if(pbcext_element_Fr_random(alpha) == IERROR) GOTOENDRC(IERROR, sltgs23_blind);
+  
   if(!(beta = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_blind);
-  if(pbcext_element_Fr_random(beta) == IERROR) GOTOENDRC(IERROR, sltgs23_blind);
+
   if(!(gamma = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_blind);
-  if(pbcext_element_Fr_random(gamma) == IERROR) GOTOENDRC(IERROR, sltgs23_blind);
+
+  // if(pbcext_element_Fr_random(alpha) == IERROR) GOTOENDRC(IERROR, sltgs23_blind);
+  // if(pbcext_element_Fr_random(beta) == IERROR) GOTOENDRC(IERROR, sltgs23_blind);
+  // if(pbcext_element_Fr_random(gamma) == IERROR) GOTOENDRC(IERROR, sltgs23_blind);
     
   /* Rerandomize the pseudonym encryption under the cpk and 
      add an encryption layer for the pseudonym under the bpk */

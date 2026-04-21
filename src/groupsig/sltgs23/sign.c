@@ -97,6 +97,13 @@ int sltgs23_sign(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memk
   if(!(sltgs23_sig->nym2 = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_mul(aux, sltgs23_grpkey->cpk, rho) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
   if(pbcext_element_G1_mul(sltgs23_sig->nym2, sltgs23_grpkey->h1, sltgs23_memkey->y) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // pbcext_element_G1_t *tmp;
+  // pbcext_element_Fr_t *tmp_fr;
+  // if(!(tmp = pbcext_element_G1_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(!(tmp_fr = pbcext_element_Fr_init())) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_Fr_set2(tmp_fr, 2) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+  // if(pbcext_element_G1_add(tmp,sltgs23_sig->nym2, tmp_fr) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
+
   if(pbcext_element_G1_add(sltgs23_sig->nym2, sltgs23_sig->nym2, aux) == IERROR) GOTOENDRC(IERROR, sltgs23_sign);
 
   /* A1 = g1^r1*g2^r2  A2 = A*g2^r1*/

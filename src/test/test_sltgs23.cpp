@@ -604,7 +604,7 @@ namespace groupsig {
     groupsig_blindsig_t *bsig, *csig;
     groupsig_key_t *bldkey, *pubkey;
     identity_t *id;
-    message_t *msg;
+    message_t *msg, *msg_r;
     int rc;
     uint8_t b;
 
@@ -649,8 +649,11 @@ namespace groupsig {
     
     csig = groupsig_blindsig_init(grpkey->scheme);
     EXPECT_NE(csig, nullptr);
+
+    msg_r = message_init();
+    EXPECT_NE(msg_r, nullptr);
     
-    rc = groupsig_convert(&csig, &bsig, 1, grpkey, cnvkey, pubkey, msg);
+    rc = groupsig_convert(&csig, &bsig, 1, grpkey, cnvkey, pubkey, msg_r);
     EXPECT_EQ(rc, IOK);
 
     /* Unblind */
@@ -670,7 +673,7 @@ namespace groupsig {
     rc = groupsig_trace_blind(id, bsig, &bldkey, grpkey, csig);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_trace_convert(&csig, &bsig, 1, grpkey, cnvkey, pubkey, msg);
+    rc = groupsig_trace_convert(&csig, &bsig, 1, grpkey, cnvkey, pubkey, msg_r);
     EXPECT_EQ(rc, IOK);
 
     rc = groupsig_trace_unblind(id, sig, csig, grpkey, bldkey, msg);
@@ -697,7 +700,10 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     rc = message_free(msg);
-    EXPECT_EQ(rc, IOK);    
+    EXPECT_EQ(rc, IOK);  
+    
+    rc = message_free(msg_r);
+    EXPECT_EQ(rc, IOK);  
     
   }
 
