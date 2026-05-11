@@ -21,12 +21,12 @@
 #include <limits.h>
 
 #include "gtest/gtest.h"
-
+#include "gtest/internal/gtest-internal.h"
 #include "groupsig.h"
 #include "gml.h"
 #include "bap24.h"
 #include "message.h"
-
+#include "chrono"
 using namespace std;
 
 namespace groupsig {
@@ -193,6 +193,11 @@ namespace groupsig {
   /* Successfully adds a group member */
   TEST_F(BAP24Test, AddsNewMember) {
 
+    
+
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    
     int rc;
 
     rc = groupsig_setup(GROUPSIG_BAP24_CODE, grpkey, mgrkey, gml);
@@ -202,6 +207,12 @@ namespace groupsig {
 
     EXPECT_EQ(memkey[0]->scheme, GROUPSIG_BAP24_CODE);
 
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+    std::cout << "Elapsed time: " << duration << " ms" << std::endl;
+    
   }
 
   /* Successfully initializes a signature */
@@ -209,7 +220,7 @@ namespace groupsig {
 
     groupsig_signature_t *sig;
     int rc;
-
+    
     rc = groupsig_setup(GROUPSIG_BAP24_CODE, grpkey, mgrkey, gml);
     EXPECT_EQ(rc, IOK);
 
@@ -245,11 +256,15 @@ namespace groupsig {
     /* Initialize a message with a test string */
     msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
     EXPECT_NE(msg, nullptr);
-
+     auto start = std::chrono::high_resolution_clock::now();
     /* Sign */
     rc = groupsig_sign(sig, msg, memkey[0], grpkey, UINT_MAX);
     EXPECT_EQ(rc, IOK);
-    
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+    std::cout << "Sign elapsed time: " << duration << " ms" << std::endl;
     /* Verify the signature */
     rc = groupsig_verify(&b, sig, msg, grpkey);
     EXPECT_EQ(rc, IOK);

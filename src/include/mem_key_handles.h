@@ -32,6 +32,7 @@
 #include "groupsig/scsl25/mem_key.h"
 #include "groupsig/bap24/mem_key.h"
 #include "groupsig/sltgs23/mem_key.h"
+#include "groupsig/klapseq/mem_key.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +41,7 @@ extern "C" {
  * @def GROUPSIG_MEM_KEY_HANDLES_N
  * @brief Number of known handles of member key schemes.
  */
-#define GROUPSIG_MEM_KEY_HANDLES_N 11
+#define GROUPSIG_MEM_KEY_HANDLES_N 12
 
 /**
  * @var GROUPSIG_MEM_KEY_HANDLES
@@ -58,6 +59,7 @@ static const mem_key_handle_t *GROUPSIG_MEM_KEY_HANDLES[GROUPSIG_MEM_KEY_HANDLES
   &scsl25_mem_key_handle,
   &bap24_mem_key_handle,
   &sltgs23_mem_key_handle,
+  &klapseq_mem_key_handle,
 };
 
 #ifdef __cplusplus

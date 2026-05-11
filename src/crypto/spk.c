@@ -86,7 +86,7 @@ int spk_dlog_copy(spk_dlog_t *dst, spk_dlog_t *src) {
   
 }
 
-int spk_dlog_G1_sign(spk_dlog_t *pi,
+int spk_dlog_G1_sign(spk_dlog_t *pi, //1eG1 1Frmul 1Frsub h
 		     pbcext_element_G1_t *G,
 		     pbcext_element_G1_t *g,
 		     pbcext_element_Fr_t *x,
@@ -158,7 +158,7 @@ int spk_dlog_G1_sign(spk_dlog_t *pi,
   
 }
 
-int spk_dlog_G1_verify(uint8_t *ok,
+int spk_dlog_G1_verify(uint8_t *ok, //2eG1 + 1G1add + h
 		       pbcext_element_G1_t *G,
 		       pbcext_element_G1_t *g,
 		       spk_dlog_t *pi,
@@ -228,7 +228,7 @@ int spk_dlog_G1_verify(uint8_t *ok,
   
 }
 
-int spk_dlog_G2_sign(spk_dlog_t *pi,
+int spk_dlog_G2_sign(spk_dlog_t *pi, //1eG2 + 1Frmul 1 Frsub
 		     pbcext_element_G2_t *G,
 		     pbcext_element_G2_t *g,
 		     pbcext_element_Fr_t *x,
@@ -300,7 +300,7 @@ int spk_dlog_G2_sign(spk_dlog_t *pi,
   
 }
 
-int spk_dlog_G2_verify(uint8_t *ok,
+int spk_dlog_G2_verify(uint8_t *ok, //2eG2 + 1G2add + 1h
 		       pbcext_element_G2_t *G,
 		       pbcext_element_G2_t *g,
 		       spk_dlog_t *pi,

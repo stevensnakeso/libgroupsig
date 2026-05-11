@@ -32,6 +32,7 @@
 #include "groupsig/scsl25/signature.h"
 #include "groupsig/bap24/signature.h"
 #include "groupsig/sltgs23/signature.h"
+#include "groupsig/klapseq/signature.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +41,7 @@ extern "C" {
  * @def GROUPSIG_SIGNATURE_HANDLES_N
  * @brief Number of supported set of handles for managing group signatures.
  */
-#define GROUPSIG_SIGNATURE_HANDLES_N 11
+#define GROUPSIG_SIGNATURE_HANDLES_N 12
 
 /**
  * @var GROUPSIG_SIGNATURE_HANDLES
@@ -58,6 +59,7 @@ static const groupsig_signature_handle_t *GROUPSIG_SIGNATURE_HANDLES[GROUPSIG_SI
   &scsl25_signature_handle,
   &bap24_signature_handle,
   &sltgs23_signature_handle,
+  &klapseq_signature_handle,
 };
 
 #ifdef __cplusplus

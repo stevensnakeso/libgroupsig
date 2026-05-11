@@ -100,11 +100,7 @@ int sltgs23_verify(uint8_t *ok,
   if(pbcext_element_G1_add(t4, t4, aux_G1) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);  
   if(pbcext_element_G1_mul(aux_G1, sltgs23_sig->A1, sltgs23_sig->s_x) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);
   if(pbcext_element_G1_add(t4, t4, aux_G1) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);  
-  // pbcext_element_G1_mul(t4, sltgs23_grpkey->h 1, sltgs23_sig->szeta1);
-  // pbcext_element_G1_mul(aux_G1, sltgs23_grpkey->h2, sltgs23_sig->szeta2);
-  // pbcext_element_G1_add(t4, t4, aux_G1);
-  // pbcext_element_G1_mul(aux_G1, sltgs23_sig->A1, sltgs23_sig->s_x);
-  // pbcext_element_G1_add(t4, t4, aux_G1);
+
 
   if(pbcext_pairing(t5, sltgs23_sig->A2, sltgs23_grpkey->ipk) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);
   if(pbcext_pairing(aux_GT, sltgs23_grpkey->g1, sltgs23_grpkey->g2) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);
@@ -127,11 +123,6 @@ int sltgs23_verify(uint8_t *ok,
   if(pbcext_element_GT_pow(aux_GT, aux_GT, sltgs23_sig->ss) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);
   if(pbcext_element_GT_mul(t5, t5, aux_GT) == IERROR) GOTOENDRC(IERROR, sltgs23_verify);
   
-  // if(pbcext_element_G1_cmp(t1, sltgs23_sig->t1) != 0) GOTOENDRC(IERROR, sltgs23_verify);
-  // if(pbcext_element_G1_cmp(t2, sltgs23_sig->t2) != 0) GOTOENDRC(IERROR, sltgs23_verify);
-  // if(pbcext_element_G1_cmp(t3, sltgs23_sig->t3) != 0) GOTOENDRC(IERROR, sltgs23_verify);
-  // if(pbcext_element_G1_cmp(t4, sltgs23_sig->t4) != 0) GOTOENDRC(IERROR, sltgs23_verify);  //??
-  // if(pbcext_element_GT_cmp(t5, sltgs23_sig->t5) != 0) GOTOENDRC(IERROR, sltgs23_verify);
 
   
   if(!(_c = pbcext_element_Fr_init()))  GOTOENDRC(IERROR, sltgs23_verify);

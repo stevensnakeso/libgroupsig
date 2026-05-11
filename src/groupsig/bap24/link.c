@@ -82,12 +82,6 @@ int bap24_link(groupsig_proof_t **proof,
       GOTOENDRC(IERROR, bap24_link);
     if (!ok) GOTOENDRC(IFAIL, bap24_link);
 
-    
-
-    if (!ok) {
-      GOTOENDRC(IFAIL, bap24_link);
-    }
-
     /* 提取范围标识并计算 Hash(scp) */
     if(message_json_get_key(&msg_scp, msgs[i], "$.scope") == IERROR)
       GOTOENDRC(IERROR, bap24_link);

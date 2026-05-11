@@ -6,7 +6,7 @@
 
 char *SCHEMES[] = {"bbs04", "ps16", "cpy06",
                    "kty04", "klap20", "gl19",
-                   "dl21", "dl21seq"};
+                   "dl21", "dl21seq", "scsl25", "bap24", "sltgs23"};
 const int N_SCHEMES = sizeof(SCHEMES) / sizeof(SCHEMES[0]);
 
 
@@ -60,7 +60,7 @@ void load_hw() {
 void usage(char *name, int ret) {
   printf("Usage: %s <SCHEME> [OPTS]\n"
          "SCHEME:\n"
-         "\tThe scheme can be any of the following values: bbs04, gl19, klap20, ps16, dl21, dl21seq, cpy06, kty04.\n"
+         "\tThe scheme can be any of the following values: bbs04, gl19, klap20, ps16, dl21, dl21seq, cpy06, kty04, scsl25, bap24, sltgs23.\n"
          "OPTS:\n"
          "\t-b|--benchmark\t\t Run benchmark instead of tests.\n"
          "\t-i|--iterations N\t Number of benchmark iterations. Default: 5\n"

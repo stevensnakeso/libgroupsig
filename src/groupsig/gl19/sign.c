@@ -137,11 +137,11 @@ int gl19_sign(groupsig_signature_t *sig,
     GOTOENDRC(IERROR, gl19_sign);
   if(!(aux_Zr = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, gl19_sign);
-  if(pbcext_element_G1_add(aux, gl19_memkey->H, gl19_memkey->h2s) == IERROR)
+  if(pbcext_element_G1_add(aux, gl19_memkey->H, gl19_memkey->h2s) == IERROR) // can be precomputed
     GOTOENDRC(IERROR, gl19_sign);
-  if(pbcext_element_G1_add(aux, gl19_grpkey->g1, aux) == IERROR)
+  if(pbcext_element_G1_add(aux, gl19_grpkey->g1, aux) == IERROR) // can be precomputed
     GOTOENDRC(IERROR, gl19_sign);
-  if(pbcext_element_G1_add(aux, gl19_memkey->h3d, aux) == IERROR)
+  if(pbcext_element_G1_add(aux, gl19_memkey->h3d, aux) == IERROR) // can be precomputed
     GOTOENDRC(IERROR, gl19_sign);  
   if(pbcext_element_G1_mul(aux, aux, r1) == IERROR) // aux = (g1*h1^y*h2^s*h3^d)^r1
     GOTOENDRC(IERROR, gl19_sign); 

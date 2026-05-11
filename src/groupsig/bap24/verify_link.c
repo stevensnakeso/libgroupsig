@@ -93,11 +93,11 @@ int bap24_verify_link(uint8_t *ok,
     hash_free(hc); hc = NULL;
     mem_free(msg_scp); msg_scp = NULL;
     
-    /* RSA 累加：hscp_ = \prod H(scp_i) */
+
     if(pbcext_element_G2_add(hscp_, hscp_, hscp) == IERROR)
       GOTOENDRC(IERROR, bap24_verify_link);
 
-    /* 累加签名的假名分量：nym_ = \prod psd_i */
+
     bap24_sig = (bap24_signature_t *) sigs[i]->sig;
     if(pbcext_element_G2_add(nym_, nym_, bap24_sig->cnym3) == IERROR)
       GOTOENDRC(IERROR, bap24_verify_link);

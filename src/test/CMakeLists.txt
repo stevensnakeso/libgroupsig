@@ -78,6 +78,19 @@ target_link_libraries(KLAP20Test
   pthread)
 add_test(NAME KLAP20Test COMMAND KLAP20Test)
 
+# Tests for KLAPSEQ
+add_executable(KLAPSEQTest test_klapseq.cpp)
+target_link_libraries(KLAPSEQTest
+  PUBLIC
+  groupsig
+  big
+  sys
+  logger
+  gtest_main
+  gtest
+  pthread)
+add_test(NAME KLAPSEQTest COMMAND KLAPSEQTest)
+
 # Tests for DL21
 add_executable(DL21Test test_dl21.cpp)
 target_link_libraries(DL21Test

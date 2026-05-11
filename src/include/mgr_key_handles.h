@@ -32,6 +32,7 @@
 #include "groupsig/scsl25/mgr_key.h"
 #include "groupsig/bap24/mgr_key.h"
 #include "groupsig/sltgs23/mgr_key.h"
+#include "groupsig/klapseq/mgr_key.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +41,7 @@ extern "C" {
  * @def GROUPSIG_MGR_KEY_HANDLES_N
  * @brief Number of supported bundles of manager key handles.
  */
-#define GROUPSIG_MGR_KEY_HANDLES_N 11
+#define GROUPSIG_MGR_KEY_HANDLES_N 12
 
 /**
  * @var GROUPSIG_MGR_KEY_HANDLES
@@ -58,6 +59,7 @@ static const mgr_key_handle_t *GROUPSIG_MGR_KEY_HANDLES[GROUPSIG_MGR_KEY_HANDLES
   &scsl25_mgr_key_handle,
   &bap24_mgr_key_handle,
   &sltgs23_mgr_key_handle,
+  &klapseq_mgr_key_handle,
 };
 
 #ifdef __cplusplus

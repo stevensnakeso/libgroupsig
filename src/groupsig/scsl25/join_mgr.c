@@ -122,8 +122,6 @@ int scsl25_join_mgr(message_t **mout,
       GOTOENDRC(IERROR, scsl25_join_mgr);
     
     /* 导入零知识证明 pi_U */
-    // if(!(spk = spk_dlog_import(min->bytes + len + _len, &len)))
-    //   GOTOENDRC(IERROR, scsl25_join_mgr);
     if(!(spk = spk_rep_import(min->bytes + len + _len, &len)))
       GOTOENDRC(IERROR, scsl25_join_mgr);
 
@@ -160,11 +158,6 @@ int scsl25_join_mgr(message_t **mout,
     pbcext_element_G1_free(y[0]);
   }
 
-    // if(spk_dlog_G1_verify(&ok, U, scsl25_grpkey->g1,
-    //     spk, bU, len) == IERROR) {
-    //   GOTOENDRC(IERROR, scsl25_join_mgr);
-    // }
-
     if(!ok) GOTOENDRC(IERROR, scsl25_join_mgr);
 
     /* 签发成员凭证：计算 v = U^(1/u) mod n */
@@ -180,13 +173,6 @@ int scsl25_join_mgr(message_t **mout,
 
     if(pbcext_element_G1_mul(scsl25_memkey->v, U, inv_u) == IERROR)
       GOTOENDRC(IERROR, scsl25_join_mgr);
-
-    //tmp check it works
-    // pbcext_element_G1_t *tmp_aux;
-    // tmp_aux = pbcext_element_G1_init();
-    // pbcext_element_G1_mul(tmp_aux,scsl25_memkey->v,u);
-    //Original memkey->U
-    // if(pbcext_element_G1_cmp(U,tmp_aux) == IOK) {printf("Test Passed!");} else {printf("Test Failed!"); GOTOENDRC(IERROR,scsl25_join_mgr);}
 
     /* 此时 memkey 包含 A=v，导出并发送给 EV */
     bkey = NULL; 

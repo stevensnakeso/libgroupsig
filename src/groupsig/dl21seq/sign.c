@@ -191,9 +191,9 @@ int dl21seq_sign(groupsig_signature_t *sig,
     GOTOENDRC(IERROR, dl21seq_sign);
   if(!(aux_Zr = pbcext_element_Fr_init()))
     GOTOENDRC(IERROR, dl21seq_sign);
-  if(pbcext_element_G1_add(aux, dl21seq_memkey->H, dl21seq_memkey->h2s) == IERROR)
+  if(pbcext_element_G1_add(aux, dl21seq_memkey->H, dl21seq_memkey->h2s) == IERROR) //can be precomputed as well, but we will do it here for clarity
     GOTOENDRC(IERROR, dl21seq_sign);
-  if(pbcext_element_G1_add(aux, dl21seq_grpkey->g1, aux) == IERROR)
+  if(pbcext_element_G1_add(aux, dl21seq_grpkey->g1, aux) == IERROR) //can be precomputed as well, but we will do it here for clarity
     GOTOENDRC(IERROR, dl21seq_sign);
   if(pbcext_element_G1_mul(aux, aux, r1) == IERROR) // aux = (g1*h1^y*h2^s)^r1
     GOTOENDRC(IERROR, dl21seq_sign); 

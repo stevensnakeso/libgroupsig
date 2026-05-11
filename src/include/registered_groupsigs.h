@@ -33,6 +33,7 @@
 #include "scsl25.h"
 #include "bap24.h"
 #include "sltgs23.h"
+#include "klapseq.h"
 
 #ifdef __cplusplus
 extern "C" {

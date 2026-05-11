@@ -41,9 +41,9 @@ typedef struct {
   pbcext_element_G2_t *cnym1; /**< Commitment to the pseudonym. */
   pbcext_element_GT_t *cnym2; /**< Commitment to the pseudonym. */
   pbcext_element_G2_t *cnym3; /**< Commitment to the pseudonym. */
-  pbcext_element_G1_t *D1,*D2; /**< Auxiliary element used in the signature. */
-  pbcext_element_G2_t *D5; /**< Auxiliary element used in the signature. */
-  pbcext_element_GT_t *D3,*D4,*D6; /**< Auxiliary element used in the signature. */
+  // pbcext_element_G1_t *D1,*D2; /**< Auxiliary element used in the signature. */
+  // pbcext_element_G2_t *D5; /**< Auxiliary element used in the signature. */
+  // pbcext_element_GT_t *D3,*D4,*D6; /**< Auxiliary element used in the signature. */
 
 } bap24_signature_t;
 

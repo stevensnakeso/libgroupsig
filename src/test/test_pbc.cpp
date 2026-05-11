@@ -24,7 +24,7 @@
 
 #include "sysenv.h"
 #include "shim/pbc_ext.h"
-
+#include "chrono"
 using namespace std;
 
 /*
@@ -70,10 +70,14 @@ namespace pbcext {
 
     pbcext_element_Fp_t *e;
     int rc;
-
+    auto start = std::chrono::high_resolution_clock::now();
     e = pbcext_element_Fp_init();
     EXPECT_NE(e, nullptr);
+    auto end = std::chrono::high_resolution_clock::now();
 
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+    std::cout << "InitFp elapsed time: " << duration << " us" << std::endl;
     rc = pbcext_element_Fp_free(e);
     EXPECT_EQ(rc, IOK);
 
@@ -83,7 +87,7 @@ namespace pbcext {
 
     pbcext_element_Fp_t *e;
     int rc;
-
+    auto start = std::chrono::high_resolution_clock::now();
     e = pbcext_element_Fp_init();
     EXPECT_NE(e, nullptr);
     
@@ -92,6 +96,11 @@ namespace pbcext {
 
     rc = pbcext_element_Fp_is0(e);
     EXPECT_EQ(rc, 1);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+    std::cout << "InitFpClear elapsed time: " << duration << " us" << std::endl;
 
     rc = pbcext_element_Fp_free(e);
     EXPECT_EQ(rc, IOK);
@@ -875,8 +884,13 @@ namespace pbcext {
     rc = pbcext_element_Fr_random(r);
     EXPECT_NE(rc, IERROR);    
 
+    auto start = std::chrono::high_resolution_clock::now();
     rc = pbcext_element_G1_mul(e, e, r);
     EXPECT_NE(rc, IERROR);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "G1 mul elapsed time: " << duration << " us" << std::endl;
 
     rc = pbcext_element_G1_free(e);
     EXPECT_EQ(rc, IOK);
@@ -934,8 +948,13 @@ namespace pbcext {
     rc = pbcext_element_G1_neg(e2, e);
     EXPECT_NE(rc, IERROR);
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     rc = pbcext_element_G1_add(e2, e2, e);
     EXPECT_NE(rc, IERROR);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    std::cout << "G1 add elapsed time: " << duration << " us" << std::endl;
 
     rc = pbcext_element_G1_is0(e2);
     EXPECT_EQ(rc, 1);
@@ -1160,8 +1179,13 @@ namespace pbcext {
     rc = pbcext_element_G2_clear(e2);
     EXPECT_NE(rc, IERROR);
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     rc = pbcext_element_G2_add(e2, e2, e);
     EXPECT_NE(rc, IERROR);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    std::cout << "G2 add elapsed time: " << duration << " ns" << std::endl;
 
     rc = pbcext_element_G2_cmp(e, e2);
     EXPECT_EQ(rc, 0);
@@ -1192,8 +1216,14 @@ namespace pbcext {
     rc = pbcext_element_Fr_random(r);
     EXPECT_NE(rc, IERROR);    
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     rc = pbcext_element_G2_mul(e, e, r);
     EXPECT_NE(rc, IERROR);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "G2 mul elapsed time: " << duration << " us" << std::endl;
 
     rc = pbcext_element_G2_free(e);
     EXPECT_EQ(rc, IOK);
@@ -1454,8 +1484,14 @@ namespace pbcext {
     rc = pbcext_element_G2_random(e2);
     EXPECT_EQ(rc, IOK);
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     rc = pbcext_pairing(e, e1, e2);
     EXPECT_EQ(rc, IOK);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "GT pairing elapsed time: " << duration << " us" << std::endl;
     
     rc = pbcext_element_G1_free(e1);
     EXPECT_EQ(rc, IOK);

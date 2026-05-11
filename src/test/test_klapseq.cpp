@@ -23,15 +23,15 @@
 #include "gtest/gtest.h"
 
 #include "groupsig.h"
-#include "klap20.h"
+#include "klapseq.h"
 #include "message.h"
 
 using namespace std;
 
 namespace groupsig {
 
-  // The fixture for testing KLAP20 scheme.
-  class KLAP20Test : public ::testing::Test {
+  // The fixture for testing KLAPSEQ scheme.
+  class KLAPSEQTest : public ::testing::Test {
   protected:
     // You can remove any or all of the following functions if their bodies
     // would be empty.
@@ -42,23 +42,23 @@ namespace groupsig {
     groupsig_key_t **memkey;
     uint32_t n;
 
-    KLAP20Test() {
+    KLAPSEQTest() {
 
       int rc;
 
-      rc = groupsig_init(GROUPSIG_KLAP20_CODE, time(NULL));
+      rc = groupsig_init(GROUPSIG_KLAPSEQ_CODE, time(NULL));
       EXPECT_EQ(rc, IOK);
 
-      isskey = groupsig_mgr_key_init(GROUPSIG_KLAP20_CODE);
+      isskey = groupsig_mgr_key_init(GROUPSIG_KLAPSEQ_CODE);
       EXPECT_NE(isskey, nullptr);
 
-      opnkey = groupsig_mgr_key_init(GROUPSIG_KLAP20_CODE);
+      opnkey = groupsig_mgr_key_init(GROUPSIG_KLAPSEQ_CODE);
       EXPECT_NE(opnkey, nullptr);
 
-      grpkey = groupsig_grp_key_init(GROUPSIG_KLAP20_CODE);
+      grpkey = groupsig_grp_key_init(GROUPSIG_KLAPSEQ_CODE);
       EXPECT_NE(grpkey, nullptr);
 
-      gml = gml_init(GROUPSIG_KLAP20_CODE);
+      gml = gml_init(GROUPSIG_KLAPSEQ_CODE);
       EXPECT_NE(gml, nullptr);
 
       memkey = nullptr;
@@ -66,7 +66,7 @@ namespace groupsig {
 
     }
 
-    ~KLAP20Test() override {
+    ~KLAPSEQTest() override {
       groupsig_mgr_key_free(isskey); isskey = NULL;
       groupsig_mgr_key_free(opnkey); opnkey = NULL;
       groupsig_grp_key_free(grpkey); grpkey = NULL;
@@ -77,7 +77,7 @@ namespace groupsig {
 	}
 	free(memkey); memkey = NULL;
       }
-      groupsig_clear(GROUPSIG_KLAP20_CODE);
+      groupsig_clear(GROUPSIG_KLAPSEQ_CODE);
     }
 
     void addMembers(uint32_t n) {
@@ -142,39 +142,39 @@ namespace groupsig {
     }
 
     // Class members declared here can be used by all tests in the test suite
-    // for KLAP20.
+    // for KLAPSEQ.
   };
 
 
-  TEST_F(KLAP20Test, GetCodeFromStr) {
+  TEST_F(KLAPSEQTest, GetCodeFromStr) {
 
     int rc;
     uint8_t scheme;
 
-    rc = groupsig_get_code_from_str(&scheme, (char *) GROUPSIG_KLAP20_NAME);
+    rc = groupsig_get_code_from_str(&scheme, (char *) GROUPSIG_KLAPSEQ_NAME);
     EXPECT_EQ(rc, IOK);
 
-    EXPECT_EQ(scheme, GROUPSIG_KLAP20_CODE);
+    EXPECT_EQ(scheme, GROUPSIG_KLAPSEQ_CODE);
 
   }
 
-  // Tests that the KLAP20 constructor creates the required keys.
-  TEST_F(KLAP20Test, CreatesGrpAndMgrKeys) {
+  // Tests that the KLAPSEQ constructor creates the required keys.
+  TEST_F(KLAPSEQTest, CreatesGrpAndMgrKeys) {
 
-    /* Scheme is set to KLAP20 */
-    EXPECT_EQ(grpkey->scheme, GROUPSIG_KLAP20_CODE);
-    EXPECT_EQ(isskey->scheme, GROUPSIG_KLAP20_CODE);
-    EXPECT_EQ(opnkey->scheme, GROUPSIG_KLAP20_CODE);
+    /* Scheme is set to KLAPSEQ */
+    EXPECT_EQ(grpkey->scheme, GROUPSIG_KLAPSEQ_CODE);
+    EXPECT_EQ(isskey->scheme, GROUPSIG_KLAPSEQ_CODE);
+    EXPECT_EQ(opnkey->scheme, GROUPSIG_KLAPSEQ_CODE);
 
   }
 
   /* groupsig_get_joinstart must return 0 */
-  TEST_F(KLAP20Test, CheckJoinStart) {
+  TEST_F(KLAPSEQTest, CheckJoinStart) {
 
     int rc;
     uint8_t start;
 
-    rc = groupsig_get_joinstart(GROUPSIG_KLAP20_CODE, &start);
+    rc = groupsig_get_joinstart(GROUPSIG_KLAPSEQ_CODE, &start);
     EXPECT_EQ(rc, IOK);
 
     EXPECT_EQ(start, 0);
@@ -182,12 +182,12 @@ namespace groupsig {
   }
 
   /* groupsig_get_joinseq must return 3 */
-  TEST_F(KLAP20Test, CheckJoinSeq) {
+  TEST_F(KLAPSEQTest, CheckJoinSeq) {
 
     int rc;
     uint8_t seq;
 
-    rc = groupsig_get_joinseq(GROUPSIG_KLAP20_CODE, &seq);
+    rc = groupsig_get_joinseq(GROUPSIG_KLAPSEQ_CODE, &seq);
     EXPECT_EQ(rc, IOK);
 
     EXPECT_EQ(seq, 3);
@@ -195,39 +195,39 @@ namespace groupsig {
   }
 
   /* Successfully adds a group member */
-  TEST_F(KLAP20Test, AddsNewMember) {
+  TEST_F(KLAPSEQTest, AddsNewMember) {
 
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     addMembers(1);
 
-    EXPECT_EQ(memkey[0]->scheme, GROUPSIG_KLAP20_CODE);
+    EXPECT_EQ(memkey[0]->scheme, GROUPSIG_KLAPSEQ_CODE);
 
   }
 
   /* Successfully initializes a signature */
-  TEST_F(KLAP20Test, InitializeSignature) {
+  TEST_F(KLAPSEQTest, InitializeSignature) {
 
     groupsig_signature_t *sig;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
     sig = groupsig_signature_init(grpkey->scheme);
     EXPECT_NE(sig, nullptr);
 
-    EXPECT_EQ(sig->scheme, GROUPSIG_KLAP20_CODE);
+    EXPECT_EQ(sig->scheme, GROUPSIG_KLAPSEQ_CODE);
 
     groupsig_signature_free(sig);
     sig = nullptr;
@@ -235,17 +235,17 @@ namespace groupsig {
   }
 
   /* Successfully creates a valid signature */
-  TEST_F(KLAP20Test, SignVerifyValid) {
+  TEST_F(KLAPSEQTest, SignVerifyValid) {
 
     groupsig_signature_t *sig;
     message_t *msg;
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -280,17 +280,17 @@ namespace groupsig {
   }
 
   /* Creates a valid signature, but verifies with wrong message */
-  TEST_F(KLAP20Test, SignVerifyWrongMessage) {
+  TEST_F(KLAPSEQTest, SignVerifyWrongMessage) {
 
     groupsig_signature_t *sig;
     message_t *msg, *msg2;
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -331,7 +331,7 @@ namespace groupsig {
   }
 
   /* Successfully verifies a batch of valid signatures by the same user */
-  TEST_F(KLAP20Test, SignVerifyValidBatchSameMember) {
+  TEST_F(KLAPSEQTest, SignVerifyValidBatchSameMember) {
 
     groupsig_signature_t **sigs;
     message_t **msgs;
@@ -340,10 +340,10 @@ namespace groupsig {
     uint32_t i;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Add one member */
@@ -395,7 +395,7 @@ namespace groupsig {
   }
 
   /* Successfully rejects a batch of wrong signatures by the same user */
-  TEST_F(KLAP20Test, SignVerifyWrongBatchSameMember) {
+  TEST_F(KLAPSEQTest, SignVerifyWrongBatchSameMember) {
 
     groupsig_signature_t **sigs;
     message_t **msgs;
@@ -404,10 +404,10 @@ namespace groupsig {
     uint32_t i;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Add one member */
@@ -466,7 +466,7 @@ namespace groupsig {
   }
 
   /* Successfully verifies a batch of valid signatures by different users */
-  TEST_F(KLAP20Test, SignVerifyValidBatchDiffMembers) {
+  TEST_F(KLAPSEQTest, SignVerifyValidBatchDiffMembers) {
 
     groupsig_signature_t **sigs;
     message_t **msgs;
@@ -475,10 +475,10 @@ namespace groupsig {
     uint32_t i;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Add ten members */
@@ -530,7 +530,7 @@ namespace groupsig {
   }
 
   /* Successfully rejects a batch of wrong signatures by different users */
-  TEST_F(KLAP20Test, SignVerifyWrongBatchDiffMembers) {
+  TEST_F(KLAPSEQTest, SignVerifyWrongBatchDiffMembers) {
 
     groupsig_signature_t **sigs;
     message_t **msgs;
@@ -539,10 +539,10 @@ namespace groupsig {
     uint32_t i;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Add ten member */
@@ -601,7 +601,7 @@ namespace groupsig {
   }
 
   /* Opens a signature and produces a valid open proof */
-  TEST_F(KLAP20Test, OpenSignatureValidProof) {
+  TEST_F(KLAPSEQTest, OpenSignatureValidProof) {
 
     groupsig_signature_t *sig;
     groupsig_proof_t *proof;
@@ -610,10 +610,10 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -632,7 +632,7 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     /* Open */
-    proof = groupsig_proof_init(GROUPSIG_KLAP20_CODE);
+    proof = groupsig_proof_init(GROUPSIG_KLAPSEQ_CODE);
     EXPECT_NE(proof, nullptr);
 
     rc = groupsig_open(&index, proof, nullptr, sig, grpkey, opnkey, gml);
@@ -659,7 +659,7 @@ namespace groupsig {
   }
 
   /* Opens a signature but produces a wrong open proof */
-  TEST_F(KLAP20Test, OpenSignatureWrongProof) {
+  TEST_F(KLAPSEQTest, OpenSignatureWrongProof) {
 
     groupsig_signature_t *sig0, *sig1;
     groupsig_proof_t *proof;
@@ -668,10 +668,10 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -696,7 +696,7 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     /* Open */
-    proof = groupsig_proof_init(GROUPSIG_KLAP20_CODE);
+    proof = groupsig_proof_init(GROUPSIG_KLAPSEQ_CODE);
     EXPECT_NE(proof, nullptr);
 
     rc = groupsig_open(&index, proof, nullptr, sig0, grpkey, opnkey, gml);
@@ -728,17 +728,17 @@ namespace groupsig {
   /** Group key tests **/
 
   /* Successfully exports and imports a group key to a string */
-  TEST_F(KLAP20Test, GrpKeyExportImport) {
+  TEST_F(KLAPSEQTest, GrpKeyExportImport) {
 
     groupsig_key_t *dst;
     byte_t *bytes;
     uint32_t size;
     int rc, len;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Get the size of the string to store the exported key */
@@ -753,7 +753,7 @@ namespace groupsig {
     EXPECT_NE(bytes, nullptr);
 
     /* Import the group key */
-    dst = groupsig_grp_key_import(GROUPSIG_KLAP20_CODE, bytes, size);
+    dst = groupsig_grp_key_import(GROUPSIG_KLAPSEQ_CODE, bytes, size);
     EXPECT_NE(dst, nullptr);
 
     rc = groupsig_grp_key_free(dst);
@@ -764,18 +764,18 @@ namespace groupsig {
   }
 
   /* Successfully copies a group key */
-  TEST_F(KLAP20Test, GrpKeyCopy) {
+  TEST_F(KLAPSEQTest, GrpKeyCopy) {
 
     groupsig_key_t *dst;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
-    dst = groupsig_grp_key_init(GROUPSIG_KLAP20_CODE);
+    dst = groupsig_grp_key_init(GROUPSIG_KLAPSEQ_CODE);
     EXPECT_NE(dst, nullptr);
 
     rc = groupsig_grp_key_copy(dst, grpkey);
@@ -789,17 +789,17 @@ namespace groupsig {
   /** Manager key tests **/
 
   /* Successfully exports and imports an issuer key to a string */
-  TEST_F(KLAP20Test, IssKeyExportImport) {
+  TEST_F(KLAPSEQTest, IssKeyExportImport) {
 
     groupsig_key_t *dst;
     byte_t *bytes;
     uint32_t size;
     int rc, len;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Get the size of the string to store the exported key */
@@ -814,7 +814,7 @@ namespace groupsig {
     EXPECT_NE(bytes, nullptr);
 
     /* Import the group key */
-    dst = groupsig_mgr_key_import(GROUPSIG_KLAP20_CODE, bytes, size);
+    dst = groupsig_mgr_key_import(GROUPSIG_KLAPSEQ_CODE, bytes, size);
     EXPECT_NE(dst, nullptr);
 
     rc = groupsig_mgr_key_free(dst);
@@ -825,18 +825,18 @@ namespace groupsig {
   }
 
   /* Successfully copies an issuer key */
-  TEST_F(KLAP20Test, IssKeyCopy) {
+  TEST_F(KLAPSEQTest, IssKeyCopy) {
 
     groupsig_key_t *dst;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
-    dst = groupsig_mgr_key_init(GROUPSIG_KLAP20_CODE);
+    dst = groupsig_mgr_key_init(GROUPSIG_KLAPSEQ_CODE);
     EXPECT_NE(dst, nullptr);
 
     rc = groupsig_mgr_key_copy(dst, isskey);
@@ -848,7 +848,7 @@ namespace groupsig {
   }
 
   /* Successfully exports and imports an opener key to a string */
-  TEST_F(KLAP20Test, OpnkeyExportImport) {
+  TEST_F(KLAPSEQTest, OpnkeyExportImport) {
 
     groupsig_key_t *dst;
     byte_t *bytes;
@@ -860,10 +860,10 @@ namespace groupsig {
     message_t *msg;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Get the size of the string to store the exported key */
@@ -879,7 +879,7 @@ namespace groupsig {
     EXPECT_NE(bytes, nullptr);
 
     /* Import the group key */
-    dst = groupsig_mgr_key_import(GROUPSIG_KLAP20_CODE, bytes, size);
+    dst = groupsig_mgr_key_import(GROUPSIG_KLAPSEQ_CODE, bytes, size);
     EXPECT_NE(dst, nullptr);
 
     /* Free stuff */
@@ -891,18 +891,18 @@ namespace groupsig {
   }
 
   /* Successfully copies a converter key */
-  TEST_F(KLAP20Test, OpnkeyCopy) {
+  TEST_F(KLAPSEQTest, OpnkeyCopy) {
 
     groupsig_key_t *dst;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
-    dst = groupsig_mgr_key_init(GROUPSIG_KLAP20_CODE);
+    dst = groupsig_mgr_key_init(GROUPSIG_KLAPSEQ_CODE);
     EXPECT_NE(dst, nullptr);
 
     rc = groupsig_mgr_key_copy(dst, opnkey);
@@ -916,17 +916,17 @@ namespace groupsig {
   /** Member key tests **/
 
   /* Successfully exports and imports a member key to a string */
-  TEST_F(KLAP20Test, MemKeyExportImport) {
+  TEST_F(KLAPSEQTest, MemKeyExportImport) {
 
     groupsig_key_t *dst;
     byte_t *bytes;
     uint32_t size;
     int rc, len;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Add one member */
@@ -944,7 +944,7 @@ namespace groupsig {
     EXPECT_NE(bytes, nullptr);
 
     /* Import the group key */
-    dst = groupsig_mem_key_import(GROUPSIG_KLAP20_CODE, bytes, size);
+    dst = groupsig_mem_key_import(GROUPSIG_KLAPSEQ_CODE, bytes, size);
     EXPECT_NE(dst, nullptr);
 
     rc = groupsig_mem_key_free(dst);
@@ -955,21 +955,21 @@ namespace groupsig {
   }
 
   /* Successfully copies a member key */
-  TEST_F(KLAP20Test, MemKeyCopy) {
+  TEST_F(KLAPSEQTest, MemKeyCopy) {
 
     groupsig_key_t *dst;
     int rc;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
    /* Add one member */
     addMembers(1);
 
-    dst = groupsig_mem_key_init(GROUPSIG_KLAP20_CODE);
+    dst = groupsig_mem_key_init(GROUPSIG_KLAPSEQ_CODE);
     EXPECT_NE(dst, nullptr);
 
     rc = groupsig_mem_key_copy(dst, memkey[0]);
@@ -983,7 +983,7 @@ namespace groupsig {
   /** Signature object tests **/
 
   /* Successfully converts a signature as a string */
-  TEST_F(KLAP20Test, SignatureToString) {
+  TEST_F(KLAPSEQTest, SignatureToString) {
 
     groupsig_signature_t *sig;
     message_t *msg;
@@ -991,10 +991,10 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -1033,17 +1033,17 @@ namespace groupsig {
   }
 
   /* Successfully copies a signature */
-  TEST_F(KLAP20Test, SignatureCopy) {
+  TEST_F(KLAPSEQTest, SignatureCopy) {
 
     groupsig_signature_t *src, *dst;
     message_t *msg;
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the src group signature object */
@@ -1094,7 +1094,7 @@ namespace groupsig {
   }
 
   /* Successfully creates a valid signature */
-  TEST_F(KLAP20Test, SignatureExportImport) {
+  TEST_F(KLAPSEQTest, SignatureExportImport) {
 
     groupsig_signature_t *sig, *imported;
     message_t *msg;
@@ -1103,10 +1103,10 @@ namespace groupsig {
     int rc;
     uint8_t b;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Initialize the group signature object */
@@ -1157,17 +1157,17 @@ namespace groupsig {
   /** GML tests **/
 
   /* Successfully exports and imports a GML */
-  TEST_F(KLAP20Test, GmlExportImport) {
+  TEST_F(KLAPSEQTest, GmlExportImport) {
 
     byte_t *bytes;
     gml_t *imported;
     int rc;
     uint32_t size;
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, isskey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
     EXPECT_EQ(rc, IOK);
 
-    rc = groupsig_setup(GROUPSIG_KLAP20_CODE, grpkey, opnkey, gml);
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
     EXPECT_EQ(rc, IOK);
 
     /* Add three member */
@@ -1179,7 +1179,7 @@ namespace groupsig {
     EXPECT_EQ(rc, IOK);
 
     /* Import */
-    imported = gml_import(GROUPSIG_KLAP20_CODE, bytes, size);
+    imported = gml_import(GROUPSIG_KLAPSEQ_CODE, bytes, size);
     EXPECT_NE(imported, nullptr);
 
     gml_free(imported);
