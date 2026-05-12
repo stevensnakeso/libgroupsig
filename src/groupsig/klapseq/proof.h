@@ -20,15 +20,36 @@
 #ifndef _KLAPSEQ_PROOF_H
 #define _KLAPSEQ_PROOF_H
 
+#include "crypto/spk.h"
 #include "groupsig/klapseq/spk.h"
 #include "include/proof.h"
 #include "klapseq.h"
 
-/**
- * @struct klapseq_proof_t
- * @brief Open proofs for KLAPSEQ.
- */
-typedef klapseq_spk1_t klapseq_proof_t;
+typedef struct {
+  spk_dlog_t *spk; /**< Linking proof. */
+  byte_t **x; /**< Sequence proof. */
+  uint64_t *xlen; /* Length, in bytes, per element of x. */
+  uint64_t n; /**< Number of elements in x and xlen. */
+} klapseql_proof_t;
+
+
+typedef enum {
+  KLAPSEQ_PROOF_TYPE_1,
+  KLAPSEQ_PROOF_TYPE_2
+} klapseq_proof_type_t;
+
+typedef struct {
+  klapseq_proof_type_t type; /**< The type of proof. */
+  klapseq_spk1_t *spk1; //TYPE1 
+  klapseql_proof_t *seq_proof; //TYPE2
+} klapseq_proof_t;
+
+
+// /**
+//  * @struct klapseq_proof_t
+//  * @brief Open proofs for KLAPSEQ.
+//  */
+// typedef klapseq_spk1_t klapseq_proof_t;
 
 /** 
  * @fn struct groupsig_proof_t* klapseq_proof_init()
@@ -57,7 +78,7 @@ int klapseq_proof_free(groupsig_proof_t *proof);
  * @return A newly allocated proof (similar to the one received) or NULL
  *  if error.
  */
-void* klapseq_proof_copy(void *proof);
+int klapseq_proof_copy(groupsig_proof_t *dst, groupsig_proof_t *src);
 
 /** 
  * @fn int klapseq_proof_to_string

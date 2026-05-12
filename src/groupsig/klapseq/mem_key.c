@@ -55,6 +55,8 @@ groupsig_key_t* klapseq_mem_key_init() {
   klapseq_key->u = NULL;
   klapseq_key->v = NULL;
   klapseq_key->w = NULL;
+  klapseq_key->k = NULL;
+  klapseq_key->kk = NULL;
   
   return key;
 
@@ -92,6 +94,14 @@ int klapseq_mem_key_free(groupsig_key_t *key) {
     if(klapseq_key->w) {
       pbcext_element_G1_free(klapseq_key->w);
       klapseq_key->w = NULL;
+    }
+    if(klapseq_key->k) {
+      prf_key_free(klapseq_key->k);
+      klapseq_key->k = NULL;
+    }
+    if(klapseq_key->kk) {
+      prf_key_free(klapseq_key->kk);
+      klapseq_key->kk = NULL;
     }
     mem_free(key->key); key->key = NULL;
     key->key = NULL;
@@ -146,7 +156,14 @@ int klapseq_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
     if(pbcext_element_G1_set(klapseq_dst->w, klapseq_src->w) == IERROR)
       GOTOENDRC(IERROR, klapseq_mem_key_copy);    
   }
-  
+  if(klapseq_src->k) {
+    if (!(klapseq_dst->k = prf_key_init())) GOTOENDRC(IERROR, klapseq_mem_key_copy);
+    memcpy(klapseq_dst->k->bytes, klapseq_src->k->bytes, klapseq_src->k->len);
+  }
+  if(klapseq_src->kk) {
+    if (!(klapseq_dst->kk = prf_key_init())) GOTOENDRC(IERROR, klapseq_mem_key_copy);
+    memcpy(klapseq_dst->kk->bytes, klapseq_src->kk->bytes, klapseq_src->kk->len);
+  }
  klapseq_mem_key_copy_end:
 
   if(rc == IERROR) {
@@ -166,6 +183,14 @@ int klapseq_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
       pbcext_element_G1_free(klapseq_dst->w);
       klapseq_dst->w = NULL;
     }
+    if(klapseq_dst->k) {
+      prf_key_free(klapseq_dst->k);
+      klapseq_dst->k = NULL;
+    }
+    if(klapseq_dst->kk) {
+      prf_key_free(klapseq_dst->kk);
+      klapseq_dst->kk = NULL;
+    }
   }
 
   return rc;
@@ -175,22 +200,25 @@ int klapseq_mem_key_copy(groupsig_key_t *dst, groupsig_key_t *src) {
 int klapseq_mem_key_get_size(groupsig_key_t *key) {
 
   klapseq_mem_key_t *klapseq_key;
-  uint64_t size64, salpha, su, sv, sw;
+  uint64_t size64, salpha, su, sv, sw, sk, skk;
   
   if(!key || key->scheme != GROUPSIG_KLAPSEQ_CODE) {
     LOG_EINVAL(&logger, __FILE__, "klapseq_mem_key_get_size", __LINE__, LOGERROR);
     return -1;
   }
 
-  salpha = su = sv = sw = 0;
+  salpha = su = sv = sw = sk = skk = 0;
   klapseq_key = key->key;
   
   if(klapseq_key->alpha) { if(pbcext_element_Fr_byte_size(&salpha) == IERROR) return -1; }
   if(klapseq_key->u) { if(pbcext_element_G1_byte_size(&su) == IERROR) return -1; }
   if(klapseq_key->v) { if(pbcext_element_G1_byte_size(&sv) == IERROR) return -1; }
   if(klapseq_key->w) { if(pbcext_element_G1_byte_size(&sw) == IERROR) return -1; }
+  if(klapseq_key->k) sk = klapseq_key->k->len;
+  if(klapseq_key->kk) skk = klapseq_key->kk->len;  
 
-  size64 = sizeof(uint8_t)*2 + sizeof(int)*4+ salpha + su + sv + sw;
+
+  size64 = sizeof(uint8_t)*2 + sizeof(int)*6+ salpha + su + sv + sw + sk + skk;
 
   if(size64 > INT_MAX) return -1;
   return (int) size64;
@@ -268,12 +296,34 @@ int klapseq_mem_key_export(byte_t **bytes,
     ctr += len;
   } else { ctr += sizeof(int); }
 
+  /* Dump k */
+  if (klapseq_key->k && klapseq_key->k->bytes && klapseq_key->k->len) {
+    _bytes[ctr] = klapseq_key->k->len;
+    ctr++;
+    memcpy(&_bytes[ctr], klapseq_key->k->bytes, klapseq_key->k->len);
+    ctr += klapseq_key->k->len;
+  } else {
+    ctr += sizeof(uint8_t);
+  }
+  
+  /* Dump kk */
+  if (klapseq_key->kk && klapseq_key->kk->bytes && klapseq_key->kk->len) {
+    _bytes[ctr] = klapseq_key->k->len;
+    ctr++;    
+    memcpy(&_bytes[ctr], klapseq_key->kk->bytes, klapseq_key->kk->len);
+    ctr += klapseq_key->kk->len;  
+  } else {
+    ctr += sizeof(uint8_t);
+  }
   /* Sanity check */
   if (ctr != _size) {
     LOG_ERRORCODE_MSG(&logger, __FILE__, "klapseq_mem_key_export", __LINE__, 
 		      EDQUOT, "Unexpected size.", LOGERROR);
     GOTOENDRC(IERROR, klapseq_mem_key_export);
   }  
+
+
+    
 
   /* Prepare the return */
   if(!*bytes) {
@@ -380,7 +430,32 @@ groupsig_key_t* klapseq_mem_key_import(byte_t *source, uint32_t size) {
   } else {
     ctr += len;
   }  
- 
+
+  /* k */
+  if(!(klapseq_key->k = prf_key_init()))
+    GOTOENDRC(IERROR, klapseq_mem_key_import);
+  // Currently, we only support BLAKE2 lengths in PRF. This may change.
+  if (source[ctr] && source[ctr] != klapseq_key->k->len)
+    GOTOENDRC(IERROR, klapseq_mem_key_import);
+  ctr++;
+
+  if (source[ctr-1]) {
+    memcpy(klapseq_key->k->bytes, &source[ctr], klapseq_key->k->len);
+    ctr += klapseq_key->k->len;
+  }
+
+  /* kk */
+  if(!(klapseq_key->kk = prf_key_init()))
+    GOTOENDRC(IERROR, klapseq_mem_key_import);
+  // Currently, we only support BLAKE2 lengths in PRF. This may change.
+  if (source[ctr] && source[ctr] != klapseq_key->kk->len)
+    GOTOENDRC(IERROR, klapseq_mem_key_import);
+  ctr++;
+
+  if (source[ctr-1]) {
+    memcpy(klapseq_key->kk->bytes, &source[ctr], klapseq_key->kk->len);
+    ctr += klapseq_key->kk->len;
+  }
 
  klapseq_mem_key_import_end:
   

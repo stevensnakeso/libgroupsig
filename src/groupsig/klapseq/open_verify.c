@@ -68,11 +68,11 @@ int klapseq_open_verify(uint8_t *ok,
     GOTOENDRC(IERROR, klapseq_open_verify);
 
   if (klapseq_spk1_verify(&_ok,
-			 klapseq_proof,
+			 klapseq_proof->spk1,
 			 klapseq_sig->uu,
 			 klapseq_grpkey->g,
 			 e2,
-			 klapseq_proof->tau,
+			 klapseq_proof->spk1->tau,
 			 bsig,
 			 slen) == IERROR)
     GOTOENDRC(IERROR, klapseq_open_verify);

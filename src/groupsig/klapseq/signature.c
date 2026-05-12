@@ -89,6 +89,23 @@ int klapseq_signature_free(groupsig_signature_t *sig) {
       spk_dlog_free(klapseq_sig->pi);
       klapseq_sig->pi = NULL;
     }
+    if(klapseq_sig->nym) {
+      pbcext_element_G1_free(klapseq_sig->nym);
+      klapseq_sig->nym = NULL;
+    }
+    if(klapseq_sig->seq) {
+      if(klapseq_sig->seq->seq1) {
+      mem_free(klapseq_sig->seq->seq1);
+          }
+          if(klapseq_sig->seq->seq2) {
+      mem_free(klapseq_sig->seq->seq2);
+          }
+          if(klapseq_sig->seq->seq3) {
+      mem_free(klapseq_sig->seq->seq3);
+          }
+      mem_free(klapseq_sig->seq);
+      klapseq_sig->seq = NULL;
+    }
     mem_free(klapseq_sig); klapseq_sig = NULL;
   }
   
@@ -130,6 +147,13 @@ int klapseq_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src)
     GOTOENDRC(IERROR, klapseq_signature_copy);
   if(spk_dlog_copy(klapseq_dst->pi, klapseq_src->pi) == IERROR)
     GOTOENDRC(IERROR, klapseq_signature_copy);
+  if(!(klapseq_dst->nym = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, klapseq_signature_copy);
+  if(pbcext_element_G1_set(klapseq_dst->nym, klapseq_src->nym) == IERROR)
+    GOTOENDRC(IERROR, klapseq_signature_copy);
+  if(!(klapseq_dst->seq = (klapseq_seqinfo_t *) mem_malloc(sizeof(klapseq_seqinfo_t))))
+    GOTOENDRC(IERROR, klapseq_signature_copy);
+  memcpy(klapseq_dst->seq, klapseq_src->seq, sizeof(klapseq_seqinfo_t));
   
  klapseq_signature_copy_end:
 
@@ -150,7 +174,23 @@ int klapseq_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src)
       spk_dlog_free(klapseq_dst->pi);
       klapseq_dst->pi = NULL;
     }
-
+    if(klapseq_dst->nym) {
+      pbcext_element_G1_free(klapseq_dst->nym);
+      klapseq_dst->nym = NULL;
+    }
+    if(klapseq_dst->seq) {
+      if(klapseq_dst->seq->seq1) {
+      mem_free(klapseq_dst->seq->seq1);
+          }
+          if(klapseq_dst->seq->seq2) {
+      mem_free(klapseq_dst->seq->seq2);
+          }
+          if(klapseq_dst->seq->seq3) {
+      mem_free(klapseq_dst->seq->seq3);
+          }
+      mem_free(klapseq_dst->seq);
+      klapseq_dst->seq = NULL;
+    }
   }
   
   return rc;
@@ -160,7 +200,7 @@ int klapseq_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src)
 int klapseq_signature_get_size(groupsig_signature_t *sig) {
 
   klapseq_signature_t *klapseq_sig;
-  uint64_t size64, suu, svv, sww, ss, sc;
+  uint64_t size64, suu, svv, sww, ss, sc,snym;
   
   if(!sig || sig->scheme != GROUPSIG_KLAPSEQ_CODE) {
     LOG_EINVAL(&logger, __FILE__, "klapseq_signature_get_size",
@@ -177,8 +217,10 @@ int klapseq_signature_get_size(groupsig_signature_t *sig) {
   if(pbcext_element_G1_byte_size(&sww) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&sc) == IERROR) return -1;
   if(pbcext_element_Fr_byte_size(&ss) == IERROR) return -1;  
-      
-  size64 = sizeof(uint8_t) + sizeof(int)*5 + suu + svv + sww +  sc + ss;
+  if(pbcext_element_G1_byte_size(&snym) == IERROR) return -1;
+
+  size64 = sizeof(uint8_t) + sizeof(int)*5 + suu + svv + sww +  sc + ss + snym + 3*sizeof(uint64_t) + klapseq_sig->seq->len1
+    + klapseq_sig->seq->len2 + klapseq_sig->seq->len3;
 
   if(size64 > INT_MAX) return -1;
   return (int) size64;
@@ -245,6 +287,37 @@ int klapseq_signature_export(byte_t **bytes,
   if(pbcext_dump_element_Fr_bytes(&__bytes, &len, klapseq_sig->pi->s) == IERROR) 
     GOTOENDRC(IERROR, klapseq_signature_export);
   ctr += len;  
+
+  /* Dump nym */
+  __bytes = &_bytes[ctr];
+  if(pbcext_dump_element_G1_bytes(&__bytes, &len, klapseq_sig->nym) == IERROR) 
+    GOTOENDRC(IERROR, klapseq_signature_export);
+  ctr += len;
+
+  /* Dump len1 */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->len1, sizeof(uint64_t));
+  ctr += sizeof(uint64_t);
+
+  /* Get seq1 */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->seq1, klapseq_sig->seq->len1);
+  ctr += klapseq_sig->seq->len1;
+
+  /* Dump len2 */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->len2, sizeof(uint64_t));
+  ctr += sizeof(uint64_t);
+
+  /* Get seq2 */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->seq2, klapseq_sig->seq->len2);
+  ctr += klapseq_sig->seq->len2;
+
+  /* Dump len3 */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->len3, sizeof(uint64_t));
+  ctr += sizeof(uint64_t);
+
+  /* Get seq3 */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->seq3, klapseq_sig->seq->len3);
+  ctr += klapseq_sig->seq->len3;
+
 
   /* Sanity check */
   if (ctr != _size) {
@@ -337,6 +410,55 @@ groupsig_signature_t* klapseq_signature_import(byte_t *source, uint32_t size) {
   if(pbcext_get_element_Fr_bytes(klapseq_sig->pi->s, &len, &source[ctr]) == IERROR)
     GOTOENDRC(IERROR, klapseq_signature_import);
   ctr += len;
+
+  /* Get nym */
+  if(!(klapseq_sig->nym = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, klapseq_signature_import);
+  if(pbcext_get_element_G1_bytes(klapseq_sig->nym, &len, &source[ctr]) == IERROR)
+    GOTOENDRC(IERROR, klapseq_signature_import);
+  if (!len) {
+    ctr += sizeof(int);  // @TODO: this is an artifact of pbcext_get_element_XX_bytes
+  } else {
+    ctr += len;
+  }
+
+   klapseq_sig->seq = (klapseq_seqinfo_t *) mem_malloc(sizeof(klapseq_seqinfo_t));
+  if (!klapseq_sig->seq) GOTOENDRC(IERROR, klapseq_signature_import);
+
+  /* Get len1 */
+  memcpy(&klapseq_sig->seq->len1, &source[ctr], sizeof(uint64_t));
+  ctr += sizeof(uint64_t);
+
+  /* Get seq1 */
+  if (!(klapseq_sig->seq->seq1 =
+	(byte_t *) mem_malloc(sizeof(byte_t)*klapseq_sig->seq->len1)))
+    GOTOENDRC(IERROR, klapseq_signature_import);
+  memcpy(klapseq_sig->seq->seq1, &source[ctr], klapseq_sig->seq->len1);
+  ctr += klapseq_sig->seq->len1;
+
+  /* Get len2 */
+  memcpy(&klapseq_sig->seq->len2, &source[ctr], sizeof(uint64_t));
+  ctr += sizeof(uint64_t);
+
+  /* Get seq2 */
+  if (!(klapseq_sig->seq->seq2 =
+	(byte_t *) mem_malloc(sizeof(byte_t)*klapseq_sig->seq->len2)))
+    GOTOENDRC(IERROR, klapseq_signature_import);
+  memcpy(klapseq_sig->seq->seq2, &source[ctr], klapseq_sig->seq->len2);
+  ctr += klapseq_sig->seq->len2;
+
+  /* Get len3 */
+  memcpy(&klapseq_sig->seq->len3, &source[ctr], sizeof(uint64_t));
+  ctr += sizeof(uint64_t);
+
+  /* Get seq3 */
+  if (!(klapseq_sig->seq->seq3 =
+	(byte_t *) mem_malloc(sizeof(byte_t)*klapseq_sig->seq->len3)))
+    GOTOENDRC(IERROR, klapseq_signature_import);
+  memcpy(klapseq_sig->seq->seq3, &source[ctr], klapseq_sig->seq->len3);
+  ctr += klapseq_sig->seq->len3;
+
+
 
  klapseq_signature_import_end:
 

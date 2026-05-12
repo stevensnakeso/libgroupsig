@@ -54,6 +54,9 @@ int klapseq_open(uint64_t *index,
   uint8_t match;
   int rc;
 
+  klapseq_proof_t *klapseq_proof;
+  klapseq_proof = proof->proof;
+
   if (!index || !sig || sig->scheme != GROUPSIG_KLAPSEQ_CODE ||
       !grpkey || grpkey->scheme != GROUPSIG_KLAPSEQ_CODE ||
       !mgrkey || mgrkey->scheme != GROUPSIG_KLAPSEQ_CODE ||
@@ -132,15 +135,15 @@ int klapseq_open(uint64_t *index,
   if (klapseq_signature_export(&bsig, &slen, sig) == IERROR)
     GOTOENDRC(IERROR, klapseq_open);
 
-  if (!(proof->proof = klapseq_spk1_init()))
+  if (!(klapseq_proof->spk1 = klapseq_spk1_init()))
     GOTOENDRC(IERROR, klapseq_open);
 
-  if (!(((klapseq_spk1_t *) proof->proof)->tau = pbcext_element_GT_init()))
+  if (!(((klapseq_spk1_t *) klapseq_proof->spk1)->tau = pbcext_element_GT_init()))
     GOTOENDRC(IERROR, klapseq_open);
-  if (pbcext_element_GT_set(((klapseq_spk1_t *) proof->proof)->tau, e3) == IERROR)
+  if (pbcext_element_GT_set(((klapseq_spk1_t *) klapseq_proof->spk1)->tau, e3) == IERROR)
     GOTOENDRC(IERROR, klapseq_open);
   
-  if (klapseq_spk1_sign(proof->proof,
+  if (klapseq_spk1_sign(klapseq_proof->spk1,
 		       ff,
 		       klapseq_sig->uu,
 		       klapseq_grpkey->g,
@@ -159,9 +162,9 @@ int klapseq_open(uint64_t *index,
   if (bsig) { mem_free(bsig); bsig = NULL; }
   
   if (rc == IERROR) {
-    if (proof->proof) {
-      klapseq_spk1_free(proof->proof);
-      proof->proof = NULL;
+    if (klapseq_proof->spk1) {
+      klapseq_spk1_free(klapseq_proof->spk1);
+      klapseq_proof->spk1 = NULL;
     }
   }
   

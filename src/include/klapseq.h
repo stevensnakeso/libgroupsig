@@ -321,6 +321,124 @@ int klapseq_open_verify(uint8_t *ok,
  * @var klapseq_groupsig_bundle
  * @brief The set of functions to manage KLAPSEQ groups.
  */
+
+/**
+ * @typedef int klapseq_link(groupsig_proof_t **proof,
+ *                        groupsig_key_t *grpkey,
+ *                        groupsig_key_t *memkey,
+ *                        message_t *msg,
+ *                        groupsig_signature_t **sigs,
+ *                        message_t **msgs,
+ *                        uint32_t n)
+ * @brief Issues a proof of several klapseq signatures being
+ *        linked (issued by the same member.)
+ *
+ * @param[in,out] proof The proof to be issued.
+ * @param[in] grpkey The group key.
+ * @param[in] memkey The key used for issuing the individual signatures.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures to link.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+ * @return IOK or IERROR.
+ */
+int klapseq_link(groupsig_proof_t **proof,
+                 groupsig_key_t *grpkey,
+                 groupsig_key_t *memkey,
+                 message_t *msg,
+                 groupsig_signature_t **sigs,
+                 message_t **msgs,
+                 uint32_t n);
+
+/**
+ * @fn int groupsig_verify_link(uint8_t *ok,
+ *                              groupsig_key_t *grpkey,
+ *                              groupsig_proof_t *proof,
+ *                              message_t *msg,
+ *                              groupsig_signature_t **sigs,
+ *                              message_t **msgs,
+ *                              uint32_t n)
+ * @brief Verifies proofs of several klapseq signatures being linked.
+ *
+ * @param[in,out] ok Will be set to 1 (proof valid) or 0 (proof invalid).
+ * @param[in] proof The proof to be verified.
+ * @param[in] grpkey The group key.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+ * @return IOK or IERROR.
+ */
+int klapseq_verify_link(uint8_t *ok,
+                        groupsig_key_t *grpkey,
+                        groupsig_proof_t *proof,
+                        message_t *msg,
+                        groupsig_signature_t **sigs,
+                        message_t **msgs,
+                        uint32_t n);
+
+
+/**
+ * @typedef int klapseq_seqlink(groupsig_proof_t **proof,
+ *                              groupsig_key_t *grpkey,
+ *                              groupsig_key_t *memkey,
+ *                              message_t *msg,
+ *                              groupsig_signature_t **sigs,
+ *                              message_t **msgs,
+ *                              uint32_t n)
+ * @brief Issues a proof of several klapseq signatures being
+ *        sequentially linked (issued by the same member.)
+ *
+ * @param[in,out] proof The proof to be issued.
+ * @param[in] grpkey The group key.
+ * @param[in] memkey The key used for issuing the individual signatures.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures to link.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+ * @return IOK or IERROR.
+ */
+int klapseq_seqlink(groupsig_proof_t **proof,
+                    groupsig_key_t *grpkey,
+                    groupsig_key_t *memkey,
+                    message_t *msg,
+                    groupsig_signature_t **sigs,
+                    message_t **msgs,
+                    uint32_t n);
+
+/**
+ * @fn int groupsig_verify_seqlink(uint8_t *ok,
+ *                              groupsig_key_t *grpkey,
+ *                              groupsig_proof_t *proof,
+ *                              message_t *msg,
+ *                              groupsig_signature_t **sigs,
+ *                              message_t **msgs,
+ *                              uint32_t n)
+ * @brief Verifies proofs of several klapseq signatures being sequentially
+ *  linked.
+ *
+ * @param[in,out] ok Will be set to 1 (proof valid) or 0 (proof invalid).
+ * @param[in] proof The proof to be verified.
+ * @param[in] grpkey The group key.
+ * @param[in] msg The message to add to the created proof (prevents replays.)
+ * @param[in] sigs The signatures.
+ * @param[in] msgs The signed messages.
+ * @param[in] n The size of the sig and msg arrays.
+ *
+n * @return IOK or IERROR.
+ */
+int klapseq_verify_seqlink(uint8_t *ok,
+                           groupsig_key_t *grpkey,
+                           groupsig_proof_t *proof,
+                           message_t *msg,
+                           groupsig_signature_t **sigs,
+                           message_t **msgs,
+                           uint32_t n);
+
+
 static const groupsig_t klapseq_groupsig_bundle = {
  desc: &klapseq_description, /**< Contains the KLAPSEQ scheme description. */
  init: &klapseq_init, /**< Initializes the variables needed by KLAPSEQ. */
@@ -345,10 +463,10 @@ static const groupsig_t klapseq_groupsig_bundle = {
  convert: NULL, /**< Converts blinded group signatures. */
  unblind: NULL, /**< Unblinds converted group signatures. */
  identify: NULL, // &identify, /**< Determines whether a signature has been issued by a member. */
- link: NULL, // &link,
- verify_link: NULL, // &link_verify
- seqlink: NULL, // &seqlink,
- verify_seqlink: NULL, // &seqlink_verify
+ link: &klapseq_link, // &link,
+ verify_link: &klapseq_verify_link, // &link_verify
+ seqlink: &klapseq_seqlink, // &seqlink,
+ verify_seqlink: &klapseq_verify_seqlink, // &seqlink_verify
 };
 
 #ifdef __cplusplus

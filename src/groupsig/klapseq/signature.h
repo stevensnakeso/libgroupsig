@@ -27,6 +27,20 @@
 #include "crypto/spk.h"
 
 /**
+ * @struct klapseq_seqinfo_t
+ * @brief Defines the sequencing information in KLAPSEQ signatures.
+ */
+typedef struct {
+  byte_t *seq1; /**< Computed as Hash(k',PRF(k,seq3)) */
+  uint64_t len1; /**< Size in bytes of seq1. */
+  byte_t *seq2; /**< Computed as Hash(k',PRF(k,seq3) xor Hash(k, PRF(k,i-1))) */
+  uint64_t len2; /**< Size in bytes of seq2. */
+  byte_t *seq3; /**< Computed as PRF(k,i) -- converted to byte */
+  uint64_t len3; /**< Size in bytes of seq3. */
+} klapseq_seqinfo_t;
+
+
+/**
  * @struct klapseq_signature_t
  * @brief Defines the structure of a KLAPSEQ signature.
  */
@@ -36,6 +50,8 @@ typedef struct {
   pbcext_element_G1_t *vv;
   pbcext_element_G1_t *ww;
   spk_dlog_t *pi;
+  pbcext_element_G1_t *nym;
+  klapseq_seqinfo_t *seq;
 } klapseq_signature_t;
 
 /** 

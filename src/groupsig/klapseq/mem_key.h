@@ -26,7 +26,7 @@
 #include "klapseq.h"
 #include "include/mem_key.h"
 #include "shim/pbc_ext.h"
-
+#include "crypto/prf.h"
 /**
  * @def KLAPSEQ_MEM_KEY_BEGIN_MSG
  * @brief Begin string to prepend to headers of files containing KLAPSEQ member keys
@@ -48,6 +48,8 @@ typedef struct {
   pbcext_element_G1_t *u;
   pbcext_element_G1_t *v; 
   pbcext_element_G1_t *w; 
+  prf_key_t *k; /**< Randomly picked by the Member. */
+  prf_key_t *kk; /**< Randomly picked by the Member. */
 } klapseq_mem_key_t;
 
 /** 

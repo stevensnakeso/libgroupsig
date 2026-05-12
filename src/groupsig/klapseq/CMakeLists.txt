@@ -14,7 +14,12 @@ add_library (klapseq
   open_verify.c
   gml.c gml.h
   spk.c spk.h
-  proof.c proof.h)
+  proof.c proof.h
+  link.c
+	verify_link.c
+	seqlink.c
+	verify_seqlink.c
+  )
 
 target_include_directories (klapseq PRIVATE ${OPENSSL_INCLUDE_DIR})
 target_link_libraries (klapseq PRIVATE ${OPENSSL_LIBRARIES})
