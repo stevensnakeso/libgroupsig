@@ -48,6 +48,7 @@ int klapseq_verify(uint8_t *ok,
   klapseq_grp_key_t *klapseq_grpkey;
   int rc;
   uint8_t _ok;
+  byte_t *msg_scp, *msg_msg;
 
   if(!ok || !msg || !sig || sig->scheme != GROUPSIG_KLAPSEQ_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_KLAPSEQ_CODE) {
@@ -61,14 +62,18 @@ int klapseq_verify(uint8_t *ok,
 
   e1 = e2 = e3 = NULL;
   _ok = 0;
-
+  msg_scp = NULL; msg_msg = NULL;
+  /* Parse message and scope values from msg */
+  if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR)
+    GOTOENDRC(IERROR, klapseq_verify);
+  if(message_json_get_key(&msg_scp, msg, "$.scope") == IERROR)
+    GOTOENDRC(IERROR, klapseq_verify);
   /* Verify SPK */
   if (spk_dlog_G1_verify(&_ok,
 			 klapseq_sig->ww,
 			 klapseq_sig->uu,
 			 klapseq_sig->pi,
-			 msg->bytes,
-			 msg->length) == IERROR)
+			 (byte_t *) msg_msg, strlen(msg_msg)) == IERROR)
     GOTOENDRC(IERROR, klapseq_verify);
 
   if (!_ok) {
@@ -131,6 +136,7 @@ int klapseq_verify_batch(uint8_t *ok,
   int rc;
   uint32_t i;
   uint8_t _ok;
+  char *msg_scp, *msg_msg;
 
   if(!ok || !msgs || !sigs ||
      !grpkey || grpkey->scheme != GROUPSIG_KLAPSEQ_CODE) {
@@ -176,14 +182,19 @@ if (!(g1 = pbcext_element_G1_init()))
     
     klapseq_sig = sigs[i]->sig;
     msg = msgs[i];
+    msg_scp = NULL; msg_msg = NULL;
+    /* Parse message and scope values from msg */
+    if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR)
+      GOTOENDRC(IERROR, klapseq_verify_batch);
+    if(message_json_get_key(&msg_scp, msg, "$.scope") == IERROR)
+      GOTOENDRC(IERROR, klapseq_verify_batch);
 
     /* Verify SPK */
     if (spk_dlog_G1_verify(&_ok,
 			   klapseq_sig->ww,
 			   klapseq_sig->uu,
 			   klapseq_sig->pi,
-			   msg->bytes,
-			   msg->length) == IERROR)
+			   (byte_t *) msg_msg, strlen(msg_msg)) == IERROR)
       GOTOENDRC(IERROR, klapseq_verify_batch);
 
     if (!_ok) {

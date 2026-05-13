@@ -218,7 +218,7 @@ int klapseq_mem_key_get_size(groupsig_key_t *key) {
   if(klapseq_key->kk) skk = klapseq_key->kk->len;  
 
 
-  size64 = sizeof(uint8_t)*2 + sizeof(int)*6+ salpha + su + sv + sw + sk + skk;
+  size64 = sizeof(uint8_t)*2 + sizeof(int)*4+ salpha + su + sv + sw + sk + skk + 2; //2 ctr++ 2 for code and type
 
   if(size64 > INT_MAX) return -1;
   return (int) size64;

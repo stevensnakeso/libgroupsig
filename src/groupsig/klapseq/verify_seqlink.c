@@ -192,7 +192,7 @@ int klapseq_verify_seqlink(uint8_t *ok,
   if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR)
     GOTOENDRC(IERROR, klapseq_verify_link);
 
-  spk = ((klapseq_proof_t *) proof->proof)->spk1;
+  spk = ((klapseq_proof_t *) proof->proof)->seq_proof->spk;
   if(spk_dlog_G1_verify(&_ok, nym_, hscp_, spk, (byte_t *) msg_msg,
 			strlen(msg_msg)) == IERROR)
     GOTOENDRC(IERROR, klapseq_verify_link);

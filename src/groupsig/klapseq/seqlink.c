@@ -160,7 +160,7 @@ int klapseq_seqlink(groupsig_proof_t **proof,
     pbcext_element_G1_from_hash(hscp, hc->hash, hc->length);
     hash_free(hc); hc = NULL;
     mem_free(msg_scp); msg_scp = NULL;
-    
+    mem_free(msg_msg); msg_msg = NULL;
     if(pbcext_element_G1_add(hscp_, hscp_, hscp) == IERROR)
       GOTOENDRC(IERROR, klapseq_link);
 
@@ -180,7 +180,7 @@ int klapseq_seqlink(groupsig_proof_t **proof,
   /* Compute the proof */
 
   if(!(_proof = klapseq_proof_init())) GOTOENDRC(IERROR, klapseq_link);
-  spk = ((klapseq_proof_t *) _proof->proof)->spk1;
+  spk = ((klapseq_proof_t *) _proof->proof)->seq_proof->spk;
   if(spk_dlog_G1_sign(spk, nym_, hscp_, klapseq_memkey->alpha, (byte_t *) msg_msg,
 		      strlen(msg_msg)) == IERROR) GOTOENDRC(IERROR, klapseq_link);
 

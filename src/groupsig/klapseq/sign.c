@@ -123,6 +123,9 @@ int klapseq_sign(groupsig_signature_t *sig,
   klapseq_mem_key_t *klapseq_memkey;
   int rc;
   klapseq_seqinfo_t *seq;
+  pbcext_element_G1_t *hscp;
+  hash_t *hc;
+  byte_t *msg_scp, *msg_msg;
   if(!sig || !msg || 
      !memkey || memkey->scheme != GROUPSIG_KLAPSEQ_CODE ||
      !grpkey || grpkey->scheme != GROUPSIG_KLAPSEQ_CODE) {
@@ -133,9 +136,14 @@ int klapseq_sign(groupsig_signature_t *sig,
   klapseq_sig = sig->sig;
   klapseq_grpkey = grpkey->key;
   klapseq_memkey = memkey->key;
+  msg_msg = NULL; msg_scp = NULL;
   r = NULL;
   rc = IOK;
-
+  /* Parse message and scope values from msg */
+  if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR)
+    GOTOENDRC(IERROR, klapseq_sign);
+  if(message_json_get_key(&msg_scp, msg, "$.scope") == IERROR)
+    GOTOENDRC(IERROR, klapseq_sign);
   /* Randomize u, v and w */
   if (!(r = pbcext_element_Fr_init())) GOTOENDRC(IERROR, klapseq_sign);
   if (pbcext_element_Fr_random(r) == IERROR) GOTOENDRC(IERROR, klapseq_sign);
@@ -157,13 +165,30 @@ int klapseq_sign(groupsig_signature_t *sig,
 		       klapseq_sig->ww,
 		       klapseq_sig->uu,
 		       klapseq_memkey->alpha,
-		       msg->bytes,
-		       msg->length) == IERROR)
+		       (byte_t *) msg_msg, strlen(msg_msg)) == IERROR)
     GOTOENDRC(IERROR, klapseq_sign);
   
   /* Compute seq */
   if(!(seq = (klapseq_seqinfo_t *) mem_malloc(sizeof(klapseq_seqinfo_t))))
     GOTOENDRC(IERROR, klapseq_sign);
+
+  /* Compute h_{scp} = Hash(scp) */
+  if (!(hscp = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, klapseq_sign);
+  if(!(hc = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, klapseq_sign);
+  if(hash_update(hc, (byte_t *) msg_scp, strlen(msg_scp)) == IERROR)
+    GOTOENDRC(IERROR, klapseq_sign);
+  if(hash_finalize(hc) == IERROR) GOTOENDRC(IERROR, klapseq_sign);
+  pbcext_element_G1_from_hash(hscp, hc->hash, hc->length);
+
+  /* Compute nym*/
+  if (!(klapseq_sig->nym = pbcext_element_G1_init()))
+    GOTOENDRC(IERROR, klapseq_sign);
+
+  
+  if (pbcext_element_G1_mul(klapseq_sig->nym, hscp, klapseq_memkey->alpha) == IERROR)
+    GOTOENDRC(IERROR, klapseq_sign);
+  
 
   if (_klap_compute_seq(klapseq_memkey, seq, state) == IERROR)
     GOTOENDRC(IERROR, klapseq_sign);

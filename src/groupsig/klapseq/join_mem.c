@@ -85,6 +85,15 @@ int klapseq_join_mem(message_t **mout, groupsig_key_t *memkey,
   rc = IOK;
   
   if (seq == 1) { /* Second step of the <join,issue> interactive protocol.*/
+    /*init prf keys*/
+    if(!(klapseq_memkey->kk = prf_key_init()))
+      GOTOENDRC(IERROR, klapseq_join_mem);
+    if(prf_key_init_random(klapseq_memkey->kk) == IERROR)
+      GOTOENDRC(IERROR, klapseq_join_mem);
+    if(!(klapseq_memkey->k = prf_key_init()))
+      GOTOENDRC(IERROR, klapseq_join_mem);
+    if(prf_key_init_random(klapseq_memkey->k) == IERROR)
+      GOTOENDRC(IERROR, klapseq_join_mem);
 
     /* The manager sends a random element in G1 */
     if(!(n = pbcext_element_G1_init()))

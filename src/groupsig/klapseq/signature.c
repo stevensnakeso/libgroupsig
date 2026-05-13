@@ -151,9 +151,7 @@ int klapseq_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src)
     GOTOENDRC(IERROR, klapseq_signature_copy);
   if(pbcext_element_G1_set(klapseq_dst->nym, klapseq_src->nym) == IERROR)
     GOTOENDRC(IERROR, klapseq_signature_copy);
-  if(!(klapseq_dst->seq = (klapseq_seqinfo_t *) mem_malloc(sizeof(klapseq_seqinfo_t))))
-    GOTOENDRC(IERROR, klapseq_signature_copy);
-  memcpy(klapseq_dst->seq, klapseq_src->seq, sizeof(klapseq_seqinfo_t));
+
   
  klapseq_signature_copy_end:
 
@@ -178,19 +176,7 @@ int klapseq_signature_copy(groupsig_signature_t *dst, groupsig_signature_t *src)
       pbcext_element_G1_free(klapseq_dst->nym);
       klapseq_dst->nym = NULL;
     }
-    if(klapseq_dst->seq) {
-      if(klapseq_dst->seq->seq1) {
-      mem_free(klapseq_dst->seq->seq1);
-          }
-          if(klapseq_dst->seq->seq2) {
-      mem_free(klapseq_dst->seq->seq2);
-          }
-          if(klapseq_dst->seq->seq3) {
-      mem_free(klapseq_dst->seq->seq3);
-          }
-      mem_free(klapseq_dst->seq);
-      klapseq_dst->seq = NULL;
-    }
+
   }
   
   return rc;
@@ -219,7 +205,7 @@ int klapseq_signature_get_size(groupsig_signature_t *sig) {
   if(pbcext_element_Fr_byte_size(&ss) == IERROR) return -1;  
   if(pbcext_element_G1_byte_size(&snym) == IERROR) return -1;
 
-  size64 = sizeof(uint8_t) + sizeof(int)*5 + suu + svv + sww +  sc + ss + snym + 3*sizeof(uint64_t) + klapseq_sig->seq->len1
+  size64 = sizeof(uint8_t) + sizeof(int)*6 + suu + svv + sww +  sc + ss + snym + 3*sizeof(uint64_t) + klapseq_sig->seq->len1
     + klapseq_sig->seq->len2 + klapseq_sig->seq->len3;
 
   if(size64 > INT_MAX) return -1;
