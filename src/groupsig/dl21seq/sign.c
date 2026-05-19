@@ -50,18 +50,18 @@ static int _dl21_compute_seq(dl21seq_mem_key_t *memkey,
   /* Compute seq3 = PRF(k,state) */
   seq->seq3 = NULL;
   if (prf_compute(&seq->seq3, &seq->len3,
-		  memkey->k, (byte_t*) &state, sizeof(unsigned int)) == IERROR)
+		  memkey->k, (byte_t*) &state, sizeof(unsigned int)) == IERROR) //1
     GOTOENDRC(IERROR, _dl21_compute_seq);
   
   /* Compute x_i = PRF(k',state) */
-  if (prf_compute(&xi, &len, memkey->kk, seq->seq3, seq->len3) == IERROR)
+  if (prf_compute(&xi, &len, memkey->kk, seq->seq3, seq->len3) == IERROR) //3
     GOTOENDRC(IERROR, _dl21_compute_seq);
   
   /* seq1 = Hash(x_i) */
   if(!(hc = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, _dl21_compute_seq);
   if(hash_update(hc, xi, len) == IERROR) GOTOENDRC(IERROR, _dl21_compute_seq);
   if(hash_finalize(hc) == IERROR) GOTOENDRC(IERROR, _dl21_compute_seq);
-  if (!(seq->seq1 = (byte_t *) mem_malloc(sizeof(byte_t)*hc->length)))
+  if (!(seq->seq1 = (byte_t *) mem_malloc(sizeof(byte_t)*hc->length))) // 4
     GOTOENDRC(IERROR, _dl21_compute_seq);
   memcpy(seq->seq1, hc->hash, hc->length);
   seq->len1 = hc->length;

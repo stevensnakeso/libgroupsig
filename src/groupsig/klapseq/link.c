@@ -30,6 +30,7 @@
 #include "groupsig/klapseq/mem_key.h"
 #include "groupsig/klapseq/signature.h"
 //#include "groupsig/klapseq/identity.h"
+#include "groupsig/klapseq/open.h"
 #include "groupsig/klapseq/proof.h"
 #include "shim/hash.h"
 #include "shim/pbc_ext.h"
@@ -87,7 +88,9 @@ int klapseq_link(groupsig_proof_t **proof,
 
     /* Check if it is a signature issued by memkey */
     // if (klapseq_identify(&ok, NULL, grpkey, memkey, sigs[i], msgs[i]) == IERROR)
-    //   GOTOENDRC(IERROR, klapseq_link);
+    //   GOTOENDRC(IERROR, klapseq_link); signer should know that the signature is from memkey, so we can skip this step
+    
+
 
     if (!ok) {
       GOTOENDRC(IFAIL, klapseq_link);
