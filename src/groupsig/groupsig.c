@@ -272,6 +272,32 @@ int groupsig_sign(groupsig_signature_t *sig,
 
 }
 
+int groupsig_sign2(groupsig_signature_t *sig,
+                  message_t *msg,
+                  groupsig_key_t *memkey,
+                  groupsig_key_t *grpkey,
+                  unsigned int *x,
+                  unsigned int *y,
+                  int header) {
+
+  const groupsig_t *gs;
+
+  if(!sig || !msg || !memkey || !grpkey ||
+     sig->scheme != memkey->scheme || memkey->scheme != grpkey->scheme) {
+    LOG_EINVAL(&logger, __FILE__, "groupsig_sign2", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  /* Get the group signature scheme from its code */
+  if(!(gs = groupsig_get_groupsig_from_code(grpkey->scheme))) {
+    return IERROR;
+  }
+
+  /* Run the SIGN action */
+  return gs->sign2(sig, msg, memkey, grpkey, x, y, header);
+
+}
+
 int groupsig_verify(uint8_t *ok,
                     groupsig_signature_t *sig,
                     message_t *msg,
@@ -781,6 +807,33 @@ int groupsig_seqlink(groupsig_proof_t **proof,
 
 }
 
+int groupsig_seqlink2(groupsig_proof_t **proof,
+                     groupsig_key_t *grpkey,
+                     groupsig_key_t *memkey,
+                     message_t *msg,
+                     groupsig_signature_t **sigs,
+                     message_t **msgs,
+                     uint32_t n,
+                     int header) {
+
+  const groupsig_t *gs;
+
+  /* Check for mandatory parameters */
+  if(!proof || !grpkey || !memkey || !msg || !sigs || !msgs || !n) {
+    LOG_EINVAL(&logger, __FILE__, "groupsig_seqlink", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  /* Get the group signature scheme from its code */
+  if(!(gs = groupsig_get_groupsig_from_code(grpkey->scheme))) {
+    return IERROR;
+  }
+
+  /* Run the LINK action */
+  return gs->seqlink2(proof, grpkey, memkey, msg, sigs, msgs, n, header);
+
+}
+
 int groupsig_verify_seqlink(uint8_t *ok,
                             groupsig_key_t *grpkey,
                             groupsig_proof_t *proof,
@@ -804,6 +857,33 @@ int groupsig_verify_seqlink(uint8_t *ok,
 
   /* Run the LINK action */
   return gs->verify_seqlink(ok, grpkey, proof, msg, sigs, msgs, n);
+
+}
+
+int groupsig_verify_seqlink2(uint8_t *ok,
+                            groupsig_key_t *grpkey,
+                            groupsig_proof_t *proof,
+                            message_t *msg,
+                            groupsig_signature_t **sigs,
+                            message_t **msgs,
+                            uint32_t n,
+                            int header) {
+
+  const groupsig_t *gs;
+
+  /* Check for mandatory parameters */
+  if(!ok || !proof || !grpkey || !msg || !sigs || !msgs || !n) {
+    LOG_EINVAL(&logger, __FILE__, "groupsig_verify_seqlink", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  /* Get the group signature scheme from its code */
+  if(!(gs = groupsig_get_groupsig_from_code(grpkey->scheme))) {
+    return IERROR;
+  }
+
+  /* Run the LINK action */
+  return gs->verify_seqlink2(ok, grpkey, proof, msg, sigs, msgs, n, header);
 
 }
 

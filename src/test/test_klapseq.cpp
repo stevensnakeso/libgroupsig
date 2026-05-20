@@ -1660,4 +1660,219 @@ namespace groupsig {
 
   }  
 
+
+    /* Successfully creates a valid signature2 */
+  TEST_F(KLAPSEQTest, SignVerifyValid2) {
+
+    groupsig_signature_t *sig;
+    message_t *msg;
+    int rc;
+    uint8_t b;
+
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature object */
+    sig = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* Initialize a message with a test string */
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+    EXPECT_NE(msg, nullptr);
+
+    unsigned int *x,*y;
+    x = (unsigned int *) malloc(sizeof(unsigned int));
+    y = (unsigned int *) malloc(sizeof(unsigned int));
+    *x = 0;
+    *y = 0;
+    /* Sign */
+    rc = groupsig_sign2(sig, msg, memkey[0], grpkey, x, y, 0);
+    EXPECT_EQ(rc, IOK);
+
+    /* Verify the signature */
+    rc = groupsig_verify(&b, sig, msg, grpkey);
+    EXPECT_EQ(rc, IOK);
+
+    /* b must be 1 */
+    EXPECT_EQ(b, 1);
+
+    /* Free stuff */
+    rc = groupsig_signature_free(sig);
+    EXPECT_EQ(rc, IOK);
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+  }
+
+  /* Successfully seqlinks 2 signatures by the same user */
+  TEST_F(KLAPSEQTest, SuccessfullySeqLinkSigsSameUser2) {
+
+    groupsig_signature_t *sig1, *sig2, **sigs;
+    groupsig_proof_t *proof;
+    message_t *msg, **msgs;
+    int rc;
+    uint8_t b;
+     unsigned int *x,*y;
+    x = (unsigned int *) malloc(sizeof(unsigned int));
+    y = (unsigned int *) malloc(sizeof(unsigned int));
+    *x = 0;
+    *y = 0;
+    int header = 1;
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature objects */
+    sig1 = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig1, nullptr);
+
+    sig2 = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig2, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* 
+       Initialize a message with a test string 
+       (KLAPSEQ messages are JSON objects with scope and message) 
+    */
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+    EXPECT_NE(msg, nullptr);
+    
+    /* Sign */
+    rc = groupsig_sign2(sig1, msg, memkey[0], grpkey, x, y, header);
+    EXPECT_EQ(rc, IOK);
+    
+    rc = groupsig_sign2(sig2, msg, memkey[0], grpkey, x, y, header);
+    EXPECT_EQ(rc, IOK);    
+
+    /* Link the signatures */
+    msgs = (message_t **) malloc(sizeof(message_t *)*2);
+    EXPECT_NE(msgs, nullptr);
+
+    msgs[0] = msg;
+    msgs[1] = msg;
+
+    sigs = (groupsig_signature_t **) malloc(sizeof(groupsig_signature_t *)*2);
+    EXPECT_NE(sigs, nullptr);    
+    
+    sigs[0] = sig1;
+    sigs[1] = sig2;
+
+    proof = nullptr;
+    rc = groupsig_seqlink2(&proof, grpkey, memkey[0], msg, sigs, msgs, 2 , header);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_verify_seqlink2(&b, grpkey, proof, msg, sigs, msgs, 2, header);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 1);
+
+    /* Free stuff */
+    rc = groupsig_signature_free(sig1);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig2);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_proof_free(proof);
+    EXPECT_EQ(rc, IOK);    
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    free(msgs);
+    free(sigs);
+
+  }
+  /* Successfully seqlinks 2 signatures by the same user */
+  TEST_F(KLAPSEQTest, SuccessfullySeqLinkSigsSameUser2Y) {
+
+    groupsig_signature_t *sig1, *sig2, **sigs;
+    groupsig_proof_t *proof;
+    message_t *msg, **msgs;
+    int rc;
+    uint8_t b;
+     unsigned int *x,*y;
+    x = (unsigned int *) malloc(sizeof(unsigned int));
+    y = (unsigned int *) malloc(sizeof(unsigned int));
+    *x = 0;
+    *y = 0;
+    int header = 0;
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, isskey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_setup(GROUPSIG_KLAPSEQ_CODE, grpkey, opnkey, gml);
+    EXPECT_EQ(rc, IOK);
+
+    /* Initialize the group signature objects */
+    sig1 = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig1, nullptr);
+
+    sig2 = groupsig_signature_init(grpkey->scheme);
+    EXPECT_NE(sig2, nullptr);
+
+    /* Add one member */
+    addMembers(1);
+
+    /* 
+       Initialize a message with a test string 
+       (KLAPSEQ messages are JSON objects with scope and message) 
+    */
+    msg = message_from_string((char *) "{ \"scope\": \"scp\", \"message\": \"Hello, World!\" }");
+    EXPECT_NE(msg, nullptr);
+    
+    /* Sign */
+    rc = groupsig_sign2(sig1, msg, memkey[0], grpkey, x, y, header);
+    EXPECT_EQ(rc, IOK);
+    
+    rc = groupsig_sign2(sig2, msg, memkey[0], grpkey, x, y, header);
+    EXPECT_EQ(rc, IOK);    
+
+    /* Link the signatures */
+    msgs = (message_t **) malloc(sizeof(message_t *)*2);
+    EXPECT_NE(msgs, nullptr);
+
+    msgs[0] = msg;
+    msgs[1] = msg;
+
+    sigs = (groupsig_signature_t **) malloc(sizeof(groupsig_signature_t *)*2);
+    EXPECT_NE(sigs, nullptr);    
+    
+    sigs[0] = sig1;
+    sigs[1] = sig2;
+
+    proof = nullptr;
+    rc = groupsig_seqlink2(&proof, grpkey, memkey[0], msg, sigs, msgs, 2 , header);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_verify_seqlink2(&b, grpkey, proof, msg, sigs, msgs, 2, header);
+    EXPECT_EQ(rc, IOK);
+    EXPECT_EQ(b, 1);
+
+    /* Free stuff */
+    rc = groupsig_signature_free(sig1);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_signature_free(sig2);
+    EXPECT_EQ(rc, IOK);
+
+    rc = groupsig_proof_free(proof);
+    EXPECT_EQ(rc, IOK);    
+
+    rc = message_free(msg);
+    EXPECT_EQ(rc, IOK);
+
+    free(msgs);
+    free(sigs);
+
+  }
 }  // namespace groupsig

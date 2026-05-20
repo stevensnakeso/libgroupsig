@@ -78,7 +78,64 @@ static int _klapseq_compute_sequence(klapseq_proof_t *proof,
   proof->seq_proof->n = n;
 
  _klapseq_compute_sequence_end:
+  if (rc == IERROR) {
+    if (xi) {
+      for (i=0; i<n; i++) { if (xi[i]) { mem_free(xi[i]); xi[i] = NULL; } }
+      mem_free(xi); xi = NULL;
+    }
+    if (xilen) { mem_free(xilen); xilen = NULL; }
+  }
 
+  return rc;
+  
+}
+
+static int _klapseq_compute_sequence2(klapseq_proof_t *proof,
+				     klapseq_mem_key_t *memkey,
+				     groupsig_signature_t **sigs,
+             int header) {
+
+  klapseq_signature_t *klapseq_sig;
+  byte_t **xi;
+  uint64_t len, *xilen, n;
+  uint32_t i;
+  int rc;
+
+  if (!proof || !memkey || !sigs || !proof->seq_proof->n) {
+    LOG_EINVAL(&logger, __FILE__, "_klapseq_compute_sequence",
+	       __LINE__, LOGERROR);
+    return IERROR; 
+  }
+
+  rc = IOK;
+  n = proof->seq_proof->n;
+  
+  if (!(xi = (byte_t **) mem_malloc(sizeof(byte_t *)*n))) {
+    return IERROR;
+  }
+
+  memset(xi, 0, n*sizeof(byte_t *));
+  if (!(xilen = (uint64_t *) mem_malloc(sizeof(uint64_t)*n))) {
+    return IERROR;
+  }
+
+  /* x[i] = PRF(k',n[i]) = PRF(k',seq3[i]) */
+  for (i=0; i<n; i++) {
+    klapseq_sig = sigs[i]->sig;
+    if(prf_compute(&xi[i], &len, memkey->kk,
+		   klapseq_sig->seq->seq4,
+		   klapseq_sig->seq->len4) == IERROR) {
+      
+      GOTOENDRC(IERROR, _klapseq_compute_sequence);
+    }
+    xilen[i] = len;
+  }
+
+  proof->seq_proof->x = xi;
+  proof->seq_proof->xlen = xilen;
+  proof->seq_proof->n = n;
+
+ _klapseq_compute_sequence_end:
   if (rc == IERROR) {
     if (xi) {
       for (i=0; i<n; i++) { if (xi[i]) { mem_free(xi[i]); xi[i] = NULL; } }
@@ -189,6 +246,128 @@ int klapseq_seqlink(groupsig_proof_t **proof,
   if(_klapseq_compute_sequence(_proof->proof,
 			       klapseq_memkey,
 			       sigs) == IERROR)
+    GOTOENDRC(IERROR, klapseq_link);
+
+  if (!*proof) {
+    *proof = _proof;
+  } else {
+    if (klapseq_proof_copy(*proof, _proof) == IERROR)
+      GOTOENDRC(IERROR, klapseq_link);
+    klapseq_proof_free(_proof); _proof = NULL;
+  }
+  
+ klapseq_link_end:
+
+  if(msg_msg) { mem_free(msg_msg); msg_msg = NULL; }
+  if(hscp) { pbcext_element_G1_free(hscp); hscp = NULL; }
+  if(hscp_) { pbcext_element_G1_free(hscp_); hscp_ = NULL; }  
+  if(nym_) { pbcext_element_G1_free(nym_); nym_ = NULL; }
+  if(hc) { hash_free(hc); hc = NULL; }
+  if(rc == IERROR) { groupsig_proof_free(_proof); _proof = NULL; }
+  
+  return rc;
+
+}
+
+int klapseq_seqlink2(groupsig_proof_t **proof,
+		    groupsig_key_t *grpkey,
+		    groupsig_key_t *memkey,
+		    message_t *msg,
+		    groupsig_signature_t **sigs,
+		    message_t **msgs,
+		    uint32_t n,
+        int header) {
+  
+  pbcext_element_G1_t *hscp, *hscp_, *nym_;
+  klapseq_signature_t *klapseq_sig;
+  klapseq_mem_key_t *klapseq_memkey;
+  /* klapseq_sysenv_t *klapseq_sysenv; */
+  groupsig_proof_t *_proof;
+  spk_dlog_t *spk;
+  hash_t *hc;
+  char *msg_scp, *msg_msg;
+  int rc;
+  uint32_t i;
+  uint8_t ok;
+
+  if(!proof ||
+     !grpkey || grpkey->scheme != GROUPSIG_KLAPSEQ_CODE ||
+     !memkey || memkey->scheme != GROUPSIG_KLAPSEQ_CODE ||
+     !msg || !sigs || !msgs || !n) {  
+    LOG_EINVAL(&logger, __FILE__, "klapseq_link", __LINE__, LOGERROR);
+    return IERROR;
+  }
+
+  rc = IOK;
+  hscp = NULL; hscp_ = NULL; nym_ = NULL;
+  hc = NULL;
+  msg_scp = NULL; msg_msg = NULL;
+  
+  klapseq_memkey = memkey->key;
+
+  if(!(hscp = pbcext_element_G1_init())) GOTOENDRC(IERROR, klapseq_link);
+  if(!(hscp_ = pbcext_element_G1_init())) GOTOENDRC(IERROR, klapseq_link);
+  if(pbcext_element_G1_clear(hscp_) == IERROR) GOTOENDRC(IERROR, klapseq_link);
+  if(!(nym_ = pbcext_element_G1_init())) GOTOENDRC(IERROR, klapseq_link);
+  if(pbcext_element_G1_clear(nym_) == IERROR) GOTOENDRC(IERROR, klapseq_link);
+
+  /* Iterate through all signatures, verify, identify and
+     compute batched scope and nym */
+  for (i=0; i<n; i++ ) {
+
+    /* Verify signature */
+    if (klapseq_verify(&ok, sigs[i], msgs[i], grpkey) == IERROR)
+      GOTOENDRC(IERROR, klapseq_link);
+    if (!ok) GOTOENDRC(IFAIL, klapseq_link);
+
+    /* Check if it is a signature issued by memkey */
+    // if (klapseq_identify(&ok, NULL, grpkey, memkey, sigs[i], msgs[i]) == IERROR)
+    //   GOTOENDRC(IERROR, klapseq_link);
+    
+    if (!ok) {
+      GOTOENDRC(IFAIL, klapseq_link);
+    }
+    
+    /* "Accumulate" scp */
+    if(message_json_get_key(&msg_scp, msgs[i], "$.scope") == IERROR)
+      GOTOENDRC(IERROR, klapseq_link);
+
+    if(!(hc = hash_init(HASH_BLAKE2))) GOTOENDRC(IERROR, klapseq_link);
+    if(hash_update(hc, (byte_t *) msg_scp, strlen(msg_scp)) == IERROR)
+      GOTOENDRC(IERROR, klapseq_link);
+    if(hash_finalize(hc) == IERROR) GOTOENDRC(IERROR, klapseq_link);
+    pbcext_element_G1_from_hash(hscp, hc->hash, hc->length);
+    hash_free(hc); hc = NULL;
+    mem_free(msg_scp); msg_scp = NULL;
+    mem_free(msg_msg); msg_msg = NULL;
+    if(pbcext_element_G1_add(hscp_, hscp_, hscp) == IERROR)
+      GOTOENDRC(IERROR, klapseq_link);
+
+  }
+
+  /* nym_ = hscp_^y */
+  if(pbcext_element_G1_mul(nym_, hscp_, klapseq_memkey->alpha) == IERROR)
+    GOTOENDRC(IERROR, klapseq_link);
+
+  /* Do the SPK */
+
+  // For now, we just use the .msg part of the msg JSON, but
+  // the .scp part might come in handy in the future
+  if(message_json_get_key(&msg_msg, msg, "$.message") == IERROR)
+    GOTOENDRC(IERROR, klapseq_link);  
+
+  /* Compute the proof */
+
+  if(!(_proof = klapseq_proof_init())) GOTOENDRC(IERROR, klapseq_link);
+  spk = ((klapseq_proof_t *) _proof->proof)->seq_proof->spk;
+  if(spk_dlog_G1_sign(spk, nym_, hscp_, klapseq_memkey->alpha, (byte_t *) msg_msg,
+		      strlen(msg_msg)) == IERROR) GOTOENDRC(IERROR, klapseq_link);
+
+  ((klapseq_proof_t *) _proof->proof)->seq_proof->n = n;
+
+  if(_klapseq_compute_sequence2(_proof->proof,
+			       klapseq_memkey,
+			       sigs, header ) == IERROR)
     GOTOENDRC(IERROR, klapseq_link);
 
   if (!*proof) {

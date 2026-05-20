@@ -94,6 +94,9 @@ int klapseq_signature_free(groupsig_signature_t *sig) {
       klapseq_sig->nym = NULL;
     }
     if(klapseq_sig->seq) {
+      // if(klapseq_sig->seq->header) {
+      //   mem_free(klapseq_sig->seq->header);
+      // }//??
       if(klapseq_sig->seq->seq1) {
       mem_free(klapseq_sig->seq->seq1);
           }
@@ -102,6 +105,9 @@ int klapseq_signature_free(groupsig_signature_t *sig) {
           }
           if(klapseq_sig->seq->seq3) {
       mem_free(klapseq_sig->seq->seq3);
+          }
+          if(klapseq_sig->seq->seq4) {
+      mem_free(klapseq_sig->seq->seq4);
           }
       mem_free(klapseq_sig->seq);
       klapseq_sig->seq = NULL;
@@ -205,8 +211,8 @@ int klapseq_signature_get_size(groupsig_signature_t *sig) {
   if(pbcext_element_Fr_byte_size(&ss) == IERROR) return -1;  
   if(pbcext_element_G1_byte_size(&snym) == IERROR) return -1;
 
-  size64 = sizeof(uint8_t) + sizeof(int)*6 + suu + svv + sww +  sc + ss + snym + 3*sizeof(uint64_t) + klapseq_sig->seq->len1
-    + klapseq_sig->seq->len2 + klapseq_sig->seq->len3;
+  size64 = sizeof(uint8_t) + sizeof(int)*6 + suu + svv + sww +  sc + ss + snym + 4*sizeof(uint64_t) + sizeof(int) +  klapseq_sig->seq->len1
+    + klapseq_sig->seq->len2 + klapseq_sig->seq->len3 + klapseq_sig->seq->len4;
 
   if(size64 > INT_MAX) return -1;
   return (int) size64;
@@ -280,6 +286,10 @@ int klapseq_signature_export(byte_t **bytes,
     GOTOENDRC(IERROR, klapseq_signature_export);
   ctr += len;
 
+  /* Dump header */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->header, sizeof(int));
+  ctr += sizeof(int);
+
   /* Dump len1 */
   memcpy(&_bytes[ctr], &klapseq_sig->seq->len1, sizeof(uint64_t));
   ctr += sizeof(uint64_t);
@@ -303,6 +313,14 @@ int klapseq_signature_export(byte_t **bytes,
   /* Get seq3 */
   memcpy(&_bytes[ctr], &klapseq_sig->seq->seq3, klapseq_sig->seq->len3);
   ctr += klapseq_sig->seq->len3;
+
+  /* Dump len4 */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->len4, sizeof(uint64_t));
+  ctr += sizeof(uint64_t);
+
+  /* Get seq4 */
+  memcpy(&_bytes[ctr], &klapseq_sig->seq->seq4, klapseq_sig->seq->len4);
+  ctr += klapseq_sig->seq->len4;
 
 
   /* Sanity check */
@@ -408,8 +426,12 @@ groupsig_signature_t* klapseq_signature_import(byte_t *source, uint32_t size) {
     ctr += len;
   }
 
-   klapseq_sig->seq = (klapseq_seqinfo_t *) mem_malloc(sizeof(klapseq_seqinfo_t));
+  klapseq_sig->seq = (klapseq_seqinfo_t *) mem_malloc(sizeof(klapseq_seqinfo_t));
   if (!klapseq_sig->seq) GOTOENDRC(IERROR, klapseq_signature_import);
+
+  /* Get header */
+  memcpy(&klapseq_sig->seq->header, &source[ctr], sizeof(int));
+  ctr += sizeof(int);
 
   /* Get len1 */
   memcpy(&klapseq_sig->seq->len1, &source[ctr], sizeof(uint64_t));
@@ -444,7 +466,21 @@ groupsig_signature_t* klapseq_signature_import(byte_t *source, uint32_t size) {
   memcpy(klapseq_sig->seq->seq3, &source[ctr], klapseq_sig->seq->len3);
   ctr += klapseq_sig->seq->len3;
 
+  /* Get len4 */
+  memcpy(&klapseq_sig->seq->len4, &source[ctr], sizeof(uint64_t));
+  ctr += sizeof(uint64_t);
 
+  /* Get seq4 */
+  if(klapseq_sig->seq->len4 != 0) {
+
+    if (!(klapseq_sig->seq->seq4 =
+    (byte_t *) mem_malloc(sizeof(byte_t)*klapseq_sig->seq->len4)))
+      GOTOENDRC(IERROR, klapseq_signature_import);
+    memcpy(klapseq_sig->seq->seq4, &source[ctr], klapseq_sig->seq->len4);
+    ctr += klapseq_sig->seq->len4;
+  }else {
+    klapseq_sig->seq->seq4 = NULL;
+  }
 
  klapseq_signature_import_end:
 

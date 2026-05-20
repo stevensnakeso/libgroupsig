@@ -30,7 +30,6 @@
 #include "groupsig/klapseq/mem_key.h"
 #include "groupsig/klapseq/signature.h"
 //#include "groupsig/klapseq/identity.h"
-#include "groupsig/klapseq/open.h"
 #include "groupsig/klapseq/proof.h"
 #include "shim/hash.h"
 #include "shim/pbc_ext.h"

@@ -205,6 +205,37 @@ extern "C" {
 			groupsig_key_t *grpkey,
 			unsigned int seed);
 
+    /**
+   * @typedef int (*sign_f)(groupsig_signature_t *sig, message_t *msg, groupsig_key_t *memkey,
+   *		      groupsig_key_t *grpkey, unsigned int seed)
+   * @brief Type of functions for signing messages.
+   *
+   * @param[in,out] sig An initialized group signature structure. Will be set to the
+   *  produced signature.
+   * @param[in] msg The message to sign.
+   * @param[in] memkey The member key for signing.
+   * @param[in] grpkey The group key.
+   * @param[in] x When set to a value different to UINT_MAX, the system's pseudo
+   *  random number generator will be reseeded with the specified value (allowing to
+   *  re-generate signatures). Otherwise, the random number generator state will not
+   *  be modified. In any case, the random generator will be randomly reseeded after
+   *  signing.
+   * @param[in] y When set to a value different to UINT_MAX, the system's pseudo
+   *  random number generator will be reseeded with the specified value (allowing to
+   *  re-generate signatures). Otherwise, the random number generator state will not
+   *  be modified. In any case, the random generator will be randomly reseeded after
+   *  signing.
+   *
+   * @return IOK or IERROR.
+   */
+  typedef int (*sign2_f)(groupsig_signature_t *sig,
+			message_t *msg,
+			groupsig_key_t *memkey,
+			groupsig_key_t *grpkey,
+			unsigned int *x,
+      unsigned int *y,
+      int header);
+
   /**
    * @typedef int (*verify_f)(uint8_t *ok, groupsig_signature_t *sig, message_t *msg,
    *			groupsig_key_t *grpkey)
@@ -611,6 +642,7 @@ extern "C" {
 			groupsig_signature_t **sigs,
 			message_t **msgs,
 			uint32_t n);
+      
 
   /**
    * @typedef int (*verify_link_f)(uint8_t *ok,
@@ -671,6 +703,37 @@ extern "C" {
 			   groupsig_signature_t **sigs,
 			   message_t **msgs,
 			   uint32_t n);
+  /**
+   * @typedef int (*seqlink2_f)(groupsig_proof_t **proof,
+   *                           groupsig_key_t *grpkey,
+   *                           groupsig_key_t *memkey,
+   *                           message_t *msg,
+   *                           groupsig_signature_t **sigs,
+   *                           message_t **msgs,
+   *                           uint32_t n)
+   * @brief Type of functions for issuing proofs of several signatures being
+   *        sequentially linked (the *sigs array must be correctly ordered!)
+   *
+   * @param[in,out] proof The proof to be issued.
+   * @param[in] grpkey The group key.
+   * @param[in] memkey The key used for issuing the individual signatures.
+   * @param[in] msg The message to add to the created proof (prevents replays.)
+   * @param[in] sigs The signatures to sequentially link.
+   * @param[in] msgs The signed messages.
+   * @param[in] n The size of the sig and msg arrays.
+   *
+   * @return IOK if link was produced correctly; IFAIL if the signatures
+   * do not verify correctly or identify to the user. IERROR if something
+   * misbehaved.
+   */
+  typedef int (*seqlink2_f)(groupsig_proof_t **proof,
+			   groupsig_key_t *grpkey,
+			   groupsig_key_t *memkey,
+			   message_t *msg,
+			   groupsig_signature_t **sigs,
+			   message_t **msgs,
+			   uint32_t n,
+        int header);
 
   /**
    * @typedef int (*verify_seqlink_f)(uint8_t *ok,
@@ -700,6 +763,36 @@ extern "C" {
 				  groupsig_signature_t **sigs,
 				  message_t **msgs,
 				  uint32_t n);
+
+    /**
+   * @typedef int (*verify_seqlink2_f)(uint8_t *ok,
+   *                        groupsig_key_t *grpkey,
+   *                        groupsig_proof_t *proof,
+   *                        message_t *msg,
+   *                        groupsig_signature_t **sigs,
+   *                        message_t **msgs,
+   *                        uint32_t n)
+   * @brief Type of functions for verifying proofs of several signatures being
+   *        sequentially linked (the *sigs array must be correctly ordered!)
+   *
+   * @param[in,out] ok Will be set to 1 (proof valid) or 0 (proof invalid).
+   * @param[in] grpkey The group key.
+   * @param[in] proof The proof.
+   * @param[in] msg The message to add to the created proof (prevents replays.)
+   * @param[in] sigs The signatures to link.
+   * @param[in] msgs The signed messages.
+   * @param[in] n The size of the sig and msg arrays.
+   *
+   * @return IOK or IERROR.
+   */
+  typedef int (*verify_seqlink2_f)(uint8_t *ok,
+				  groupsig_key_t *grpkey,
+				  groupsig_proof_t *proof,
+				  message_t *msg,
+				  groupsig_signature_t **sigs,
+				  message_t **msgs,
+				  uint32_t n,
+          int header);
 
   /**
    * @typedef int (*trace_blind_f)(groupsig_blindsig_t *bsig, groupsig_key_t **bldkey,
@@ -763,6 +856,10 @@ extern "C" {
     trace_blind_f trace_blind; /**< Blinds a signature for tracing. */
     trace_convert_f trace_convert; /**< Converts a blinded signature for tracing. */
     trace_unblind_f trace_unblind; /**< Unblinds a signature for tracing. */
+    sign2_f sign2; /**< Signs messages with a different signing algorithm. */
+    seqlink2_f seqlink2; /**< Creates a proof of a set of signatures being
+			  sequentially linked with additional parameters. */
+    verify_seqlink2_f verify_seqlink2; /**< Verifies a proof of sequential link with additional parameters. */
   } groupsig_t;
 
   /* Function implementations */
@@ -969,6 +1066,34 @@ extern "C" {
 		    groupsig_key_t *memkey,
 		    groupsig_key_t *grpkey,
 		    unsigned int seed);
+
+  /**
+   * @fn int groupsig_sign(groupsig_signature_t *sig, message_t *msg,
+   *		  groupsig_key_t *memkey,
+   *		  groupsig_key_t *grpkey, unsigned int seed)
+   * @brief Runs the signing algorithm of the scheme associated with the received
+   *        tokens.
+   *
+   * @param[in,out] sig The group signature structure to be filled. Must be initialized
+   *  by the caller.
+   * @param[in] msg The message to sign.
+   * @param[in] memkey The member key to use for signing.
+   * @param[in] grpkey The group key.
+   * @param[in] seed When different to UINT_MAX, the specified seed will be sued
+   *  for reseeding the PRNG. If UINT_MAX, the current state of the random number
+   *  generator will be used.
+   *
+   * @return IOK or IERROR.
+   *
+   */
+  int groupsig_sign2(groupsig_signature_t *sig,
+		    message_t *msg,
+		    groupsig_key_t *memkey,
+		    groupsig_key_t *grpkey,
+		    unsigned int *x,
+        unsigned int *y,
+        int header
+      );
 
   /**
    * @fn int groupsig_verify(uint8_t *ok, groupsig_signature_t *sig,
@@ -1455,6 +1580,38 @@ extern "C" {
 		       groupsig_signature_t **sigs,
 		       message_t **msgs,
 		       uint32_t n);
+    /**
+   * @fn int groupsig_seqlink2(groupsig_proof_t **proof,
+   *                          groupsig_key_t *grpkey,
+   *                          groupsig_key_t *memkey,
+   *                          message_t *msg,
+   *                          groupsig_signature_t **sigs,
+   *                          message_t **msgs,
+   *                          uint32_t n)
+   * @brief Issues proofs of several signatures being sequentially linked
+   * (the *sigs array must be correctly ordered!)
+   *
+   * @param[in,out] proof The proof to be issued.
+   * @param[in] grpkey The group key.
+   * @param[in] memkey The key used for issuing the individual signatures.
+   * @param[in] msg The message to add to the created proof (prevents replays.)
+   * @param[in] sigs The signatures to sequentially link.
+   * @param[in] msgs The signed messages.
+   * @param[in] n The size of the sig and msg arrays.
+   *
+   * @return IOK if link was produced correctly; IFAIL if the signatures
+   * do not verify correctly or identify to the user. IERROR if something
+   * misbehaved.
+   */
+  int groupsig_seqlink2(groupsig_proof_t **proof,
+		       groupsig_key_t *grpkey,
+		       groupsig_key_t *memkey,
+		       message_t *msg,
+		       groupsig_signature_t **sigs,
+		       message_t **msgs,
+		       uint32_t n,
+           int header
+         );
 
   /**
    * @fn int groupsig_verify_seqlink(uint8_t *ok,
@@ -1484,6 +1641,35 @@ extern "C" {
 			      groupsig_signature_t **sigs,
 			      message_t **msgs,
 			      uint32_t n);
+    /**
+   * @fn int groupsig_verify_seqlink(uint8_t *ok,
+   *                                 groupsig_key_t *grpkey,
+   *                                 groupsig_proof_t *proof,
+   *                                 message_t *msg,
+   *                                 groupsig_signature_t **sigs,
+   *                                 message_t **msgs,
+   *                                 uint32_t n)
+   * @brief Verifies proofs of several signatures being sequentially linked
+   *  (the *sigs array must be correctly ordered!)
+   *
+   * @param[in,out] ok Will be set to 1 (proof valid) or 0 (proof invalid).
+   * @param[in] grpkey The group key.
+   * @param[in] proof The proof.
+   * @param[in] msg The message to add to the created proof (prevents replays.)
+   * @param[in] sigs The signatures to link.
+   * @param[in] msgs The signed messages.
+   * @param[in] n The size of the sig and msg arrays.
+   *
+   * @return IOK or IERROR.
+   */
+  int groupsig_verify_seqlink2(uint8_t *ok,
+			      groupsig_key_t *grpkey,
+			      groupsig_proof_t *proof,
+			      message_t *msg,
+			      groupsig_signature_t **sigs,
+			      message_t **msgs,
+			      uint32_t n,
+            int header);
 
   /**
    * @fn int groupsig_get_code_from_str(uint8_t *code, char *name)

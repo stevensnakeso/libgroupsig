@@ -31,12 +31,15 @@
  * @brief Defines the sequencing information in KLAPSEQ signatures.
  */
 typedef struct {
+  int header;
   byte_t *seq1; /**< Computed as Hash(k',PRF(k,seq3)) */
   uint64_t len1; /**< Size in bytes of seq1. */
   byte_t *seq2; /**< Computed as Hash(k',PRF(k,seq3) xor Hash(k, PRF(k,i-1))) */
   uint64_t len2; /**< Size in bytes of seq2. */
   byte_t *seq3; /**< Computed as PRF(k,i) -- converted to byte */
   uint64_t len3; /**< Size in bytes of seq3. */
+  byte_t *seq4; /**< Computed as Hash(k',PRF(k,seq3) xor Hash(k, PRF(k,i+1))) */
+  uint64_t len4; /**< Size in bytes of seq4. */
 } klapseq_seqinfo_t;
 
 
